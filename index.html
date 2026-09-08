@@ -574,7 +574,7 @@ function setInvitePartnerAndContinue(partner, retryAfter){
   if(retryAfter) enterApp();
 }
 
-function enterApp(){
+async function enterApp(){
   const v = document.getElementById('inviteCode').value.trim().toUpperCase();
   if(v.length < 6) return toast('Davet kodunu kontrol et');
 
@@ -584,8 +584,31 @@ function enterApp(){
     return;
   }
 
-  const rec = (state.adminMembers || []).find(m => (m.inviteCode || '').toUpperCase() === v && m.status !== 'removed');
+  let rec = (state.adminMembers || []).find(m => (m.inviteCode || '').toUpperCase() === v && m.status !== 'removed');
+
   if(!rec){
+    try{
+      if(!window.PAIRA_FIREBASE_API){
+        await new Promise((resolve,reject)=>{
+          const t=setTimeout(()=>reject(new Error('Firebase hazır değil')),5000);
+          window.addEventListener('paira-firebase-ready',()=>{clearTimeout(t);resolve();},{once:true});
+        });
+      }
+      rec = await window.PAIRA_FIREBASE_API.getInvitation(v);
+      if(rec && rec.status !== 'removed'){
+        state.adminMembers = state.adminMembers || [];
+        const idx = state.adminMembers.findIndex(m => (m.inviteCode || '').toUpperCase() === v);
+        if(idx >= 0) state.adminMembers[idx] = rec;
+        else state.adminMembers.unshift(rec);
+      }
+    }catch(err){
+      console.warn('PAIRA invite lookup', err);
+      toast('Davet Firebase’den doğrulanamadı');
+      return;
+    }
+  }
+
+  if(!rec || rec.status === 'removed'){
     toast('Davet kodu geçersiz');
     return;
   }
@@ -620,6 +643,15 @@ function enterApp(){
   rec.usedDevices = rec.partnerDevices.filter(Boolean);
   const bothApproved = rec.partnerDevices.filter(Boolean).length >= 2;
   rec.status = bothApproved ? 'active' : 'pending';
+
+  try{
+    if(!window.PAIRA_FIREBASE_API) throw new Error('Firebase hazır değil');
+    await window.PAIRA_FIREBASE_API.saveInvitation(rec.inviteCode || rec._firebaseId, rec);
+  }catch(err){
+    console.warn('PAIRA invite approval save', err);
+    toast('Onay Firebase’e kaydedilemedi');
+    return;
+  }
 
   persist();
   renderAdminMembers();
@@ -1947,8 +1979,19 @@ setTimeout(applyInviteFromLink, 50);
     return snap.docs.map(s => ({...s.data(), _firebaseId:s.id}));
   }
 
+  async function getInvitation(id){
+    if(isLocalContent()){
+      const rows = await listInvitations();
+      return rows.find(r => String(r.inviteCode || r._firebaseId || '').toUpperCase() === String(id || '').toUpperCase()) || null;
+    }
+    const snap = await getDoc(doc(db, "invitations", id));
+    if(!snap.exists()) return null;
+    return {...snap.data(), _firebaseId:snap.id};
+  }
+
   async function saveInvitation(id, data){
     const clean = JSON.parse(JSON.stringify(data));
+    delete clean._firebaseId;
     if(isLocalContent()){
       await restFirestore("invitations/" + encodeURIComponent(id), {
         method:"PATCH",
@@ -1969,6 +2012,7 @@ setTimeout(applyInviteFromLink, 50);
 
   window.PAIRA_FIREBASE_API = {
     listInvitations,
+    getInvitation,
     saveInvitation,
     removeInvitation
   };
