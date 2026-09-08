@@ -630,41 +630,41 @@ async function enterApp(){
   const pIndex = pendingInvitePartner - 1;
   const deviceId = getDeviceId();
 
-  if(rec.partnerDevices.some((d, idx) => idx !== pIndex && d === deviceId)){
-    toast('Diğer partner bu cihazda onaylandı. İkinci partner kendi telefonundan onay vermeli.');
-    return;
-  }
-
-  const existingDevice = rec.partnerDevices[pIndex];
-  if(existingDevice && existingDevice !== deviceId){
-    toast('Bu partner onayı başka bir telefonda tamamlanmış.');
-    return;
-  }
-
-  const alreadyApprovedHere = existingDevice === deviceId;
-
-  if(!existingDevice){
-    rec.partnerDevices[pIndex] = deviceId;
-  }
-
-  setDevicePartnerIdentity(rec, pIndex);
-  rec.usedDevices = rec.partnerDevices.filter(Boolean);
-  const bothApproved = rec.partnerDevices.filter(Boolean).length >= 2;
-  rec.status = bothApproved ? 'active' : 'pending';
-
-  // Aynı partner bu telefonda zaten onaylandıysa Firebase'e ikinci kez yazma.
-  // Aktifleşmiş davette tekrar write denemesi güvenlik kuralına takılıyordu.
-  if(!alreadyApprovedHere){
-    try{
-      if(!window.PAIRA_FIREBASE_API) throw new Error('Firebase hazır değil');
-      await window.PAIRA_FIREBASE_API.saveInvitation(rec.inviteCode || rec._firebaseId, rec);
-    }catch(err){
-      console.warn('PAIRA invite approval save', err);
+  // Partner onayını atomik transaction ile yap. Böylece iki telefon birbirinin
+  // onayını eski veriyle ezemez ve aynı anda onay verseler bile 2/2 korunur.
+  try{
+    if(!window.PAIRA_FIREBASE_API) throw new Error('Firebase hazır değil');
+    rec = await window.PAIRA_FIREBASE_API.approveInvitationPartner(
+      rec.inviteCode || rec._firebaseId,
+      pIndex,
+      deviceId
+    );
+  }catch(err){
+    const msg = String(err?.message || err || '');
+    console.warn('PAIRA invite approval transaction', err);
+    if(msg.includes('DEVICE_OTHER_PARTNER')){
+      toast('Bu telefon diğer partner için kayıtlı. Kendi partner linkinizi açın.');
+    }else if(msg.includes('PARTNER_ALREADY_OTHER_DEVICE')){
+      toast('Bu partner başka bir telefonda zaten onaylandı.');
+    }else if(msg.includes('INVITE_REMOVED')){
+      toast('Bu davet artık aktif değil.');
+    }else{
       toast('Onay Firebase’e kaydedilemedi');
-      return;
     }
+    return;
   }
 
+  rec.partnerPhones = rec.partnerPhones || [rec.contact || '', rec.contact2 || ''];
+  rec.partnerDevices = rec.partnerDevices || ['', ''];
+  setDevicePartnerIdentity(rec, pIndex);
+
+  // Ekrandaki yerel kaydı da Firebase'deki son durumla eşitle.
+  state.adminMembers = state.adminMembers || [];
+  const recIdx = state.adminMembers.findIndex(m => (m.inviteCode || m._firebaseId || '').toUpperCase() === v);
+  if(recIdx >= 0) state.adminMembers[recIdx] = rec;
+  else state.adminMembers.unshift(rec);
+
+  const bothApproved = rec.partnerDevices.filter(Boolean).length >= 2;
   persist();
   renderAdminMembers();
 
@@ -1876,7 +1876,8 @@ setTimeout(applyInviteFromLink, 50);
     collection,
     getDocs,
     setDoc,
-    deleteDoc
+    deleteDoc,
+    runTransaction
   } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
   import { getStorage } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-storage.js";
 
@@ -2014,6 +2015,41 @@ setTimeout(applyInviteFromLink, 50);
     await setDoc(doc(db, "invitations", id), clean);
   }
 
+  async function approveInvitationPartner(id, partnerIndex, deviceId){
+    if(isLocalContent()) throw new Error("INVITE_APPROVAL_REQUIRES_WEB");
+    const ref = doc(db, "invitations", id);
+    return await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      if(!snap.exists()) throw new Error("INVITE_NOT_FOUND");
+
+      const data = snap.data() || {};
+      if(data.status === "removed") throw new Error("INVITE_REMOVED");
+
+      const devices = Array.isArray(data.partnerDevices) ? [...data.partnerDevices] : ["", ""];
+      while(devices.length < 2) devices.push("");
+      const otherIndex = partnerIndex === 0 ? 1 : 0;
+
+      if(devices[otherIndex] === deviceId && devices[partnerIndex] !== deviceId){
+        throw new Error("DEVICE_OTHER_PARTNER");
+      }
+      if(devices[partnerIndex] && devices[partnerIndex] !== deviceId){
+        throw new Error("PARTNER_ALREADY_OTHER_DEVICE");
+      }
+
+      // Bu telefon zaten doğru partner olarak kayıtlıysa tekrar write yapma.
+      if(devices[partnerIndex] === deviceId){
+        return {...data, partnerDevices:devices, _firebaseId:snap.id};
+      }
+
+      devices[partnerIndex] = deviceId;
+      const usedDevices = devices.filter(Boolean);
+      const status = usedDevices.length >= 2 ? "active" : "pending";
+
+      tx.update(ref, {partnerDevices:devices, usedDevices, status});
+      return {...data, partnerDevices:devices, usedDevices, status, _firebaseId:snap.id};
+    });
+  }
+
   async function removeInvitation(id){
     if(isLocalContent()){
       await restFirestore("invitations/" + encodeURIComponent(id), {method:"DELETE"});
@@ -2026,6 +2062,7 @@ setTimeout(applyInviteFromLink, 50);
     listInvitations,
     getInvitation,
     saveInvitation,
+    approveInvitationPartner,
     removeInvitation
   };
 
