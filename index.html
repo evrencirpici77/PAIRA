@@ -613,13 +613,37 @@ async function enterApp(){
   rec.partnerPhones = rec.partnerPhones || [rec.contact || '', rec.contact2 || ''];
   rec.partnerDevices = rec.partnerDevices || ['', ''];
 
+  // Daha önce onaylanmış telefon tekrar davet kodu seçmek zorunda kalmasın.
+  // Aktif çift hesabında cihaz hangi partnere kayıtlıysa doğrudan o kimlikle aç.
+  const returningDeviceId = getDeviceId();
+  const returningPartnerIndex = rec.partnerDevices.findIndex(d => d === returningDeviceId);
+  const invitationAlreadyActive = rec.status === 'active' || rec.partnerDevices.filter(Boolean).length >= 2;
+  if(invitationAlreadyActive){
+    if(returningPartnerIndex >= 0){
+      pendingInvitePartner = returningPartnerIndex + 1;
+      setDevicePartnerIdentity(rec, returningPartnerIndex);
+      state.adminMembers = state.adminMembers || [];
+      const activeIdx = state.adminMembers.findIndex(m => (m.inviteCode || m._firebaseId || '').toUpperCase() === v);
+      if(activeIdx >= 0) state.adminMembers[activeIdx] = rec;
+      else state.adminMembers.unshift(rec);
+      persist();
+      historyStack = ['home'];
+      show('home');
+      ensureSharedProfileSync();
+      toast('Ortak hesap açıldı ✓');
+      return;
+    }
+    toast('Bu çift hesabı iki onaylı telefona bağlı. Onaylı telefonlardan giriş yapın.');
+    return;
+  }
+
   if(!pendingInvitePartner){
     chooseInvitePartner(rec, true);
     return;
   }
 
   const pIndex = pendingInvitePartner - 1;
-  const deviceId = getDeviceId();
+  const deviceId = returningDeviceId;
 
   // Partner onayını atomik transaction ile yap. Böylece iki telefon birbirinin
   // onayını eski veriyle ezemez ve aynı anda onay verseler bile 2/2 korunur.
@@ -2013,7 +2037,42 @@ renderAdminInbox();
 updateAdminCounters();
 renderProfileView();
 persist();
+
+async function resumeApprovedDeviceSession(){
+  try{
+    const params = new URLSearchParams(window.location.search);
+    // Partner davet linki açılmışsa normal davet akışı çalışsın.
+    if(params.get('invite')) return;
+
+    const saved = getDevicePartnerIdentity();
+    const code = String(saved?.inviteCode || '').trim().toUpperCase();
+    if(!code) return;
+
+    const api = await waitForPairaFirebaseApi();
+    const rec = await api.getInvitation(code);
+    if(!rec || rec.status === 'removed') return;
+
+    rec.partnerDevices = rec.partnerDevices || ['', ''];
+    const deviceId = getDeviceId();
+    const idx = rec.partnerDevices.findIndex(d => d === deviceId);
+    if(idx < 0) return;
+
+    setDevicePartnerIdentity(rec, idx);
+    state.adminMembers = state.adminMembers || [];
+    const recIdx = state.adminMembers.findIndex(m => (m.inviteCode || m._firebaseId || '').toUpperCase() === code);
+    if(recIdx >= 0) state.adminMembers[recIdx] = rec;
+    else state.adminMembers.unshift(rec);
+    persist();
+    historyStack = ['home'];
+    show('home');
+    ensureSharedProfileSync();
+  }catch(err){
+    console.warn('PAIRA returning session', err);
+  }
+}
+
 setTimeout(applyInviteFromLink, 50);
+setTimeout(resumeApprovedDeviceSession, 650);
 </script>
 
 <!-- PAIRA Firebase authentication + admin gate -->
