@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>PAIRA</title>
+<meta name="paira-build" content="v17-auto-member-directory">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
@@ -564,8 +565,8 @@ function show(id){
   el.classList.add('active');
   window.scrollTo(0,0);
   if(id==='profile'){ renderProfileView(); ensureSharedProfileSync(); }
-  if(id==='members'){ renderMembersView(); ensureSharedProfileSync(); }
-  if(id==='member'){ renderSelectedMemberView(); ensureSharedProfileSync(); }
+  if(id==='members'){ renderMembersView(); ensureSharedProfileSync(); ensureMembersDirectorySync(); }
+  if(id==='member'){ renderSelectedMemberView(); ensureSharedProfileSync(); ensureMembersDirectorySync(); }
   if(id==='profileEdit'){ loadProfileEdit(); ensureSharedProfileSync(); }
   if(id==='gallery'){ renderGalleryView(); ensureSharedProfileSync(); }
   if(id==='chats'){
@@ -762,33 +763,115 @@ function openMenu(){
 
 
 let selectedMember = 'self';
+let directoryMembers = [];
+let membersDirectoryUnsub = null;
+let membersDirectorySeq = 0;
+let membersDirectoryReady = false;
 
-function realMembersData(){
+function memberCardFromProfile(profile){
+  const p = profile || {};
+  const id = String(p._firebaseId || '').trim();
+  if(!id) return null;
+  const photos = Array.isArray(p.photos) ? p.photos.filter(Boolean) : [];
+  const coverIndex = Math.max(0, Math.min(Number.isInteger(p.coverIndex) ? p.coverIndex : 0, Math.max(photos.length-1,0)));
+  return {
+    id,
+    name:String(p.name || 'PAIRA Üyesi').trim() || 'PAIRA Üyesi',
+    city:String(p.city || '').trim(),
+    img:photos[coverIndex] || '',
+    profile:p
+  };
+}
+
+function currentCoupleMember(){
   const p = state.profile || {};
   const me = currentChatIdentity();
-  const name = String(p.name || me.coupleName || 'Evren & Gamze').trim();
+  const id = sharedProfileAccountId() || 'self';
+  const name = String(p.name || me.coupleName || 'PAIRA Üyesi').trim();
   const city = String(p.city || '').trim();
   const photos = Array.isArray(p.photos) ? p.photos : [];
   const coverIndex = Math.max(0, Math.min(Number.isInteger(p.coverIndex) ? p.coverIndex : 0, Math.max(photos.length-1,0)));
   const img = photos[coverIndex] || defaultProfilePhoto() || '';
-  return [{ id:'self', name, city, img, profile:p }];
+  return { id, name, city, img, profile:p, isSelf:true };
+}
+
+function realMembersData(){
+  const self = currentCoupleMember();
+  const byId = new Map();
+  (directoryMembers || []).forEach(m=>{
+    if(m && m.id) byId.set(String(m.id), m);
+  });
+  // Kendi profilimiz Firestore anlık görüntüsünden daha yeniyse yerel ortak profili kullan.
+  byId.set(String(self.id), self);
+  return [...byId.values()].sort((a,b)=>{
+    if(a.isSelf && !b.isSelf) return -1;
+    if(b.isSelf && !a.isSelf) return 1;
+    return String(a.name || '').localeCompare(String(b.name || ''), 'tr');
+  });
+}
+
+async function applyMembersDirectorySnapshot(rows, seq){
+  try{
+    const api = await waitForPairaFirebaseApi();
+    const checked = await Promise.all((rows || []).map(async profile=>{
+      const id = String(profile?._firebaseId || '').trim();
+      if(!id) return null;
+      try{
+        const inv = await api.getInvitation(id);
+        if(!inv) return null;
+        const devices = Array.isArray(inv.partnerDevices) ? inv.partnerDevices.filter(Boolean) : [];
+        const active = inv.status !== 'removed' && (inv.status === 'active' || devices.length >= 2);
+        return active ? memberCardFromProfile(profile) : null;
+      }catch(_){
+        return null;
+      }
+    }));
+    if(seq !== membersDirectorySeq) return;
+    directoryMembers = checked.filter(Boolean);
+    membersDirectoryReady = true;
+    const active = document.querySelector('.screen.active');
+    if(active && active.id === 'members') renderMembersView();
+    if(active && active.id === 'member') renderSelectedMemberView();
+  }catch(err){
+    console.warn('PAIRA member directory filter', err);
+  }
+}
+
+async function ensureMembersDirectorySync(){
+  if(membersDirectoryUnsub) return;
+  try{
+    const api = await waitForPairaFirebaseApi();
+    membersDirectoryUnsub = api.subscribeCoupleProfiles((rows)=>{
+      const seq = ++membersDirectorySeq;
+      applyMembersDirectorySnapshot(rows, seq);
+    },(err)=>{
+      membersDirectoryReady = true;
+      console.warn('PAIRA member directory sync', err);
+      const active = document.querySelector('.screen.active');
+      if(active && active.id === 'members') renderMembersView();
+    });
+  }catch(err){
+    membersDirectoryReady = true;
+    console.warn('PAIRA member directory start', err);
+  }
 }
 
 function renderMembersView(){
   const wrap = document.getElementById('membersList');
   if(!wrap) return;
   const list = realMembersData();
+  const selfId = String(currentCoupleMember().id);
   wrap.innerHTML = list.map(m=>`
     <button class="event-card" style="width:100%" onclick="openRealMember('${m.id}')">
       ${m.img ? `<img src="${m.img}" alt="${escapeHtml(m.name)}">` : `<div style="width:118px;min-width:118px;height:118px;border-radius:14px;border:1px solid #6a4f2d;display:grid;place-items:center;font-size:34px">♙</div>`}
       <div class="event-copy">
         <div><h3>${escapeHtml(m.name)}</h3>${m.city ? `<div class="event-meta">📍 ${escapeHtml(m.city)}</div>` : ''}</div>
-        <span class="badge">Aktif üye</span>
+        <span class="badge">${String(m.id)===selfId ? 'Sizin çift hesabınız' : 'Aktif üye'}</span>
       </div>
     </button>
   `).join('') + `
     <div class="card" style="text-align:center;padding:18px">
-      <div class="muted">Şu anda sistemde görünen gerçek çift hesabınız budur. Yeni gerçek üyeler eklendikçe burada listelenecek.</div>
+      <div class="muted">${membersDirectoryReady ? `${list.length} aktif çift • Yeni onaylanan çiftler otomatik olarak burada görünür.` : 'Aktif üyeler Firebase’den yükleniyor...'}</div>
     </div>`;
 }
 
@@ -800,7 +883,12 @@ function openRealMember(id){
 function renderSelectedMemberView(){
   const wrap = document.getElementById('memberView');
   if(!wrap) return;
-  const m = realMembersData().find(x=>x.id===selectedMember) || realMembersData()[0];
+  const list = realMembersData();
+  const m = list.find(x=>String(x.id)===String(selectedMember)) || list[0];
+  if(!m){
+    wrap.innerHTML = '<div class="card muted">Üye profili bulunamadı.</div>';
+    return;
+  }
   const p = m.profile || {};
   const photos = Array.isArray(p.photos) ? p.photos : [];
   const cover = m.img || '';
@@ -819,7 +907,7 @@ function renderSelectedMemberView(){
 function openMemberSearch(){
   modal(`<h2 style="color:#e7bd72;margin-top:0">Üye Ara</h2>
     <label class="form-label">İsim veya şehir</label>
-    <input id="memberSearchQuery" class="form-field" placeholder="Örn. Ece, Kaan, İzmir, Bodrum"
+    <input id="memberSearchQuery" class="form-field" placeholder="Örn. Evren, Gamze, İstanbul"
       onkeydown="if(event.key==='Enter'){performMemberSearch()}">
     <div class="search-help">Çift adı, kişi adı veya şehir yazarak arama yapabilirsiniz.</div>
     <button class="gold" style="margin-top:14px" onclick="performMemberSearch()">Ara</button>
@@ -839,7 +927,7 @@ function renderMemberOverlay(list, titleText){
   grid.innerHTML = list.length
     ? list.map((m)=>`
         <button class="filtered-card" onclick="openRealMember('${m.id || 'self'}')">
-          ${m.img ? `<img src="${m.img}" alt="${escapeHtml(m.name)}">` : ''}
+          ${m.img ? `<img src="${m.img}" alt="${escapeHtml(m.name)}">` : `<div style="height:105px;display:grid;place-items:center;font-size:28px">♙</div>`}
           <div style="padding:8px;color:#f0d39c;font-size:12px">${escapeHtml(m.name)}</div>
         </button>
       `).join('')
@@ -868,13 +956,11 @@ function performMemberSearch(){
 }
 
 function cityPicker(){
+  const cities = [...new Set(realMembersData().map(m=>String(m.city || '').trim()).filter(Boolean))]
+    .sort((a,b)=>a.localeCompare(b,'tr'));
   modal(`<h2>Şehir</h2>
-  <button class="citybtn" onclick="closeModal();clearCity()">Tümü</button>
-  <button class="citybtn" onclick="closeModal();selectCity('İstanbul')">İstanbul</button>
-  <button class="citybtn" onclick="closeModal();selectCity('İzmir')">İzmir</button>
-  <button class="citybtn" onclick="closeModal();selectCity('Ankara')">Ankara</button>
-  <button class="citybtn" onclick="closeModal();selectCity('Bodrum')">Bodrum</button>
-  <button class="citybtn" onclick="closeModal();selectCity('Antalya')">Antalya</button>`);
+    <button class="citybtn" onclick="closeModal();clearCity()">Tümü</button>
+    ${cities.map(city=>`<button class="citybtn" onclick="closeModal();selectCity('${city.replace(/'/g,"\\'")}')">${escapeHtml(city)}</button>`).join('') || '<div class="muted">Henüz şehir bilgisi olan üye yok.</div>'}`);
 }
 function selectCity(city){
   const list = realMembersData().filter(m=>m.city===city);
@@ -2568,6 +2654,17 @@ setTimeout(resumeApprovedDeviceSession, 650);
     });
   }
 
+  function subscribeCoupleProfiles(onProfiles, onError){
+    return onSnapshot(collection(db, 'coupleProfiles'),(snap)=>{
+      const rows = snap.docs
+        .map(d=>({...d.data(), _firebaseId:d.id}))
+        .sort((a,b)=>Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
+      onProfiles(rows);
+    },(err)=>{
+      if(onError) onError(err);
+    });
+  }
+
   function safeEventAttendanceId(value, max=120){
     return String(value || '').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,max);
   }
@@ -2622,6 +2719,7 @@ setTimeout(resumeApprovedDeviceSession, 650);
     uploadCoupleProfilePhotos,
     saveCoupleProfile,
     subscribeCoupleProfile,
+    subscribeCoupleProfiles,
     getEventAttendance,
     setEventAttendance,
     subscribeEventAttendance
