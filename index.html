@@ -538,9 +538,9 @@ function show(id){
   if(!el) return;
   el.classList.add('active');
   window.scrollTo(0,0);
-  if(id==='profile') renderProfileView();
-  if(id==='profileEdit') loadProfileEdit();
-  if(id==='gallery') renderGalleryView();
+  if(id==='profile'){ renderProfileView(); ensureSharedProfileSync(); }
+  if(id==='profileEdit'){ loadProfileEdit(); ensureSharedProfileSync(); }
+  if(id==='gallery'){ renderGalleryView(); ensureSharedProfileSync(); }
   if(id==='chats'){
     const me=currentChatIdentity();
     const z=document.getElementById('chatIdentityInfo');
@@ -683,6 +683,7 @@ async function enterApp(){
 
   historyStack = ['home'];
   show('home');
+  ensureSharedProfileSync();
   toast('İki partner de onay verdi. Ortak hesap açıldı ✓');
 }
 function toast(t){
@@ -991,6 +992,85 @@ function clearAdminInbox(){
 }
 
 
+let sharedProfileUnsub = null;
+let sharedProfileKey = '';
+
+function sharedProfileAccountId(){
+  const p = getDevicePartnerIdentity();
+  return String((p && (p.memberId || p.inviteCode)) || '').trim();
+}
+
+function sharedProfilePayload(){
+  const p = state.profile || {};
+  const me = currentChatIdentity();
+  return {
+    name:String(p.name || me.coupleName || '').slice(0,120),
+    city:String(p.city || '').slice(0,80),
+    age1:String(p.age1 || '').slice(0,20),
+    age2:String(p.age2 || '').slice(0,20),
+    children:String(p.children || '').slice(0,40),
+    about:String(p.about || '').slice(0,1200),
+    interests:Array.isArray(p.interests) ? p.interests.map(x=>String(x).slice(0,60)).slice(0,30) : [],
+    updatedAt:Date.now(),
+    updatedBy:String(me.partnerName || 'Partner').slice(0,80)
+  };
+}
+
+function applySharedProfile(remote){
+  if(!remote || typeof remote !== 'object') return;
+  const local = state.profile || {};
+  state.profile = {
+    ...local,
+    name:remote.name ?? local.name,
+    city:remote.city ?? local.city,
+    age1:remote.age1 ?? local.age1,
+    age2:remote.age2 ?? local.age2,
+    children:remote.children ?? local.children,
+    about:remote.about ?? local.about,
+    interests:Array.isArray(remote.interests) ? [...remote.interests] : (local.interests || []),
+    // Fotoğraflar bu adımda telefonda kalıyor. Bir sonraki adım Firebase Storage olacak.
+    photos:Array.isArray(local.photos) ? local.photos : [],
+    coverIndex:typeof local.coverIndex === 'number' ? local.coverIndex : 0
+  };
+  try{ persist(); }catch(_){ }
+
+  const active = document.querySelector('.screen.active');
+  if(active && active.id === 'profile') renderProfileView();
+  if(active && active.id === 'gallery') renderGalleryView();
+}
+
+function stopSharedProfileSync(){
+  if(typeof sharedProfileUnsub === 'function'){
+    try{ sharedProfileUnsub(); }catch(_){ }
+  }
+  sharedProfileUnsub = null;
+  sharedProfileKey = '';
+}
+
+async function ensureSharedProfileSync(){
+  const accountId = sharedProfileAccountId();
+  if(!accountId) return;
+  if(sharedProfileKey === accountId && sharedProfileUnsub) return;
+
+  stopSharedProfileSync();
+  sharedProfileKey = accountId;
+
+  try{
+    const api = await waitForPairaFirebaseApi();
+    const existing = await api.getCoupleProfile(accountId);
+    if(existing){
+      applySharedProfile(existing);
+    }else{
+      await api.saveCoupleProfile(accountId, sharedProfilePayload());
+    }
+    sharedProfileUnsub = api.subscribeCoupleProfile(accountId, applySharedProfile, err=>{
+      console.warn('PAIRA shared profile sync', err);
+    });
+  }catch(err){
+    console.warn('PAIRA shared profile start', err);
+  }
+}
+
 const PROFILE_INTERESTS = [
   "Gurme","Seyahat","Canlı Müzik","Deniz","Sanat","Wellness",
   "Hafta Sonu","Doğa","Spor","Dans","Tiyatro","Şarap Tadımı"
@@ -1112,7 +1192,7 @@ function removeProfilePhoto(i){
   renderPhotoEditor();
 }
 
-function saveProfileEdit(){
+async function saveProfileEdit(){
   const name = document.getElementById('pe_name').value.trim();
   const city = document.getElementById('pe_city').value.trim();
   if(!name){
@@ -1136,8 +1216,21 @@ function saveProfileEdit(){
     toast('Fotoğraflar çok büyük. Birkaçını azaltıp tekrar deneyin.');
     return;
   }
+
+  const accountId = sharedProfileAccountId();
+  if(accountId){
+    try{
+      const api = await waitForPairaFirebaseApi();
+      await api.saveCoupleProfile(accountId, sharedProfilePayload());
+    }catch(err){
+      console.warn('PAIRA shared profile save', err);
+      toast('Profil Firebase’e kaydedilemedi');
+      return;
+    }
+  }
+
   renderProfileView();
-  toast('Profil kaydedildi ✓');
+  toast('Ortak profil kaydedildi ✓');
   setTimeout(()=>show('profile'),350);
 }
 
@@ -1378,11 +1471,18 @@ function escapeAttr(s){
 function setDevicePartnerIdentity(rec, partnerIndex){
   const partnerName = (rec.partnerNames || [])[partnerIndex] || `${partnerIndex+1}. Partner`;
   localStorage.setItem('paira_partner_identity_v14', JSON.stringify({
-    memberId: rec.id,
+    memberId: rec.id || rec.inviteCode || rec._firebaseId,
+    inviteCode: rec.inviteCode || rec._firebaseId || '',
     coupleName: rec.name,
+    city: rec.city || '',
     partnerIndex,
     partnerName
   }));
+
+  // Davet hesabı açıldığında telefondaki örnek profil adı yerine gerçek çift adını kullan.
+  state.profile = state.profile || {};
+  if(rec.name) state.profile.name = rec.name;
+  if(rec.city && (!state.profile.city || state.profile.city === 'Bodrum')) state.profile.city = rec.city;
 }
 
 function getDevicePartnerIdentity(){
@@ -2149,6 +2249,38 @@ setTimeout(applyInviteFromLink, 50);
     await addDoc(chatMessagesCollection(kind,roomId),clean);
   }
 
+  function coupleProfileRef(id){
+    return doc(db, 'coupleProfiles', String(id || '').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,120));
+  }
+
+  async function getCoupleProfile(id){
+    const snap = await getDoc(coupleProfileRef(id));
+    return snap.exists() ? {...snap.data(), _firebaseId:snap.id} : null;
+  }
+
+  async function saveCoupleProfile(id, data){
+    const clean = {
+      name:String(data?.name || '').slice(0,120),
+      city:String(data?.city || '').slice(0,80),
+      age1:String(data?.age1 || '').slice(0,20),
+      age2:String(data?.age2 || '').slice(0,20),
+      children:String(data?.children || '').slice(0,40),
+      about:String(data?.about || '').slice(0,1200),
+      interests:Array.isArray(data?.interests) ? data.interests.map(x=>String(x).slice(0,60)).slice(0,30) : [],
+      updatedAt:Number(data?.updatedAt || Date.now()),
+      updatedBy:String(data?.updatedBy || '').slice(0,80)
+    };
+    await setDoc(coupleProfileRef(id), clean, {merge:true});
+  }
+
+  function subscribeCoupleProfile(id, onProfile, onError){
+    return onSnapshot(coupleProfileRef(id),(snap)=>{
+      onProfile(snap.exists() ? {...snap.data(), _firebaseId:snap.id} : null);
+    },(err)=>{
+      if(onError) onError(err);
+    });
+  }
+
   async function removeInvitation(id){
     if(isLocalContent()){
       await restFirestore("invitations/" + encodeURIComponent(id), {method:"DELETE"});
@@ -2164,7 +2296,10 @@ setTimeout(applyInviteFromLink, 50);
     approveInvitationPartner,
     removeInvitation,
     subscribeChatMessages,
-    sendChatMessage
+    sendChatMessage,
+    getCoupleProfile,
+    saveCoupleProfile,
+    subscribeCoupleProfile
   };
 
   window.pairaLoadInvitations = async function(){
