@@ -388,17 +388,6 @@ textarea.form-field{min-height:105px;resize:vertical}
   <label class="form-label">Şehir</label>
   <input id="pe_city" class="form-field" placeholder="İstanbul">
 
-  <div class="form-grid">
-    <div>
-      <label class="form-label">1. kişi yaş</label>
-      <input id="pe_age1" class="form-field" type="number" min="18" placeholder="36">
-    </div>
-    <div>
-      <label class="form-label">2. kişi yaş</label>
-      <input id="pe_age2" class="form-field" type="number" min="18" placeholder="38">
-    </div>
-  </div>
-
   <label class="form-label">Çocuk sayısı</label>
   <select id="pe_children" class="form-field">
     <option value="">Belirtmek istemiyorum</option>
@@ -418,7 +407,7 @@ textarea.form-field{min-height:105px;resize:vertical}
   <div class="photo-uploader">
     <label class="photo-add" for="pe_photos">＋ Fotoğraf Ekle</label>
     <input id="pe_photos" type="file" accept="image/*" multiple onchange="handleProfilePhotos(event)">
-    <div class="muted" style="font-size:12px;margin-top:8px">En fazla 20 fotoğraf. Bir fotoğrafı ana profil fotoğrafı seçebilirsiniz.</div>
+    <div class="muted" style="font-size:12px;margin-top:8px">En fazla 5 fotoğraf. Bir fotoğrafı ana profil fotoğrafı seçebilirsiniz.</div>
     <div id="pe_photo_grid" class="photo-grid"></div>
   </div>
 
@@ -511,8 +500,6 @@ if(!state.profile){
   state.profile = {
     name:"Ece & Kaan",
     city:"Bodrum",
-    age1:"36",
-    age2:"38",
     children:"Çocuk yok",
     about:"Hayatı paylaşınca güzel... Yeni insanlarla tanışmak, keyifli sohbetler ve güzel etkinlikler en büyük tutkumuz.",
     interests:["Gurme","Seyahat","Canlı Müzik","Deniz"],
@@ -520,6 +507,8 @@ if(!state.profile){
     coverIndex:0
   };
 }
+delete state.profile.age1;
+delete state.profile.age2;
 if(!Array.isArray(state.profile.interests)) state.profile.interests = [];
 if(!Array.isArray(state.profile.photos)) state.profile.photos = [];
 if(typeof state.profile.coverIndex !== 'number') state.profile.coverIndex = 0;
@@ -1008,12 +997,12 @@ function sharedProfilePayload(){
   return {
     name:String(p.name || me.coupleName || '').slice(0,120),
     city:String(p.city || '').slice(0,80),
-    age1:String(p.age1 || '').slice(0,20),
-    age2:String(p.age2 || '').slice(0,20),
+    age1:'',
+    age2:'',
     children:String(p.children || '').slice(0,40),
     about:String(p.about || '').slice(0,1200),
     interests:Array.isArray(p.interests) ? p.interests.map(x=>String(x).slice(0,60)).slice(0,30) : [],
-    photos:Array.isArray(p.photos) ? p.photos.filter(x=>/^https?:\/\//i.test(String(x))).slice(0,20) : [],
+    photos:Array.isArray(p.photos) ? p.photos.filter(x=>/^https?:\/\//i.test(String(x))).slice(0,5) : [],
     coverIndex:Number.isInteger(p.coverIndex) ? p.coverIndex : 0,
     updatedAt:Date.now(),
     updatedBy:String(me.partnerName || 'Partner').slice(0,80)
@@ -1027,8 +1016,6 @@ function applySharedProfile(remote){
     ...local,
     name:remote.name ?? local.name,
     city:remote.city ?? local.city,
-    age1:remote.age1 ?? local.age1,
-    age2:remote.age2 ?? local.age2,
     children:remote.children ?? local.children,
     about:remote.about ?? local.about,
     interests:Array.isArray(remote.interests) ? [...remote.interests] : (local.interests || []),
@@ -1091,8 +1078,6 @@ function loadProfileEdit(){
   const p = state.profile || {};
   document.getElementById('pe_name').value = p.name || '';
   document.getElementById('pe_city').value = p.city || '';
-  document.getElementById('pe_age1').value = p.age1 || '';
-  document.getElementById('pe_age2').value = p.age2 || '';
   document.getElementById('pe_children').value = p.children || '';
   document.getElementById('pe_about').value = p.about || '';
   editingInterests = [...(p.interests || [])];
@@ -1122,9 +1107,9 @@ function toggleInterest(name){
 function handleProfilePhotos(event){
   const files = Array.from(event.target.files || []);
   if(!files.length) return;
-  const remaining = Math.max(0, 20 - editingPhotos.length);
+  const remaining = Math.max(0, 5 - editingPhotos.length);
   if(remaining <= 0){
-    toast('En fazla 20 fotoğraf eklenebilir');
+    toast('En fazla 5 fotoğraf eklenebilir');
     event.target.value = '';
     return;
   }
@@ -1141,7 +1126,7 @@ function handleProfilePhotos(event){
           if(editingPhotos.length === chosen.length) editingCoverIndex = 0;
           renderPhotoEditor();
           event.target.value = '';
-          if(files.length > remaining) toast('20 fotoğraf sınırı uygulandı');
+          if(files.length > remaining) toast('5 fotoğraf sınırı uygulandı');
         }
       });
     };
@@ -1205,8 +1190,8 @@ async function saveProfileEdit(){
   state.profile = {
     name,
     city,
-    age1:document.getElementById('pe_age1').value.trim(),
-    age2:document.getElementById('pe_age2').value.trim(),
+    age1:'',
+    age2:'',
     children:document.getElementById('pe_children').value,
     about:document.getElementById('pe_about').value.trim(),
     interests:[...editingInterests],
@@ -1235,7 +1220,7 @@ async function saveProfileEdit(){
       await api.saveCoupleProfile(accountId, sharedProfilePayload());
     }catch(err){
       console.warn('PAIRA shared profile save', err);
-      toast('Profil veya fotoğraflar Firebase’e kaydedilemedi');
+      toast('Profil veya fotoğraflar kaydedilemedi');
       return;
     }
   }
@@ -1251,13 +1236,11 @@ function renderProfileView(){
   const p = state.profile || {};
   const photos = p.photos || [];
   const cover = photos.length ? photos[Math.min(p.coverIndex||0, photos.length-1)] : defaultProfilePhoto();
-  const ages = [p.age1,p.age2].filter(Boolean).join(' & ');
   wrap.innerHTML = `
     ${cover ? `<img class="profile-cover" src="${cover}" alt="Ana profil fotoğrafı">` : ''}
     <div class="card">
       <h2>${escapeHtml(p.name || 'Profil')}</h2>
       ${p.city ? `<p>📍 ${escapeHtml(p.city)}</p>` : ''}
-      ${ages ? `<p>🎂 ${escapeHtml(ages)}</p>` : ''}
       ${p.children ? `<p>👶 ${escapeHtml(p.children)}</p>` : ''}
       ${p.about ? `<p class="muted">${escapeHtml(p.about)}</p>` : ''}
       ${(p.interests||[]).length ? `<div class="profile-interests">${p.interests.map(x=>`<span class="profile-pill">${escapeHtml(x)}</span>`).join('')}</div>` : ''}
@@ -2057,7 +2040,6 @@ setTimeout(applyInviteFromLink, 50);
     onSnapshot,
     limit
   } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-  import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-storage.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyB3gFiLfA3naEP4Lx5fNt7o5oUwXQSUM1c",
@@ -2072,7 +2054,6 @@ setTimeout(applyInviteFromLink, 50);
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const storage = getStorage(app);
 
   let verifiedAdmin = false;
   let pairaRestIdToken = "";
@@ -2269,9 +2250,11 @@ setTimeout(applyInviteFromLink, 50);
     return snap.exists() ? {...snap.data(), _firebaseId:snap.id} : null;
   }
 
+  const CLOUDINARY_CLOUD_NAME = 'xelka8hr';
+  const CLOUDINARY_UPLOAD_PRESET = 'paira_profile';
+
   async function uploadCoupleProfilePhotos(id, photos){
-    const key = String(id || '').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,120);
-    const input = Array.isArray(photos) ? photos.slice(0,20) : [];
+    const input = Array.isArray(photos) ? photos.slice(0,5) : [];
     const urls = [];
     for(let i=0;i<input.length;i++){
       const src = String(input[i] || '');
@@ -2280,12 +2263,27 @@ setTimeout(applyInviteFromLink, 50);
         continue;
       }
       if(!/^data:image\//i.test(src)) continue;
-      const mime = (src.match(/^data:([^;]+);/) || [,'image/jpeg'])[1];
-      const ext = mime.includes('png') ? 'png' : (mime.includes('webp') ? 'webp' : 'jpg');
-      const file = `${Date.now()}_${i}_${Math.random().toString(36).slice(2,8)}.${ext}`;
-      const objRef = storageRef(storage, `coupleProfiles/${key}/photos/${file}`);
-      await uploadString(objRef, src, 'data_url', {contentType:mime});
-      urls.push(await getDownloadURL(objRef));
+
+      const form = new FormData();
+      form.append('file', src);
+      form.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+      const controller = new AbortController();
+      const timer = setTimeout(()=>controller.abort(), 30000);
+      try{
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+          method:'POST',
+          body:form,
+          signal:controller.signal
+        });
+        const data = await res.json().catch(()=>({}));
+        if(!res.ok || !data.secure_url){
+          throw new Error(data?.error?.message || 'CLOUDINARY_UPLOAD_FAILED');
+        }
+        urls.push(String(data.secure_url));
+      } finally {
+        clearTimeout(timer);
+      }
     }
     return urls;
   }
@@ -2299,7 +2297,7 @@ setTimeout(applyInviteFromLink, 50);
       children:String(data?.children || '').slice(0,40),
       about:String(data?.about || '').slice(0,1200),
       interests:Array.isArray(data?.interests) ? data.interests.map(x=>String(x).slice(0,60)).slice(0,30) : [],
-      photos:Array.isArray(data?.photos) ? data.photos.map(x=>String(x).slice(0,1200)).filter(x=>/^https?:\/\//i.test(x)).slice(0,20) : [],
+      photos:Array.isArray(data?.photos) ? data.photos.map(x=>String(x).slice(0,1200)).filter(x=>/^https?:\/\//i.test(x)).slice(0,5) : [],
       coverIndex:Number.isInteger(data?.coverIndex) ? data.coverIndex : 0,
       updatedAt:Number(data?.updatedAt || Date.now()),
       updatedBy:String(data?.updatedBy || '').slice(0,80)
