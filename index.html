@@ -252,11 +252,7 @@ textarea.form-field{min-height:105px;resize:vertical}
     <button class="out" style="flex:1" onclick="openMemberSearch()">⌕ Üye Ara</button>
     <button class="out" style="flex:1" onclick="cityPicker()">⌖ Şehir</button>
   </div>
-  <div class="card" style="text-align:center;padding:28px 18px">
-    <div style="font-size:34px;margin-bottom:10px">♙</div>
-    <b style="color:#e7bd72">Henüz başka gerçek üye yok</b>
-    <div class="muted" style="margin-top:8px">Onaylanan gerçek çiftler eklendikçe burada görünecek.</div>
-  </div>
+  <div id="membersList"></div>
   <div id="filteredMembers" class="filtered-members">
     <div class="filtered-title"><b id="filteredTitle">Üyeler</b><button class="circle" style="width:34px;height:34px;font-size:17px" onclick="clearCity()">×</button></div>
     <div id="filteredGrid" class="filtered-grid"></div>
@@ -269,10 +265,7 @@ textarea.form-field{min-height:105px;resize:vertical}
     <div><div class="logo">PAIRA</div><div class="sub">ÜYE PROFİLİ</div></div>
     <span></span>
   </div>
-  <div class="card" style="text-align:center;padding:28px 18px">
-    <b style="color:#e7bd72">Üye seçilmedi</b>
-    <div class="muted" style="margin-top:8px">Gerçek üyeler eklendiğinde profilleri burada açılacak.</div>
-  </div>
+  <div id="memberView"></div>
 </section>
 
 <section id="events" class="screen page"><div class="head"><button class="back" onclick="show('home')">‹</button><div><div class="logo">PAIRA</div><div class="sub">ETKİNLİKLER</div></div><button class="circle" onclick="show('notifications')">🔔</button></div><div id="eventsList"></div></section>
@@ -571,6 +564,8 @@ function show(id){
   el.classList.add('active');
   window.scrollTo(0,0);
   if(id==='profile'){ renderProfileView(); ensureSharedProfileSync(); }
+  if(id==='members'){ renderMembersView(); ensureSharedProfileSync(); }
+  if(id==='member'){ renderSelectedMemberView(); ensureSharedProfileSync(); }
   if(id==='profileEdit'){ loadProfileEdit(); ensureSharedProfileSync(); }
   if(id==='gallery'){ renderGalleryView(); ensureSharedProfileSync(); }
   if(id==='chats'){
@@ -765,6 +760,62 @@ function openMenu(){
   <button class="citybtn" onclick="closeModal();pairaRequireAdmin('webPublish')">Web’i Yayınla</button>`);
 }
 
+
+let selectedMember = 'self';
+
+function realMembersData(){
+  const p = state.profile || {};
+  const me = currentChatIdentity();
+  const name = String(p.name || me.coupleName || 'Evren & Gamze').trim();
+  const city = String(p.city || '').trim();
+  const photos = Array.isArray(p.photos) ? p.photos : [];
+  const coverIndex = Math.max(0, Math.min(Number.isInteger(p.coverIndex) ? p.coverIndex : 0, Math.max(photos.length-1,0)));
+  const img = photos[coverIndex] || defaultProfilePhoto() || '';
+  return [{ id:'self', name, city, img, profile:p }];
+}
+
+function renderMembersView(){
+  const wrap = document.getElementById('membersList');
+  if(!wrap) return;
+  const list = realMembersData();
+  wrap.innerHTML = list.map(m=>`
+    <button class="event-card" style="width:100%" onclick="openRealMember('${m.id}')">
+      ${m.img ? `<img src="${m.img}" alt="${escapeHtml(m.name)}">` : `<div style="width:118px;min-width:118px;height:118px;border-radius:14px;border:1px solid #6a4f2d;display:grid;place-items:center;font-size:34px">♙</div>`}
+      <div class="event-copy">
+        <div><h3>${escapeHtml(m.name)}</h3>${m.city ? `<div class="event-meta">📍 ${escapeHtml(m.city)}</div>` : ''}</div>
+        <span class="badge">Aktif üye</span>
+      </div>
+    </button>
+  `).join('') + `
+    <div class="card" style="text-align:center;padding:18px">
+      <div class="muted">Şu anda sistemde görünen gerçek çift hesabınız budur. Yeni gerçek üyeler eklendikçe burada listelenecek.</div>
+    </div>`;
+}
+
+function openRealMember(id){
+  selectedMember = id || 'self';
+  show('member');
+}
+
+function renderSelectedMemberView(){
+  const wrap = document.getElementById('memberView');
+  if(!wrap) return;
+  const m = realMembersData().find(x=>x.id===selectedMember) || realMembersData()[0];
+  const p = m.profile || {};
+  const photos = Array.isArray(p.photos) ? p.photos : [];
+  const cover = m.img || '';
+  wrap.innerHTML = `
+    ${cover ? `<img class="profile-cover" src="${cover}" alt="${escapeHtml(m.name)}">` : ''}
+    <div class="card">
+      <h2>${escapeHtml(m.name)}</h2>
+      ${m.city ? `<p>📍 ${escapeHtml(m.city)}</p>` : ''}
+      ${p.children ? `<p>👶 ${escapeHtml(p.children)}</p>` : ''}
+      ${p.about ? `<p class="muted">${escapeHtml(p.about)}</p>` : ''}
+      ${(p.interests||[]).length ? `<div class="profile-interests">${p.interests.map(x=>`<span class="profile-pill">${escapeHtml(x)}</span>`).join('')}</div>` : ''}
+    </div>
+    ${photos.length > 1 ? `<div class="photo-grid">${photos.map(src=>`<div class="photo-card"><img src="${src}" alt="Üye fotoğrafı"></div>`).join('')}</div>` : ''}`;
+}
+
 function openMemberSearch(){
   modal(`<h2 style="color:#e7bd72;margin-top:0">Üye Ara</h2>
     <label class="form-label">İsim veya şehir</label>
@@ -787,8 +838,9 @@ function renderMemberOverlay(list, titleText){
   title.textContent = titleText;
   grid.innerHTML = list.length
     ? list.map((m)=>`
-        <button class="filtered-card" onclick="show('member')">
-          <img src="${m.img}" alt="${m.name}">
+        <button class="filtered-card" onclick="openRealMember('${m.id || 'self'}')">
+          ${m.img ? `<img src="${m.img}" alt="${escapeHtml(m.name)}">` : ''}
+          <div style="padding:8px;color:#f0d39c;font-size:12px">${escapeHtml(m.name)}</div>
         </button>
       `).join('')
     : '<div class="empty-city">Eşleşen üye bulunamadı.</div>';
@@ -804,7 +856,7 @@ function performMemberSearch(){
     return;
   }
 
-  const list = membersData.filter(m => {
+  const list = realMembersData().filter(m => {
     const name = (m.name || '').toLocaleLowerCase('tr-TR');
     const city = (m.city || '').toLocaleLowerCase('tr-TR');
     return name.includes(q) || city.includes(q);
@@ -825,7 +877,7 @@ function cityPicker(){
   <button class="citybtn" onclick="closeModal();selectCity('Antalya')">Antalya</button>`);
 }
 function selectCity(city){
-  const list = membersData.filter(m=>m.city===city);
+  const list = realMembersData().filter(m=>m.city===city);
   renderMemberOverlay(list, city+' • '+list.length+' çift');
   toast(city+' seçildi');
 }
@@ -1094,6 +1146,8 @@ function applySharedProfile(remote){
   const active = document.querySelector('.screen.active');
   if(active && active.id === 'profile') renderProfileView();
   if(active && active.id === 'gallery') renderGalleryView();
+  if(active && active.id === 'members') renderMembersView();
+  if(active && active.id === 'member') renderSelectedMemberView();
 }
 
 function stopSharedProfileSync(){
