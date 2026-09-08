@@ -1013,6 +1013,8 @@ function sharedProfilePayload(){
     children:String(p.children || '').slice(0,40),
     about:String(p.about || '').slice(0,1200),
     interests:Array.isArray(p.interests) ? p.interests.map(x=>String(x).slice(0,60)).slice(0,30) : [],
+    photos:Array.isArray(p.photos) ? p.photos.filter(x=>/^https?:\/\//i.test(String(x))).slice(0,20) : [],
+    coverIndex:Number.isInteger(p.coverIndex) ? p.coverIndex : 0,
     updatedAt:Date.now(),
     updatedBy:String(me.partnerName || 'Partner').slice(0,80)
   };
@@ -1030,9 +1032,8 @@ function applySharedProfile(remote){
     children:remote.children ?? local.children,
     about:remote.about ?? local.about,
     interests:Array.isArray(remote.interests) ? [...remote.interests] : (local.interests || []),
-    // Fotoğraflar bu adımda telefonda kalıyor. Bir sonraki adım Firebase Storage olacak.
-    photos:Array.isArray(local.photos) ? local.photos : [],
-    coverIndex:typeof local.coverIndex === 'number' ? local.coverIndex : 0
+    photos:Array.isArray(remote.photos) ? [...remote.photos] : (Array.isArray(local.photos) ? local.photos : []),
+    coverIndex:Number.isInteger(remote.coverIndex) ? remote.coverIndex : (typeof local.coverIndex === 'number' ? local.coverIndex : 0)
   };
   try{ persist(); }catch(_){ }
 
@@ -1223,10 +1224,18 @@ async function saveProfileEdit(){
   if(accountId){
     try{
       const api = await waitForPairaFirebaseApi();
+      const uploadedPhotos = await api.uploadCoupleProfilePhotos(accountId, state.profile.photos || []);
+      state.profile.photos = uploadedPhotos;
+      editingPhotos = [...uploadedPhotos];
+      if(state.profile.coverIndex >= uploadedPhotos.length){
+        state.profile.coverIndex = Math.max(0, uploadedPhotos.length - 1);
+        editingCoverIndex = state.profile.coverIndex;
+      }
+      persist();
       await api.saveCoupleProfile(accountId, sharedProfilePayload());
     }catch(err){
       console.warn('PAIRA shared profile save', err);
-      toast('Profil Firebase’e kaydedilemedi');
+      toast('Profil veya fotoğraflar Firebase’e kaydedilemedi');
       return;
     }
   }
@@ -2048,7 +2057,7 @@ setTimeout(applyInviteFromLink, 50);
     onSnapshot,
     limit
   } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-  import { getStorage } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-storage.js";
+  import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-storage.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyB3gFiLfA3naEP4Lx5fNt7o5oUwXQSUM1c",
@@ -2260,6 +2269,27 @@ setTimeout(applyInviteFromLink, 50);
     return snap.exists() ? {...snap.data(), _firebaseId:snap.id} : null;
   }
 
+  async function uploadCoupleProfilePhotos(id, photos){
+    const key = String(id || '').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,120);
+    const input = Array.isArray(photos) ? photos.slice(0,20) : [];
+    const urls = [];
+    for(let i=0;i<input.length;i++){
+      const src = String(input[i] || '');
+      if(/^https?:\/\//i.test(src)){
+        urls.push(src);
+        continue;
+      }
+      if(!/^data:image\//i.test(src)) continue;
+      const mime = (src.match(/^data:([^;]+);/) || [,'image/jpeg'])[1];
+      const ext = mime.includes('png') ? 'png' : (mime.includes('webp') ? 'webp' : 'jpg');
+      const file = `${Date.now()}_${i}_${Math.random().toString(36).slice(2,8)}.${ext}`;
+      const objRef = storageRef(storage, `coupleProfiles/${key}/photos/${file}`);
+      await uploadString(objRef, src, 'data_url', {contentType:mime});
+      urls.push(await getDownloadURL(objRef));
+    }
+    return urls;
+  }
+
   async function saveCoupleProfile(id, data){
     const clean = {
       name:String(data?.name || '').slice(0,120),
@@ -2269,6 +2299,8 @@ setTimeout(applyInviteFromLink, 50);
       children:String(data?.children || '').slice(0,40),
       about:String(data?.about || '').slice(0,1200),
       interests:Array.isArray(data?.interests) ? data.interests.map(x=>String(x).slice(0,60)).slice(0,30) : [],
+      photos:Array.isArray(data?.photos) ? data.photos.map(x=>String(x).slice(0,1200)).filter(x=>/^https?:\/\//i.test(x)).slice(0,20) : [],
+      coverIndex:Number.isInteger(data?.coverIndex) ? data.coverIndex : 0,
       updatedAt:Number(data?.updatedAt || Date.now()),
       updatedBy:String(data?.updatedBy || '').slice(0,80)
     };
@@ -2300,6 +2332,7 @@ setTimeout(applyInviteFromLink, 50);
     subscribeChatMessages,
     sendChatMessage,
     getCoupleProfile,
+    uploadCoupleProfilePhotos,
     saveCoupleProfile,
     subscribeCoupleProfile
   };
