@@ -1944,10 +1944,57 @@ function openEvent(id){
   currentSlide = 0;
   renderEventDetail();
   show('eventDetail');
+  ensureEventAttendanceSync(id);
 }
 function closeEvent(){
   show(eventReturnScreen || 'events');
 }
+
+let eventAttendanceUnsub = null;
+let eventAttendanceKey = '';
+
+function stopEventAttendanceSync(){
+  if(typeof eventAttendanceUnsub === 'function'){
+    try{ eventAttendanceUnsub(); }catch(_){ }
+  }
+  eventAttendanceUnsub = null;
+  eventAttendanceKey = '';
+}
+
+function applyEventAttendance(eventId, remote){
+  state.joinedEvents = state.joinedEvents || {};
+  if(remote && remote.joined === true) state.joinedEvents[eventId] = true;
+  else delete state.joinedEvents[eventId];
+  persist();
+  if(currentEvent === eventId){
+    const active = document.querySelector('.screen.active');
+    if(active && active.id === 'eventDetail') renderEventDetail();
+  }
+}
+
+async function ensureEventAttendanceSync(eventId){
+  const accountId = sharedProfileAccountId();
+  if(!eventId || !accountId) return;
+  const key = `${eventId}__${accountId}`;
+  if(eventAttendanceKey === key && eventAttendanceUnsub) return;
+
+  stopEventAttendanceSync();
+  eventAttendanceKey = key;
+
+  try{
+    const api = await waitForPairaFirebaseApi();
+    const existing = await api.getEventAttendance(eventId, accountId);
+    applyEventAttendance(eventId, existing);
+    eventAttendanceUnsub = api.subscribeEventAttendance(eventId, accountId, (row)=>{
+      applyEventAttendance(eventId, row);
+    }, (err)=>{
+      console.warn('PAIRA event attendance sync', err);
+    });
+  }catch(err){
+    console.warn('PAIRA event attendance start', err);
+  }
+}
+
 function renderEventDetail(){
   const e = events[currentEvent];
   const joined = !!state.joinedEvents[currentEvent];
@@ -1967,8 +2014,43 @@ function slideEvent(dir){
   currentSlide = (currentSlide + dir + len) % len;
   renderEventDetail();
 }
-function joinEvent(id){ state.joinedEvents[id] = true; persist(); renderEventDetail(); toast('Etkinliğe katıldın ✓'); }
-function leaveEvent(id){ delete state.joinedEvents[id]; persist(); renderEventDetail(); toast('Etkinlikten ayrıldın'); }
+async function setSharedEventAttendance(id, joined){
+  const accountId = sharedProfileAccountId();
+  const me = currentChatIdentity();
+  state.joinedEvents = state.joinedEvents || {};
+  const wasJoined = !!state.joinedEvents[id];
+
+  if(joined) state.joinedEvents[id] = true;
+  else delete state.joinedEvents[id];
+  persist();
+  renderEventDetail();
+
+  if(!accountId){
+    toast(joined ? 'Etkinliğe katıldın ✓' : 'Etkinlikten ayrıldın');
+    return;
+  }
+
+  try{
+    const api = await waitForPairaFirebaseApi();
+    await api.setEventAttendance(id, accountId, {
+      joined,
+      inviteCode:accountId,
+      coupleName:me.coupleName,
+      partnerName:me.partnerName,
+      deviceId:getDeviceId()
+    });
+    toast(joined ? 'Çift olarak etkinliğe katıldınız ✓' : 'Çift olarak etkinlikten ayrıldınız');
+  }catch(err){
+    console.warn('PAIRA event attendance save', err);
+    if(wasJoined) state.joinedEvents[id] = true;
+    else delete state.joinedEvents[id];
+    persist();
+    renderEventDetail();
+    toast('Etkinlik katılımı kaydedilemedi');
+  }
+}
+function joinEvent(id){ return setSharedEventAttendance(id, true); }
+function leaveEvent(id){ return setSharedEventAttendance(id, false); }
 function openEventChat(id){
   currentEvent = id;
   const e = events[id];
@@ -2372,6 +2454,40 @@ setTimeout(resumeApprovedDeviceSession, 650);
     });
   }
 
+  function safeEventAttendanceId(value, max=120){
+    return String(value || '').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,max);
+  }
+
+  function eventAttendanceRef(eventId, accountId){
+    return doc(db, 'eventAttendance', safeEventAttendanceId(eventId,80), 'couples', safeEventAttendanceId(accountId,120));
+  }
+
+  async function getEventAttendance(eventId, accountId){
+    const snap = await getDoc(eventAttendanceRef(eventId, accountId));
+    return snap.exists() ? {...snap.data(), _firebaseId:snap.id} : null;
+  }
+
+  function subscribeEventAttendance(eventId, accountId, onAttendance, onError){
+    return onSnapshot(eventAttendanceRef(eventId, accountId),(snap)=>{
+      onAttendance(snap.exists() ? {...snap.data(), _firebaseId:snap.id} : null);
+    },(err)=>{
+      if(onError) onError(err);
+    });
+  }
+
+  async function setEventAttendance(eventId, accountId, payload){
+    const clean = {
+      eventId:String(eventId || '').slice(0,80),
+      inviteCode:String(accountId || '').slice(0,120).toUpperCase(),
+      coupleName:String(payload?.coupleName || '').slice(0,120),
+      joined:payload?.joined === true,
+      updatedBy:String(payload?.partnerName || 'Partner').slice(0,80),
+      updatedDeviceId:String(payload?.deviceId || '').slice(0,120),
+      updatedAt:Date.now()
+    };
+    await setDoc(eventAttendanceRef(eventId, accountId), clean, {merge:false});
+  }
+
   async function removeInvitation(id){
     if(isLocalContent()){
       await restFirestore("invitations/" + encodeURIComponent(id), {method:"DELETE"});
@@ -2391,7 +2507,10 @@ setTimeout(resumeApprovedDeviceSession, 650);
     getCoupleProfile,
     uploadCoupleProfilePhotos,
     saveCoupleProfile,
-    subscribeCoupleProfile
+    subscribeCoupleProfile,
+    getEventAttendance,
+    setEventAttendance,
+    subscribeEventAttendance
   };
 
   window.pairaLoadInvitations = async function(){
