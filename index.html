@@ -584,25 +584,31 @@ async function enterApp(){
     return;
   }
 
-  let rec = (state.adminMembers || []).find(m => (m.inviteCode || '').toUpperCase() === v && m.status !== 'removed');
+  let rec = null;
 
-  if(!rec){
-    try{
-      if(!window.PAIRA_FIREBASE_API){
-        await new Promise((resolve,reject)=>{
-          const t=setTimeout(()=>reject(new Error('Firebase hazır değil')),5000);
-          window.addEventListener('paira-firebase-ready',()=>{clearTimeout(t);resolve();},{once:true});
-        });
-      }
-      rec = await window.PAIRA_FIREBASE_API.getInvitation(v);
-      if(rec && rec.status !== 'removed'){
-        state.adminMembers = state.adminMembers || [];
-        const idx = state.adminMembers.findIndex(m => (m.inviteCode || '').toUpperCase() === v);
-        if(idx >= 0) state.adminMembers[idx] = rec;
-        else state.adminMembers.unshift(rec);
-      }
-    }catch(err){
-      console.warn('PAIRA invite lookup', err);
+  // Web davetlerinde daima Firebase'deki en güncel kaydı kullan.
+  // Eski telefon localStorage verisi, aktifleşmiş hesabın üstüne yazmaya çalışmasın.
+  try{
+    if(!window.PAIRA_FIREBASE_API){
+      await new Promise((resolve,reject)=>{
+        const t=setTimeout(()=>reject(new Error('Firebase hazır değil')),5000);
+        window.addEventListener('paira-firebase-ready',()=>{clearTimeout(t);resolve();},{once:true});
+      });
+    }
+    rec = await window.PAIRA_FIREBASE_API.getInvitation(v);
+    if(rec && rec.status !== 'removed'){
+      state.adminMembers = state.adminMembers || [];
+      const idx = state.adminMembers.findIndex(m => (m.inviteCode || '').toUpperCase() === v);
+      if(idx >= 0) state.adminMembers[idx] = rec;
+      else state.adminMembers.unshift(rec);
+    }
+  }catch(err){
+    console.warn('PAIRA invite lookup', err);
+    // Yalnız yerel dosya testlerinde eski local kayıtla devam etmeye izin ver.
+    if(location.protocol === 'file:' || location.protocol === 'content:'){
+      rec = (state.adminMembers || []).find(m => (m.inviteCode || '').toUpperCase() === v && m.status !== 'removed');
+    }
+    if(!rec){
       toast('Davet Firebase’den doğrulanamadı');
       return;
     }
@@ -635,6 +641,8 @@ async function enterApp(){
     return;
   }
 
+  const alreadyApprovedHere = existingDevice === deviceId;
+
   if(!existingDevice){
     rec.partnerDevices[pIndex] = deviceId;
   }
@@ -644,13 +652,17 @@ async function enterApp(){
   const bothApproved = rec.partnerDevices.filter(Boolean).length >= 2;
   rec.status = bothApproved ? 'active' : 'pending';
 
-  try{
-    if(!window.PAIRA_FIREBASE_API) throw new Error('Firebase hazır değil');
-    await window.PAIRA_FIREBASE_API.saveInvitation(rec.inviteCode || rec._firebaseId, rec);
-  }catch(err){
-    console.warn('PAIRA invite approval save', err);
-    toast('Onay Firebase’e kaydedilemedi');
-    return;
+  // Aynı partner bu telefonda zaten onaylandıysa Firebase'e ikinci kez yazma.
+  // Aktifleşmiş davette tekrar write denemesi güvenlik kuralına takılıyordu.
+  if(!alreadyApprovedHere){
+    try{
+      if(!window.PAIRA_FIREBASE_API) throw new Error('Firebase hazır değil');
+      await window.PAIRA_FIREBASE_API.saveInvitation(rec.inviteCode || rec._firebaseId, rec);
+    }catch(err){
+      console.warn('PAIRA invite approval save', err);
+      toast('Onay Firebase’e kaydedilemedi');
+      return;
+    }
   }
 
   persist();
