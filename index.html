@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>PAIRA</title>
-<meta name="paira-build" content="v17-auto-member-directory">
+<meta name="paira-build" content="v18-realtime-notifications">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
@@ -214,6 +214,20 @@ textarea.form-field{min-height:105px;resize:vertical}
 .partner-tag{display:inline-block;margin-bottom:5px;padding:4px 7px;border-radius:999px;border:1px solid #7b5a31;background:#100b08;color:#e7c37f;font-size:10px;font-weight:800}
 .waiting-card{border:1px solid #8b6635;border-radius:18px;background:linear-gradient(145deg,#17110d,#090705);padding:16px;text-align:center}
 
+
+.notification-badge{
+  position:absolute;z-index:55;right:3.5%;top:2.2%;min-width:22px;height:22px;padding:0 6px;
+  display:none;align-items:center;justify-content:center;border-radius:999px;
+  background:#c99142;color:#120b06;font-size:11px;font-weight:900;border:1px solid #f0cf8c;
+  box-shadow:0 4px 14px rgba(0,0,0,.45);pointer-events:none
+}
+.notification-badge.on{display:flex}
+.notification-item{position:relative;padding-right:44px}
+.notification-item.unread{border-color:#c6964f;background:linear-gradient(145deg,#21170f,#0d0907)}
+.notification-dot{position:absolute;right:15px;top:16px;width:9px;height:9px;border-radius:50%;background:#e7bd72;box-shadow:0 0 10px rgba(231,189,114,.5)}
+.notification-time{display:block;color:#9f907b;font-size:11px;margin-top:7px}
+.notification-empty{border:1px solid #6f522f;border-radius:16px;padding:28px 16px;text-align:center;color:#bfae94;background:#0b0807}
+
 </style>
 </head>
 <body>
@@ -275,11 +289,9 @@ textarea.form-field{min-height:105px;resize:vertical}
 <section id="eventChat" class="screen page"><div class="head"><button class="back" onclick="show('eventDetail')">‹</button><div><div class="logo" style="font-size:34px">PAIRA</div><div class="sub">ETKİNLİK SOHBETİ</div></div><span></span></div><div id="eventChatTitle" class="section-title"></div><div id="eventPartnerIdentity" class="muted" style="font-size:12px;margin:-4px 0 10px"></div><div id="eventMsgs"></div><div class="composer"><input id="eventInput" placeholder="Mesaj yaz..."><button class="gold" style="width:64px" onclick="sendEventMessage()">➤</button></div></section>
 <section id="clubs" class="screen page"><div class="head"><button class="back" onclick="show('home')">‹</button><div><div class="logo">PAIRA</div><div class="sub">ETKİNLİK KULÜPLERİ</div></div><button class="circle" onclick="toast('＋ sadece yöneticiye açık')">＋</button></div><div id="clubsList"></div></section>
 <section id="clubDetail" class="screen page"><div class="head"><button class="back" onclick="show('clubs')">‹</button><div><div class="logo">PAIRA</div><div class="sub">KULÜP ODASI</div></div><span></span></div><div id="clubDetailWrap"></div></section>
-<section id="notifications" class="screen page"><div class="head"><button class="back" onclick="show('home')">‹</button><div><div class="logo">PAIRA</div><div class="sub">BİLDİRİMLER</div></div><button class="circle" onclick="toast('Hepsi okundu')">✓</button></div>
-
-<button class="listbtn" onclick="openEvent('bogaz')"><b>🗓 Boğaz’da Akşam Yemeği güncellendi</b><br><span class="muted">Etkinlik detayını aç</span></button>
-<button class="listbtn" onclick="show('agenda')"><b>🔔 Yarın 20:00 etkinlik hatırlatması</b><br><span class="muted">Ajandaya dön</span></button>
-<button class="listbtn" onclick="openClub('gurme')"><b>👥 Gurme Kulübü yeni mesaj</b><br><span class="muted">Kulüp odasına git</span></button>
+<section id="notifications" class="screen page"><div class="head"><button class="back" onclick="show('home')">‹</button><div><div class="logo">PAIRA</div><div class="sub">BİLDİRİMLER</div></div><button class="circle" onclick="markAllNotificationsRead()">✓</button></div>
+<div class="card" style="margin-bottom:12px"><div class="row" style="justify-content:space-between"><b>Bildirim Merkezi</b><span id="notificationUnreadCount" class="counter">0</span></div><div class="muted" style="font-size:12px;margin-top:6px">Yeni mesajlar, etkinlik duyuruları ve yönetici bildirimleri burada görünür.</div></div>
+<div id="notificationsList"><div class="notification-empty">Bildirimler yükleniyor...</div></div>
 </section>
 
 <section id="suggestions" class="screen page suggest-bg">
@@ -569,6 +581,7 @@ function show(id){
   if(id==='member'){ renderSelectedMemberView(); ensureSharedProfileSync(); ensureMembersDirectorySync(); }
   if(id==='profileEdit'){ loadProfileEdit(); ensureSharedProfileSync(); }
   if(id==='gallery'){ renderGalleryView(); ensureSharedProfileSync(); }
+  if(id==='notifications'){ ensureNotificationsSync(); renderNotifications(); }
   if(id==='chats'){
     const me=currentChatIdentity();
     const z=document.getElementById('chatIdentityInfo');
@@ -1032,6 +1045,228 @@ async function startRealtimeChat(kind, roomId, boxId){
   }
 }
 
+
+const NOTIFICATION_STARTED_KEY = 'paira_notifications_started_v18';
+const NOTIFICATION_LAST_READ_KEY = 'paira_notifications_last_read_v18';
+let notificationStartedAt = Number(localStorage.getItem(NOTIFICATION_STARTED_KEY) || 0);
+if(!notificationStartedAt){
+  notificationStartedAt = Date.now();
+  localStorage.setItem(NOTIFICATION_STARTED_KEY, String(notificationStartedAt));
+}
+let notificationLastRead = Number(localStorage.getItem(NOTIFICATION_LAST_READ_KEY) || notificationStartedAt);
+let systemNotificationRows = [];
+let chatNotificationRows = new Map();
+let systemNotificationUnsub = null;
+let chatNotificationUnsubs = [];
+let notificationsSyncStarted = false;
+let currentNotificationFeed = [];
+
+function ensureHomeNotificationBadge(){
+  const home = document.getElementById('home');
+  const mock = home && home.querySelector('.mock');
+  if(!mock || document.getElementById('homeNotificationBadge')) return;
+  const badge = document.createElement('span');
+  badge.id = 'homeNotificationBadge';
+  badge.className = 'notification-badge';
+  badge.textContent = '0';
+  mock.appendChild(badge);
+}
+
+function notificationTimeText(ts){
+  const n = Number(ts || 0);
+  if(!n) return '';
+  try{
+    return new Date(n).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  }catch(_){ return ''; }
+}
+
+function roomTitle(kind, roomId){
+  if(kind === 'event') return (events[roomId] && events[roomId].title) || 'Etkinlik Sohbeti';
+  if(kind === 'club') return (clubs[roomId] && clubs[roomId].title) || 'Kulüp Sohbeti';
+  return 'Sohbet';
+}
+
+function buildNotificationFeed(){
+  const myDevice = getDeviceId();
+  const systemRows = (systemNotificationRows || []).map(n=>({
+    id:'sys_'+String(n.id || n._firebaseId || n.clientAt || Math.random()),
+    source:'system',
+    type:String(n.type || 'announcement'),
+    title:String(n.title || 'PAIRA Bildirimi'),
+    body:String(n.body || ''),
+    eventId:String(n.eventId || ''),
+    clientAt:Number(n.clientAt || 0)
+  }));
+
+  const chatRows = [];
+  chatNotificationRows.forEach((messages,key)=>{
+    const [kind,roomId] = key.split(':');
+    (messages || []).forEach(m=>{
+      const ts = Number(m.clientAt || 0);
+      if(!ts || ts < notificationStartedAt) return;
+      if(String(m.deviceId || '') === String(myDevice || '')) return;
+      chatRows.push({
+        id:'chat_'+kind+'_'+roomId+'_'+String(m.id || ts),
+        source:'chat',
+        type:'message',
+        kind,
+        roomId,
+        title:`💬 ${roomTitle(kind,roomId)}`,
+        body:`${String(m.partnerName || 'Partner')} • ${String(m.coupleName || 'Çift')}: ${String(m.text || '')}`,
+        clientAt:ts
+      });
+    });
+  });
+
+  const seen = new Set();
+  currentNotificationFeed = [...systemRows,...chatRows]
+    .filter(n=>n.clientAt > 0)
+    .sort((a,b)=>b.clientAt-a.clientAt)
+    .filter(n=>{ if(seen.has(n.id)) return false; seen.add(n.id); return true; })
+    .slice(0,120);
+  return currentNotificationFeed;
+}
+
+function updateNotificationCounters(){
+  ensureHomeNotificationBadge();
+  const feed = buildNotificationFeed();
+  const unread = feed.filter(n=>n.clientAt > notificationLastRead).length;
+  const a = document.getElementById('notificationUnreadCount');
+  if(a) a.textContent = unread;
+  const b = document.getElementById('homeNotificationBadge');
+  if(b){
+    b.textContent = unread > 99 ? '99+' : String(unread);
+    b.classList.toggle('on', unread > 0);
+  }
+}
+
+function renderNotifications(){
+  updateNotificationCounters();
+  const wrap = document.getElementById('notificationsList');
+  if(!wrap) return;
+  const feed = currentNotificationFeed;
+  if(!feed.length){
+    wrap.innerHTML = '<div class="notification-empty">Henüz yeni bildirim yok.</div>';
+    return;
+  }
+  wrap.innerHTML = feed.map((n,i)=>{
+    const unread = n.clientAt > notificationLastRead;
+    const icon = n.type === 'event_new' ? '🗓' : n.type === 'event_update' ? '✏️' : n.type === 'announcement' ? '📣' : '';
+    const title = icon && !String(n.title).startsWith(icon) ? `${icon} ${n.title}` : n.title;
+    return `<button class="listbtn notification-item ${unread?'unread':''}" onclick="openNotificationItem(${i})">
+      <b>${escapeHtml(title)}</b><br>
+      <span class="muted">${escapeHtml(n.body || '')}</span>
+      <span class="notification-time">${escapeHtml(notificationTimeText(n.clientAt))}</span>
+      ${unread?'<span class="notification-dot"></span>':''}
+    </button>`;
+  }).join('');
+}
+
+function markAllNotificationsRead(){
+  notificationLastRead = Date.now();
+  localStorage.setItem(NOTIFICATION_LAST_READ_KEY, String(notificationLastRead));
+  renderNotifications();
+  toast('Tüm bildirimler okundu ✓');
+}
+
+function openNotificationItem(index){
+  const n = currentNotificationFeed[index];
+  if(!n) return;
+  if(n.source === 'chat'){
+    if(n.kind === 'event' && events[n.roomId]) return openEventChat(n.roomId);
+    if(n.kind === 'club' && clubs[n.roomId]) return openClub(n.roomId);
+    return show('chats');
+  }
+  if((n.type === 'event_new' || n.type === 'event_update')){
+    if(n.eventId && events[n.eventId]) return openEvent(n.eventId);
+    show('events');
+    toast('Etkinlikler ekranı açıldı');
+    return;
+  }
+}
+
+function stopNotificationChatSubscriptions(){
+  chatNotificationUnsubs.forEach(fn=>{ try{ fn(); }catch(_){} });
+  chatNotificationUnsubs = [];
+  chatNotificationRows.clear();
+}
+
+async function startNotificationChatSubscriptions(api){
+  stopNotificationChatSubscriptions();
+  const rooms = [];
+  Object.keys(events || {}).forEach(id=>rooms.push(['event',id]));
+  Object.keys(clubs || {}).forEach(id=>rooms.push(['club',id]));
+  rooms.forEach(([kind,roomId])=>{
+    try{
+      const unsub = api.subscribeChatMessages(kind,roomId,(rows)=>{
+        chatNotificationRows.set(`${kind}:${roomId}`, rows || []);
+        updateNotificationCounters();
+        const active = document.querySelector('.screen.active');
+        if(active && active.id === 'notifications') renderNotifications();
+      },err=>console.warn('PAIRA notification chat sync',kind,roomId,err));
+      chatNotificationUnsubs.push(unsub);
+    }catch(err){ console.warn('PAIRA notification room start',kind,roomId,err); }
+  });
+}
+
+async function ensureNotificationsSync(){
+  if(notificationsSyncStarted) return;
+  notificationsSyncStarted = true;
+  try{
+    const api = await waitForPairaFirebaseApi();
+    systemNotificationUnsub = api.subscribeSystemNotifications((rows)=>{
+      systemNotificationRows = rows || [];
+      updateNotificationCounters();
+      const active = document.querySelector('.screen.active');
+      if(active && active.id === 'notifications') renderNotifications();
+    },err=>{
+      console.warn('PAIRA system notification sync',err);
+      notificationsSyncStarted = false;
+    });
+    await startNotificationChatSubscriptions(api);
+  }catch(err){
+    console.warn('PAIRA notification sync start',err);
+    notificationsSyncStarted = false;
+  }
+}
+
+async function refreshNotificationChatSubscriptions(){
+  try{
+    const api = await waitForPairaFirebaseApi();
+    await startNotificationChatSubscriptions(api);
+  }catch(err){ console.warn('PAIRA notification room refresh',err); }
+}
+
+async function publishSystemNotification(payload){
+  try{
+    const api = await waitForPairaFirebaseApi();
+    await api.createSystemNotification(payload);
+    return true;
+  }catch(err){
+    console.warn('PAIRA publish notification',err);
+    toast('Bildirim yayınlanamadı');
+    return false;
+  }
+}
+
+function openAdminAnnouncementForm(){
+  modal(`<h2 style="color:#e7bd72;margin-top:0">Üyelere Duyuru Gönder</h2>
+    <label class="form-label">Başlık</label>
+    <input id="an_title" class="form-field" maxlength="120" placeholder="Örn. PAIRA duyurusu">
+    <label class="form-label">Mesaj</label>
+    <textarea id="an_body" class="form-field" maxlength="800" placeholder="Üyelere iletilecek duyuru"></textarea>
+    <button class="gold" style="margin-top:14px" onclick="sendAdminAnnouncement()">📣 Duyuruyu Yayınla</button>
+    <button class="out" style="margin-top:8px" onclick="closeModal()">İptal</button>`);
+}
+
+async function sendAdminAnnouncement(){
+  const title = getField('an_title');
+  const body = getField('an_body');
+  if(!title || !body) return toast('Başlık ve mesaj gerekli');
+  const ok = await publishSystemNotification({type:'announcement',title,body,eventId:''});
+  if(ok){ closeModal(); toast('Duyuru tüm üyelere yayınlandı ✓'); }
+}
+
 async function sendRealtimeRoomMessage(kind, roomId, inputId){
   const i=document.getElementById(inputId), v=i ? i.value.trim() : '';
   if(!v) return;
@@ -1486,6 +1721,19 @@ function formatAdminDate(dateISO){
 }
 
 function renderAdminEvents(){
+  const screen = document.getElementById('adminEvents');
+  if(screen && !document.getElementById('adminAnnouncementBtn')){
+    const list = document.getElementById('adminEventList');
+    if(list){
+      const btn = document.createElement('button');
+      btn.id = 'adminAnnouncementBtn';
+      btn.className = 'out';
+      btn.style.marginTop = '10px';
+      btn.textContent = '📣 Üyelere Duyuru Gönder';
+      btn.onclick = openAdminAnnouncementForm;
+      list.parentNode.insertBefore(btn, list);
+    }
+  }
   const ids = Object.keys(events);
   const count = document.getElementById('adminEventCount');
   if(count) count.textContent = ids.length;
@@ -1595,7 +1843,7 @@ function removeAdminEventPhoto(i){
   renderAdminEventPhotoGrid();
 }
 
-function saveAdminEvent(){
+async function saveAdminEvent(){
   const title = getField('ae_title');
   const dateISO = getField('ae_date');
   const startTime = getField('ae_start');
@@ -1634,10 +1882,18 @@ function saveAdminEvent(){
     return;
   }
 
+  const wasEdit = !!adminEditingEventId;
   closeModal();
   renderEventsList();
   renderAdminEvents();
-  toast(adminEditingEventId ? 'Etkinlik güncellendi ✓' : 'Etkinlik yayınlandı ✓');
+  toast(wasEdit ? 'Etkinlik güncellendi ✓' : 'Etkinlik yayınlandı ✓');
+  await publishSystemNotification({
+    type: wasEdit ? 'event_update' : 'event_new',
+    title: wasEdit ? `${title} güncellendi` : `Yeni etkinlik: ${title}`,
+    body: `${formatAdminDate(dateISO)} • ${startTime}${location ? ' • '+location : ''}`,
+    eventId:id
+  });
+  refreshNotificationChatSubscriptions();
   adminEditingEventId = null;
 }
 
@@ -2319,6 +2575,8 @@ renderAdminInbox();
 updateAdminCounters();
 renderProfileView();
 persist();
+ensureHomeNotificationBadge();
+ensureNotificationsSync();
 
 async function resumeApprovedDeviceSession(){
   try{
@@ -2582,6 +2840,30 @@ setTimeout(resumeApprovedDeviceSession, 650);
     await addDoc(chatMessagesCollection(kind,roomId),clean);
   }
 
+
+  function notificationsCollection(){
+    return collection(db, 'notifications');
+  }
+
+  function subscribeSystemNotifications(onRows, onError){
+    const q = query(notificationsCollection(), orderBy('clientAt','desc'), limit(100));
+    return onSnapshot(q,(snap)=>{
+      onRows(snap.docs.map(d=>({...d.data(), id:d.id, _firebaseId:d.id})));
+    },(err)=>{ if(onError) onError(err); });
+  }
+
+  async function createSystemNotification(payload){
+    const clean = {
+      type:String(payload?.type || 'announcement').slice(0,40),
+      title:String(payload?.title || 'PAIRA Bildirimi').trim().slice(0,120),
+      body:String(payload?.body || '').trim().slice(0,800),
+      eventId:String(payload?.eventId || '').slice(0,120),
+      clientAt:Date.now()
+    };
+    if(!clean.title) throw new Error('EMPTY_NOTIFICATION_TITLE');
+    await addDoc(notificationsCollection(), clean);
+  }
+
   function coupleProfileRef(id){
     return doc(db, 'coupleProfiles', String(id || '').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,120));
   }
@@ -2715,6 +2997,8 @@ setTimeout(resumeApprovedDeviceSession, 650);
     removeInvitation,
     subscribeChatMessages,
     sendChatMessage,
+    subscribeSystemNotifications,
+    createSystemNotification,
     getCoupleProfile,
     uploadCoupleProfilePhotos,
     saveCoupleProfile,
