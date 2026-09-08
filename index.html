@@ -546,6 +546,8 @@ function show(id){
     const z=document.getElementById('chatIdentityInfo');
     if(z) z.textContent=`Bu telefonda yazan: ${me.partnerName} • ${me.coupleName}`;
   }
+  if(id==='dm') startRealtimeChat('dm','ece_kaan','dmMsgs');
+  if(!['dm','eventChat','clubDetail'].includes(id) && realtimeChatUnsub) stopRealtimeChat();
   if(historyStack[historyStack.length-1] !== id) historyStack.push(id);
 }
 function goBack(){
@@ -777,12 +779,85 @@ function reportMenu(){
   <button class="citybtn" onclick="closeModal();toast('Kullanıcı engellendi')">⊘ Engelle</button>
   <button class="citybtn" onclick="closeModal()">İptal</button>`);
 }
-function sendMessage(boxId,inputId){
-  const i=document.getElementById(inputId), v=i.value.trim(); if(!v) return;
+let realtimeChatUnsub = null;
+let realtimeChatKey = '';
+
+function waitForPairaFirebaseApi(){
+  if(window.PAIRA_FIREBASE_API) return Promise.resolve(window.PAIRA_FIREBASE_API);
+  return new Promise((resolve,reject)=>{
+    const timer=setTimeout(()=>reject(new Error('Firebase hazır değil')),7000);
+    window.addEventListener('paira-firebase-ready',()=>{
+      clearTimeout(timer);
+      resolve(window.PAIRA_FIREBASE_API);
+    },{once:true});
+  });
+}
+
+function stopRealtimeChat(){
+  if(typeof realtimeChatUnsub === 'function'){
+    try{ realtimeChatUnsub(); }catch(_){ }
+  }
+  realtimeChatUnsub = null;
+  realtimeChatKey = '';
+}
+
+function renderRealtimeMessages(boxId, messages){
+  const box=document.getElementById(boxId);
+  if(!box) return;
+  if(!messages.length){
+    box.innerHTML='<div class="muted" style="padding:12px 2px">Henüz mesaj yok.</div>';
+    return;
+  }
+  box.innerHTML=messages.map(m=>`
+    <div class="chat ${isMyMessage(m)?'me':''}">
+      <div class="partner-tag">${escapeHtml(messageSenderLabel(m))}</div>
+      <div>${escapeHtml(m.text || '')}</div>
+    </div>`).join('');
+  setTimeout(()=>window.scrollTo(0,document.body.scrollHeight),30);
+}
+
+async function startRealtimeChat(kind, roomId, boxId){
+  const key=`${kind}:${roomId}:${boxId}`;
+  if(realtimeChatKey===key && realtimeChatUnsub) return;
+  stopRealtimeChat();
+  realtimeChatKey=key;
+  const box=document.getElementById(boxId);
+  if(box) box.innerHTML='<div class="muted" style="padding:12px 2px">Sohbet yükleniyor...</div>';
+  try{
+    const api=await waitForPairaFirebaseApi();
+    realtimeChatUnsub=api.subscribeChatMessages(kind,roomId,
+      msgs=>renderRealtimeMessages(boxId,msgs),
+      err=>{
+        console.warn('PAIRA realtime chat',err);
+        if(box) box.innerHTML='<div class="muted" style="padding:12px 2px">Chat bağlantısı kurulamadı.</div>';
+      });
+  }catch(err){
+    console.warn('PAIRA realtime chat start',err);
+    if(box) box.innerHTML='<div class="muted" style="padding:12px 2px">Chat bağlantısı kurulamadı.</div>';
+  }
+}
+
+async function sendRealtimeRoomMessage(kind, roomId, inputId){
+  const i=document.getElementById(inputId), v=i ? i.value.trim() : '';
+  if(!v) return;
   const me=currentChatIdentity();
-  const d=document.createElement('div'); d.className='chat me';
-  d.innerHTML=`<div class="partner-tag">${escapeHtml(me.partnerName)} • ${escapeHtml(me.coupleName)}</div><div>${escapeHtml(v)}</div>`;
-  document.getElementById(boxId).appendChild(d); i.value='';
+  try{
+    const api=await waitForPairaFirebaseApi();
+    await api.sendChatMessage(kind,roomId,{
+      partnerName:me.partnerName,
+      coupleName:me.coupleName,
+      text:v,
+      deviceId:getDeviceId()
+    });
+    i.value='';
+  }catch(err){
+    console.warn('PAIRA chat send',err);
+    toast('Mesaj gönderilemedi');
+  }
+}
+
+function sendMessage(boxId,inputId){
+  return sendRealtimeRoomMessage('dm','ece_kaan',inputId);
 }
 
 function formTemplate(title, fieldsHtml, type){
@@ -1783,20 +1858,11 @@ function openEventChat(id){
   const me=currentChatIdentity();
   const pi=document.getElementById('eventPartnerIdentity');
   if(pi) pi.textContent=`Bu telefonda yazan: ${me.partnerName} • ${me.coupleName}`;
-  const msgs = state.eventMessages[id] || [];
-  document.getElementById('eventMsgs').innerHTML = msgs.map(m=>`
-    <div class="chat ${isMyMessage(m)?'me':''}">
-      ${isMyMessage(m)?'':`<div class="partner-tag">${escapeHtml(messageSenderLabel(m))}</div>`}
-      <div>${escapeHtml(m.text || '')}</div>
-    </div>`).join('');
   show('eventChat');
+  startRealtimeChat('event',id,'eventMsgs');
 }
 function sendEventMessage(){
-  const i=document.getElementById('eventInput'), v=i.value.trim(); if(!v) return;
-  const me=currentChatIdentity();
-  state.eventMessages[currentEvent] = state.eventMessages[currentEvent] || [];
-  state.eventMessages[currentEvent].push({partnerName:me.partnerName,coupleName:me.coupleName,text:v,at:Date.now()});
-  persist(); i.value=''; openEventChat(currentEvent);
+  return sendRealtimeRoomMessage('event',currentEvent,'eventInput');
 }
 function renderClubs(){
   document.getElementById('clubsList').innerHTML = Object.entries(clubs).map(([key,c])=>{
@@ -1810,7 +1876,6 @@ function renderClubDetail(){
   const me=currentChatIdentity();
   const members = state.clubMembers[currentClub] || [];
   const joined = members.includes(me.coupleName) || members.includes(currentUser);
-  const msgs = state.clubMessages[currentClub] || [];
   const actionButtons = joined
     ? `<button class="gold" style="opacity:.75">Kulübe Katıldın ✓</button><button class="out" style="margin-top:10px;border-color:#b96060;color:#ffb2ac" onclick="leaveClub('${currentClub}')">Kulüpten Ayrıl</button>`
     : `<button class="gold" onclick="joinClub('${currentClub}')">Kulübe Katıl</button>`;
@@ -1821,11 +1886,9 @@ function renderClubDetail(){
     <div class="members-pills">${members.map(n=>`<span class="member-pill">${escapeHtml(n)}</span>`).join('') || '<span class="muted">Henüz üye yok</span>'}</div>
     <div class="section-title">Kulüp Chat Odası</div>
     <div class="muted" style="font-size:12px;margin-bottom:8px">Bu telefonda yazan: ${escapeHtml(me.partnerName)} • ${escapeHtml(me.coupleName)}</div>
-    <div id="clubMsgs">${msgs.map(m=>`<div class="chat ${isMyMessage(m)?'me':''}">
-      ${isMyMessage(m)?'':`<div class="partner-tag">${escapeHtml(messageSenderLabel(m))}</div>`}
-      <div>${escapeHtml(m.text || '')}</div>
-    </div>`).join('')}</div>
+    <div id="clubMsgs"><div class="muted" style="padding:12px 2px">Sohbet yükleniyor...</div></div>
     <div class="composer"><input id="clubInput" placeholder="Kulüp odasına mesaj yaz..."><button class="gold" style="width:64px" onclick="sendClubMessage()">➤</button></div>`;
+  startRealtimeChat('club',currentClub,'clubMsgs');
 }
 function joinClub(key){
   const me=currentChatIdentity();
@@ -1839,15 +1902,14 @@ function leaveClub(key){
   persist(); renderClubs(); renderClubDetail(); toast('Kulüpten ayrıldın');
 }
 function sendClubMessage(){
-  const i=document.getElementById('clubInput'), v=i.value.trim(); if(!v) return;
   const me=currentChatIdentity();
-  state.clubMessages[currentClub] = state.clubMessages[currentClub] || [];
   if(!(state.clubMembers[currentClub] || []).includes(me.coupleName)){
     state.clubMembers[currentClub] = state.clubMembers[currentClub] || [];
     state.clubMembers[currentClub].push(me.coupleName);
+    persist();
+    renderClubs();
   }
-  state.clubMessages[currentClub].push({partnerName:me.partnerName,coupleName:me.coupleName,text:v,at:Date.now()});
-  persist(); i.value=''; renderClubDetail();
+  return sendRealtimeRoomMessage('club',currentClub,'clubInput');
 }
 renderEventsList();
 renderAdminMembers();
@@ -1877,7 +1939,12 @@ setTimeout(applyInviteFromLink, 50);
     getDocs,
     setDoc,
     deleteDoc,
-    runTransaction
+    runTransaction,
+    addDoc,
+    query,
+    orderBy,
+    onSnapshot,
+    limit
   } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
   import { getStorage } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-storage.js";
 
@@ -2050,6 +2117,38 @@ setTimeout(applyInviteFromLink, 50);
     });
   }
 
+  function safeChatRoomId(kind, roomId){
+    const a=String(kind || 'room').toLowerCase().replace(/[^a-z0-9_-]/g,'_').slice(0,30);
+    const b=String(roomId || 'general').toLowerCase().replace(/[^a-z0-9_-]/g,'_').slice(0,80);
+    return `${a}__${b}`;
+  }
+
+  function chatMessagesCollection(kind, roomId){
+    return collection(db, 'chatRooms', safeChatRoomId(kind,roomId), 'messages');
+  }
+
+  function subscribeChatMessages(kind, roomId, onMessages, onError){
+    const q=query(chatMessagesCollection(kind,roomId),orderBy('clientAt','asc'),limit(250));
+    return onSnapshot(q,(snap)=>{
+      const rows=snap.docs.map(d=>({...d.data(),id:d.id}));
+      onMessages(rows);
+    },(err)=>{
+      if(onError) onError(err);
+    });
+  }
+
+  async function sendChatMessage(kind, roomId, payload){
+    const clean={
+      partnerName:String(payload?.partnerName || 'Partner').slice(0,80),
+      coupleName:String(payload?.coupleName || 'Çift').slice(0,120),
+      text:String(payload?.text || '').trim().slice(0,2000),
+      deviceId:String(payload?.deviceId || '').slice(0,120),
+      clientAt:Date.now()
+    };
+    if(!clean.text) throw new Error('EMPTY_MESSAGE');
+    await addDoc(chatMessagesCollection(kind,roomId),clean);
+  }
+
   async function removeInvitation(id){
     if(isLocalContent()){
       await restFirestore("invitations/" + encodeURIComponent(id), {method:"DELETE"});
@@ -2063,7 +2162,9 @@ setTimeout(applyInviteFromLink, 50);
     getInvitation,
     saveInvitation,
     approveInvitationPartner,
-    removeInvitation
+    removeInvitation,
+    subscribeChatMessages,
+    sendChatMessage
   };
 
   window.pairaLoadInvitations = async function(){
