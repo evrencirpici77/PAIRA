@@ -997,7 +997,9 @@ let sharedProfileKey = '';
 
 function sharedProfileAccountId(){
   const p = getDevicePartnerIdentity();
-  return String((p && (p.memberId || p.inviteCode)) || '').trim();
+  // Ortak profil için iki telefonda da kesin aynı olan anahtar davet kodudur.
+  // Eski sürümlerde memberId öne alındığı için aynı çift iki farklı profile düşebiliyordu.
+  return String((p && (p.inviteCode || p.memberId)) || '').trim().toUpperCase();
 }
 
 function sharedProfilePayload(){
