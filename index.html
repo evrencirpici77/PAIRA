@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>PAIRA</title>
-<meta name="paira-build" content="v18-realtime-notifications">
+<meta name="paira-build" content="v19-realtime-events">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
@@ -582,6 +582,8 @@ function show(id){
   if(id==='profileEdit'){ loadProfileEdit(); ensureSharedProfileSync(); }
   if(id==='gallery'){ renderGalleryView(); ensureSharedProfileSync(); }
   if(id==='notifications'){ ensureNotificationsSync(); renderNotifications(); }
+  if(['home','events','agenda','dayAgenda','eventDetail','eventChat','adminEvents'].includes(id)){ ensureEventsSync(); }
+  if(id==='adminEvents'){ ensureEventsSeededForAdmin(); }
   if(id==='chats'){
     const me=currentChatIdentity();
     const z=document.getElementById('chatIdentityInfo');
@@ -1703,6 +1705,102 @@ function renderGalleryView(){
 let adminEditingEventId = null;
 let adminEventPhotos = [];
 
+// V19: Etkinlikler artık Firestore'dan gerçek zamanlı senkronize edilir.
+let eventsRealtimeUnsub = null;
+let eventsSyncStarted = false;
+let eventsRemoteInitialized = false;
+let eventsSeedAttemptInFlight = false;
+
+function normalizeRealtimeEvent(row){
+  if(!row || row.kind === 'meta') return null;
+  const id = String(row.id || row._firebaseId || '').trim();
+  if(!id) return null;
+  const dateISO = String(row.dateISO || '');
+  const startTime = String(row.startTime || '');
+  const endTime = String(row.endTime || '');
+  return {
+    id,
+    title:String(row.title || 'Etkinlik'),
+    dateISO,
+    date:String(row.date || (dateISO ? formatAdminDate(dateISO) : '')),
+    startTime,
+    endTime,
+    time:String(row.time || (startTime ? (endTime ? `${startTime} - ${endTime}` : startTime) : '')),
+    location:String(row.location || ''),
+    capacity:String(row.capacity || ''),
+    desc:String(row.desc || ''),
+    images:Array.isArray(row.images) ? row.images.slice(0,3).map(String) : [],
+    updatedAt:Number(row.updatedAt || 0)
+  };
+}
+
+function rerenderEventsAfterRealtimeUpdate(){
+  const active = document.querySelector('.screen.active');
+  if(active && active.id === 'events') renderEventsList();
+  if(active && active.id === 'adminEvents') renderAdminEvents();
+  if(active && active.id === 'dayAgenda'){
+    const chip = document.querySelector('#dayHeader .day-chip');
+    const m = chip && String(chip.textContent || '').match(/(\d{1,2})/);
+    if(m) openAgendaDay(m[1]);
+  }
+  if(active && ['eventDetail','eventChat'].includes(active.id) && currentEvent && !events[currentEvent]){
+    toast('Bu etkinlik artık yayında değil');
+    show('events');
+  }else if(active && active.id === 'eventDetail' && currentEvent && events[currentEvent]){
+    renderEventDetail();
+  }
+}
+
+function applyRealtimeEvents(rows, initialized){
+  eventsRemoteInitialized = initialized === true;
+  const mapped = {};
+  (rows || []).forEach(row=>{
+    const e = normalizeRealtimeEvent(row);
+    if(e) mapped[e.id] = e;
+  });
+
+  // Firestore daha önce başlatıldıysa boş liste de gerçektir. İlk kurulumdan önce ise
+  // mevcut yerel etkinlikleri admin ilk girişte merkezi koleksiyona taşıyabilsin.
+  if(eventsRemoteInitialized || Object.keys(mapped).length){
+    events = mapped;
+    try{ persistEvents(); }catch(_e){}
+    rerenderEventsAfterRealtimeUpdate();
+    refreshNotificationChatSubscriptions();
+  }
+}
+
+async function ensureEventsSync(){
+  if(eventsSyncStarted) return;
+  eventsSyncStarted = true;
+  try{
+    const api = await waitForPairaFirebaseApi();
+    eventsRealtimeUnsub = api.subscribeEvents((rows, initialized)=>{
+      applyRealtimeEvents(rows, initialized);
+    }, err=>{
+      console.warn('PAIRA realtime events sync', err);
+      eventsSyncStarted = false;
+    });
+  }catch(err){
+    console.warn('PAIRA realtime events start', err);
+    eventsSyncStarted = false;
+  }
+}
+
+async function ensureEventsSeededForAdmin(){
+  if(eventsSeedAttemptInFlight || eventsRemoteInitialized) return;
+  eventsSeedAttemptInFlight = true;
+  try{
+    const api = await waitForPairaFirebaseApi();
+    const seeded = await api.seedEventsIfNeeded(Object.values(events || {}));
+    if(seeded) eventsRemoteInitialized = true;
+  }catch(err){
+    // Admin oturumu yoksa sessizce bekle. Admin paneli açıldığında tekrar denenir.
+    if(!String(err?.code || '').includes('permission-denied')) console.warn('PAIRA event seed', err);
+  }finally{
+    eventsSeedAttemptInFlight = false;
+  }
+}
+
 function persistEvents(){
   try{
     localStorage.setItem('paira_events_v10', JSON.stringify(events));
@@ -1858,64 +1956,89 @@ async function saveAdminEvent(){
   }
 
   const id = adminEditingEventId || ('event_' + Date.now());
+  const wasEdit = !!adminEditingEventId;
   const previous = events[id] || {};
-  events[id] = {
-    ...previous,
-    id,
-    title,
-    dateISO,
-    date: formatAdminDate(dateISO),
-    startTime,
-    endTime,
-    time: endTime ? `${startTime} - ${endTime}` : startTime,
-    location,
-    capacity: capacity || 'Kapasite belirtilmedi',
-    desc,
-    images:[...adminEventPhotos]
-  };
 
-  if(!state.eventMessages[id]) state.eventMessages[id] = [];
   try{
+    const api = await waitForPairaFirebaseApi();
+
+    // İlk merkezi kurulumda telefondaki mevcut etkinlikleri kaybetmeden Firestore'a taşı.
+    await api.seedEventsIfNeeded(Object.values(events || {}));
+
+    // Yeni seçilen yerel görselleri Cloudinary URL'lerine dönüştür. Mevcut URL'ler aynen kalır.
+    const syncedPhotos = await api.uploadEventPhotos(id, adminEventPhotos);
+    const nextEvent = {
+      ...previous,
+      id,
+      title,
+      dateISO,
+      date: formatAdminDate(dateISO),
+      startTime,
+      endTime,
+      time: endTime ? `${startTime} - ${endTime}` : startTime,
+      location,
+      capacity: capacity || 'Kapasite belirtilmedi',
+      desc,
+      images:[...syncedPhotos],
+      updatedAt:Date.now()
+    };
+
+    await api.saveEvent(id, nextEvent);
+    events[id] = nextEvent;
+    eventsRemoteInitialized = true;
+    if(!state.eventMessages[id]) state.eventMessages[id] = [];
     persistEvents();
     persist();
-  }catch(err){
-    return;
-  }
 
-  const wasEdit = !!adminEditingEventId;
-  closeModal();
-  renderEventsList();
-  renderAdminEvents();
-  toast(wasEdit ? 'Etkinlik güncellendi ✓' : 'Etkinlik yayınlandı ✓');
-  await publishSystemNotification({
-    type: wasEdit ? 'event_update' : 'event_new',
-    title: wasEdit ? `${title} güncellendi` : `Yeni etkinlik: ${title}`,
-    body: `${formatAdminDate(dateISO)} • ${startTime}${location ? ' • '+location : ''}`,
-    eventId:id
-  });
-  refreshNotificationChatSubscriptions();
-  adminEditingEventId = null;
+    closeModal();
+    renderEventsList();
+    renderAdminEvents();
+    toast(wasEdit ? 'Etkinlik tüm üyelerde güncellendi ✓' : 'Etkinlik tüm üyelere yayınlandı ✓');
+
+    await publishSystemNotification({
+      type: wasEdit ? 'event_update' : 'event_new',
+      title: wasEdit ? `${title} güncellendi` : `Yeni etkinlik: ${title}`,
+      body: `${formatAdminDate(dateISO)} • ${startTime}${location ? ' • '+location : ''}`,
+      eventId:id
+    });
+    refreshNotificationChatSubscriptions();
+    adminEditingEventId = null;
+  }catch(err){
+    console.warn('PAIRA realtime event save', err);
+    toast('Etkinlik Firebase’e kaydedilemedi');
+  }
 }
 
-function deleteAdminEvent(id){
+async function deleteAdminEvent(id){
   const e = events[id];
   if(!e) return;
   if(!confirm(`"${e.title}" etkinliğini yayından kaldırmak istiyor musun?`)) return;
 
-  delete events[id];
-  if(state.joinedEvents) delete state.joinedEvents[id];
-  if(state.eventMessages) delete state.eventMessages[id];
-
   try{
+    const api = await waitForPairaFirebaseApi();
+    await api.seedEventsIfNeeded(Object.values(events || {}));
+    await api.deleteEvent(id);
+
+    delete events[id];
+    if(state.joinedEvents) delete state.joinedEvents[id];
+    if(state.eventMessages) delete state.eventMessages[id];
     persistEvents();
     persist();
-  }catch(err){
-    return;
-  }
 
-  renderEventsList();
-  renderAdminEvents();
-  toast('Etkinlik yayından kaldırıldı');
+    renderEventsList();
+    renderAdminEvents();
+    toast('Etkinlik tüm üyelerden kaldırıldı ✓');
+    await publishSystemNotification({
+      type:'event_removed',
+      title:`Etkinlik kaldırıldı: ${e.title}`,
+      body:`${e.date || ''}${e.location ? ' • '+e.location : ''}`,
+      eventId:id
+    });
+    refreshNotificationChatSubscriptions();
+  }catch(err){
+    console.warn('PAIRA realtime event delete', err);
+    toast('Etkinlik yayından kaldırılamadı');
+  }
 }
 
 function escapeAttr(s){
@@ -2453,20 +2576,32 @@ function shareEventWhatsApp(id){
 
 function renderEventDetail(){
   const e = events[currentEvent];
+  if(!e){
+    const wrap=document.getElementById('eventDetailWrap');
+    if(wrap) wrap.innerHTML='<div class="card muted">Bu etkinlik artık yayında değil.</div>';
+    return;
+  }
+  const imgs = Array.isArray(e.images) ? e.images : [];
+  if(currentSlide >= imgs.length) currentSlide = 0;
   const joined = !!state.joinedEvents[currentEvent];
   const buttons = joined
     ? `<button class="gold" style="opacity:.75">Katılıyorum ✓</button><button class="out" style="margin-top:10px;border-color:#b96060;color:#ffb2ac" onclick="leaveEvent('${currentEvent}')">Etkinlikten Ayrıl</button>`
     : `<button class="gold" onclick="joinEvent('${currentEvent}')">Etkinliğe Katıl</button>`;
+  const media = imgs.length ? `
+    <div class="slider"><img id="slideImg" src="${imgs[currentSlide]}" alt="${escapeHtml(e.title)}">
+      ${imgs.length > 1 ? `<button class="slide-arrow left" onclick="slideEvent(-1)">‹</button><button class="slide-arrow right" onclick="slideEvent(1)">›</button>` : ''}</div>
+    <div class="dots">${imgs.map((_,i)=>`<span class="dot ${i===currentSlide?'on':''}"></span>`).join('')}</div>`
+    : `<div class="card muted" style="text-align:center;padding:28px 14px">Etkinlik görseli yok.</div>`;
   document.getElementById('eventDetailWrap').innerHTML = `
-    <div class="slider"><img id="slideImg" src="${e.images[currentSlide]}" alt="${e.title}">
-      <button class="slide-arrow left" onclick="slideEvent(-1)">‹</button><button class="slide-arrow right" onclick="slideEvent(1)">›</button></div>
-    <div class="dots">${e.images.map((_,i)=>`<span class="dot ${i===currentSlide?'on':''}"></span>`).join('')}</div>
+    ${media}
     <div class="card"><h2>${e.title}</h2><div class="row" style="justify-content:space-between;flex-wrap:wrap"><span class="badge">🗓 ${e.date}</span><span class="badge">⏰ ${e.time}</span></div>
       <p style="margin-top:12px">📍 ${e.location}</p><p class="muted">${e.desc}</p><p>👥 ${e.capacity}</p><p class="muted">Bu etkinlik ilanına en fazla 3 görsel eklenebilir. Görseller kaydırılarak gezilir.</p></div>
     ${buttons}<button class="out" style="margin-top:10px" onclick="shareEventWhatsApp('${currentEvent}')">🟢 WhatsApp'ta Paylaş</button><button class="out" style="margin-top:10px" onclick="openEventChat('${currentEvent}')">💬 Etkinlik Chat Odası</button>`;
 }
 function slideEvent(dir){
-  const len = events[currentEvent].images.length;
+  const e = events[currentEvent];
+  const len = e && Array.isArray(e.images) ? e.images.length : 0;
+  if(!len) return;
   currentSlide = (currentSlide + dir + len) % len;
   renderEventDetail();
 }
@@ -2613,6 +2748,7 @@ async function resumeApprovedDeviceSession(){
 
 setTimeout(applyInviteFromLink, 50);
 setTimeout(resumeApprovedDeviceSession, 650);
+window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
 </script>
 
 <!-- PAIRA Firebase authentication + admin gate -->
@@ -2864,6 +3000,90 @@ setTimeout(resumeApprovedDeviceSession, 650);
     await addDoc(notificationsCollection(), clean);
   }
 
+  function safeEventId(value){
+    return String(value || '').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,120);
+  }
+
+  function eventRef(id){
+    return doc(db, 'events', safeEventId(id));
+  }
+
+  function cleanEventPayload(id, data){
+    const eventId = safeEventId(id || data?.id);
+    const startTime = String(data?.startTime || '').slice(0,20);
+    const endTime = String(data?.endTime || '').slice(0,20);
+    return {
+      kind:'event',
+      id:eventId,
+      title:String(data?.title || 'Etkinlik').trim().slice(0,160),
+      dateISO:String(data?.dateISO || '').slice(0,20),
+      date:String(data?.date || '').slice(0,80),
+      startTime,
+      endTime,
+      time:String(data?.time || (startTime ? (endTime ? `${startTime} - ${endTime}` : startTime) : '')).slice(0,80),
+      location:String(data?.location || '').slice(0,200),
+      capacity:String(data?.capacity || '').slice(0,100),
+      desc:String(data?.desc || '').slice(0,3000),
+      images:Array.isArray(data?.images) ? data.images.map(x=>String(x).slice(0,300000)).slice(0,3) : [],
+      updatedAt:Number(data?.updatedAt || Date.now())
+    };
+  }
+
+  function subscribeEvents(onRows, onError){
+    return onSnapshot(collection(db, 'events'),(snap)=>{
+      let initialized = false;
+      const rows = [];
+      snap.docs.forEach(d=>{
+        const data = d.data() || {};
+        if(d.id === '__meta__' || data.kind === 'meta'){
+          initialized = data.initialized === true || initialized;
+          return;
+        }
+        rows.push({...data, _firebaseId:d.id});
+      });
+      rows.sort((a,b)=>{
+        const da=String(a.dateISO || ''), dbb=String(b.dateISO || '');
+        if(da !== dbb) return da.localeCompare(dbb);
+        return String(a.startTime || '').localeCompare(String(b.startTime || ''));
+      });
+      onRows(rows, initialized);
+    },(err)=>{ if(onError) onError(err); });
+  }
+
+  async function seedEventsIfNeeded(rows){
+    const metaRef = doc(db, 'events', '__meta__');
+    const metaSnap = await getDoc(metaRef);
+    if(metaSnap.exists() && metaSnap.data()?.initialized === true) return true;
+    if(!verifiedAdmin || !auth.currentUser) throw new Error('EVENT_SEED_ADMIN_REQUIRED');
+
+    const source = Array.isArray(rows) ? rows.filter(Boolean) : [];
+    for(const row of source){
+      const id = safeEventId(row.id || row._firebaseId);
+      if(!id || id === '__meta__') continue;
+      await setDoc(eventRef(id), cleanEventPayload(id,row), {merge:false});
+    }
+    await setDoc(metaRef,{kind:'meta',initialized:true,updatedAt:Date.now()},{merge:false});
+    return true;
+  }
+
+  async function saveEvent(id, data){
+    if(!verifiedAdmin || !auth.currentUser) throw new Error('EVENT_SAVE_ADMIN_REQUIRED');
+    const clean = cleanEventPayload(id,data);
+    await setDoc(eventRef(clean.id), clean, {merge:false});
+    await setDoc(doc(db,'events','__meta__'),{kind:'meta',initialized:true,updatedAt:Date.now()},{merge:true});
+    return clean;
+  }
+
+  async function deleteEvent(id){
+    if(!verifiedAdmin || !auth.currentUser) throw new Error('EVENT_DELETE_ADMIN_REQUIRED');
+    await deleteDoc(eventRef(id));
+    await setDoc(doc(db,'events','__meta__'),{kind:'meta',initialized:true,updatedAt:Date.now()},{merge:true});
+  }
+
+  async function uploadEventPhotos(id, photos){
+    return (await uploadCoupleProfilePhotos('__event__'+safeEventId(id), Array.isArray(photos) ? photos.slice(0,3) : [])).slice(0,3);
+  }
+
   function coupleProfileRef(id){
     return doc(db, 'coupleProfiles', String(id || '').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,120));
   }
@@ -2999,6 +3219,11 @@ setTimeout(resumeApprovedDeviceSession, 650);
     sendChatMessage,
     subscribeSystemNotifications,
     createSystemNotification,
+    subscribeEvents,
+    seedEventsIfNeeded,
+    saveEvent,
+    deleteEvent,
+    uploadEventPhotos,
     getCoupleProfile,
     uploadCoupleProfilePhotos,
     saveCoupleProfile,
