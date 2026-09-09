@@ -1,0 +1,153 @@
+name: Fix real ÂLÂ screen artwork
+
+on:
+  push:
+    branches: [ala-gorsel-deneme]
+    paths:
+      - '.github/workflows/fix-real-ala-artwork.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ala-gorsel-deneme
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install image tools
+        run: pip install pillow
+      - name: Edit the actual splash, home and agenda artwork
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re, base64, io, hashlib
+          from PIL import Image, ImageEnhance, ImageFilter, ImageDraw, ImageFont
+
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          pat=re.compile(r'data:image/(webp|png|jpeg);base64,([A-Za-z0-9+/=]+)')
+          matches=list(pat.finditer(s))
+          if len(matches) < 4:
+              raise SystemExit(f'Expected at least 4 embedded screen images, found {len(matches)}')
+
+          def font_for(size):
+              candidates=[
+                '/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf',
+                '/usr/share/fonts/truetype/liberation2/LiberationSerif-Regular.ttf'
+              ]
+              for f in candidates:
+                  if Path(f).exists(): return ImageFont.truetype(f,size)
+              return ImageFont.load_default()
+
+          def warm_lively(im, strength=1.0):
+              im=im.convert('RGB')
+              im=ImageEnhance.Color(im).enhance(1.10 + 0.06*strength)
+              im=ImageEnhance.Contrast(im).enhance(1.08 + 0.05*strength)
+              im=ImageEnhance.Brightness(im).enhance(1.025 + 0.025*strength)
+              im=ImageEnhance.Sharpness(im).enhance(1.08 + 0.12*strength)
+              # subtle warm lift while protecting blacks
+              r,g,b=im.split()
+              r=r.point(lambda x:min(255,int(x*1.035+2)))
+              g=g.point(lambda x:min(255,int(x*1.012+1)))
+              b=b.point(lambda x:max(0,int(x*0.965)))
+              return Image.merge('RGB',(r,g,b))
+
+          def dark_clone_fill(im, box, source_box=None):
+              x0,y0,x1,y1=box
+              if source_box:
+                  patch=im.crop(source_box).resize((x1-x0,y1-y0),Image.Resampling.LANCZOS)
+                  patch=patch.filter(ImageFilter.GaussianBlur(radius=max(3,(x1-x0)//30)))
+              else:
+                  patch=Image.new('RGB',(x1-x0,y1-y0),(9,6,4))
+              # feather edges
+              mask=Image.new('L',patch.size,255).filter(ImageFilter.GaussianBlur(radius=max(4,(x1-x0)//25)))
+              im.paste(patch,(x0,y0),mask)
+              return im
+
+          edited=[]
+          rebuilt=[]
+          pos=0
+          preview=Path('_runtime_debug/after_real_fix')
+          preview.mkdir(parents=True,exist_ok=True)
+
+          for i,m in enumerate(matches):
+              rebuilt.append(s[pos:m.start()])
+              fmt=m.group(1)
+              raw=base64.b64decode(m.group(2))
+              im=Image.open(io.BytesIO(raw)).convert('RGB')
+              w,h=im.size
+
+              # Make actual UI artwork more vivid. Stronger for the first four app screens.
+              if i < 4:
+                  im=warm_lively(im,1.0)
+              elif i < 16:
+                  im=warm_lively(im,0.55)
+
+              if i == 0:
+                  # REAL splash screen: remove the legacy circular P emblem only.
+                  # The emblem sits centered below the Social Club heading.
+                  box=(int(w*.36),int(h*.43),int(w*.64),int(h*.58))
+                  src=(int(w*.36),int(h*.58),int(w*.64),int(h*.73))
+                  im=dark_clone_fill(im,box,src)
+                  edited.append(f'splash index0 {w}x{h}: removed legacy P emblem')
+
+              if i == 2:
+                  # REAL home screen: replace the baked-in PAIRA title itself, not an overlay.
+                  # Clean the exact top-center brand strip using nearby lounge background.
+                  box=(int(w*.23),int(h*.025),int(w*.77),int(h*.145))
+                  src=(int(w*.23),int(h*.145),int(w*.77),int(h*.265))
+                  im=dark_clone_fill(im,box,src)
+                  draw=ImageDraw.Draw(im)
+                  text='ÂLÂ'
+                  fs=max(30,int(w*.125))
+                  font=font_for(fs)
+                  bb=draw.textbbox((0,0),text,font=font)
+                  tw,th=bb[2]-bb[0],bb[3]-bb[1]
+                  tx=(w-tw)//2
+                  ty=int(h*.052)-bb[1]
+                  # faint shadow then champagne gold
+                  draw.text((tx+1,ty+2),text,font=font,fill=(55,34,14))
+                  draw.text((tx,ty),text,font=font,fill=(236,197,126))
+                  edited.append(f'home index2 {w}x{h}: replaced baked PAIRA with ÂLÂ')
+
+              if i == 3:
+                  edited.append(f'agenda index3 {w}x{h}: lively color pass')
+
+              out=io.BytesIO()
+              savefmt={'webp':'WEBP','png':'PNG','jpeg':'JPEG'}[fmt]
+              kwargs={'quality':94,'method':6} if savefmt=='WEBP' else ({'quality':94} if savefmt=='JPEG' else {})
+              im.save(out,format=savefmt,**kwargs)
+              newraw=out.getvalue()
+              newb64=base64.b64encode(newraw).decode('ascii')
+              rebuilt.append(f'data:image/{fmt};base64,{newb64}')
+              pos=m.end()
+
+              if i < 4:
+                  im.save(preview/f'screen_{i}.jpg',quality=93)
+
+          rebuilt.append(s[pos:])
+          new=''.join(rebuilt)
+          # Remove any old temporary visual-mask stylesheet injection if still present.
+          new=new.replace('<link rel="stylesheet" href="/ala-visual-test.css?v=2">\n','')
+          p.write_text(new,encoding='utf-8')
+          (preview/'REPORT.txt').write_text('\n'.join(edited)+f'\nembedded_count={len(matches)}\n',encoding='utf-8')
+          print('\n'.join(edited))
+          PY
+      - name: Commit only test-branch visual changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html _runtime_debug/after_real_fix
+          if git diff --cached --quiet; then
+            echo "No change needed"
+          else
+            git commit -m "Fix actual splash and home artwork for ÂLÂ"
+            git push origin ala-gorsel-deneme
+          fi
