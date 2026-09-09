@@ -1,0 +1,68 @@
+name: Extract embedded artwork
+
+on:
+  push:
+    branches:
+      - ala-gorsel-deneme
+    paths:
+      - '.github/workflows/extract-embedded-artwork.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ala-gorsel-deneme
+          fetch-depth: 0
+      - name: Extract embedded images and contact sheet
+        run: |
+          python -m pip install pillow
+          python - <<'PY'
+          from pathlib import Path
+          import re, base64, io, json
+          from PIL import Image, ImageOps, ImageDraw
+          s=Path('index.html').read_text(encoding='utf-8')
+          pat=re.compile(r'data:image/(png|jpeg|jpg|webp);base64,([A-Za-z0-9+/=]+)')
+          matches=list(pat.finditer(s))
+          out=Path('_artwork_debug'); out.mkdir(exist_ok=True)
+          items=[]
+          for i,m in enumerate(matches):
+              ext='jpg' if m.group(1) in ('jpeg','jpg') else m.group(1)
+              raw=base64.b64decode(m.group(2))
+              try:
+                  im=Image.open(io.BytesIO(raw)).convert('RGB')
+              except Exception:
+                  continue
+              w,h=im.size
+              name=f'img_{i:02d}_{w}x{h}.{ext}'
+              (out/name).write_bytes(raw)
+              thumb=ImageOps.contain(im,(220,360))
+              items.append((i,name,w,h,thumb.copy()))
+          cellw,cellh=250,410
+          cols=3
+          rows=max(1,(len(items)+cols-1)//cols)
+          sheet=Image.new('RGB',(cellw*cols,cellh*rows),'white')
+          d=ImageDraw.Draw(sheet)
+          for n,(i,name,w,h,thumb) in enumerate(items):
+              x=(n%cols)*cellw+15; y=(n//cols)*cellh+35
+              sheet.paste(thumb,(x,y))
+              d.text((x,8+(n//cols)*cellh),f'{i}: {w}x{h}',fill='black')
+          sheet.save(out/'contact_sheet.jpg',quality=85)
+          (out/'manifest.json').write_text(json.dumps([{'i':i,'name':name,'w':w,'h':h} for i,name,w,h,_ in items],indent=2),encoding='utf-8')
+          print('extracted',len(items),'images')
+          PY
+      - name: Commit debug artwork on test branch only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add _artwork_debug
+          if git diff --cached --quiet; then
+            echo "No artwork changes"
+          else
+            git commit -m "Extract embedded artwork for ÂLÂ visual replacement"
+            git push origin ala-gorsel-deneme
+          fi
