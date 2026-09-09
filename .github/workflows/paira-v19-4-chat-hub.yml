@@ -1,0 +1,139 @@
+name: PAIRA v19.4 chat hub fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/paira-v19-4-chat-hub.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch chat hub
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          original = text
+
+          text = text.replace(
+              '<meta name="paira-build" content="v19.3-club-membership-sync">',
+              '<meta name="paira-build" content="v19.4-chat-hub-fix">',
+              1,
+          )
+
+          chat_start = text.index('<section id="chats" class="screen page">')
+          dm_start = text.index('<section id="dm" class="screen page">', chat_start)
+          new_chat = '''<section id="chats" class="screen page">
+  <div class="head"><button class="back" onclick="show('home')">‹</button><div><div class="logo">PAIRA</div><div class="sub">CHAT</div></div><span></span></div>
+  <div class="card"><b id="chatIdentityInfo">Partner kimliği aktif</b><div class="muted" style="font-size:12px;margin-top:4px">Aynı çift hesabındaki iki partner mesajlarda ayrı isimle görünür.</div></div>
+  <button class="listbtn" onclick="openGeneralChat()"><b>PAIRA Genel Sohbet</b><br><span class="muted">Tüm PAIRA üyeleri</span></button>
+  <div class="section-title">Kulüp Sohbetleri</div>
+  <div id="chatClubRooms"></div>
+  <div class="section-title">Etkinlik Sohbetleri</div>
+  <div id="chatEventRooms"></div>
+  <div class="card muted">Bireysel çift sohbetleri henüz aktif değil.</div>
+</section>
+
+<section id="generalChat" class="screen page">
+  <div class="head"><button class="back" onclick="show('chats')">‹</button><div><div class="logo">PAIRA</div><div class="sub">GENEL SOHBET</div></div><span></span></div>
+  <div class="muted" id="generalChatIdentity" style="font-size:12px;margin-bottom:10px"></div>
+  <div id="generalChatMsgs"><div class="muted" style="padding:12px 2px">Sohbet yükleniyor...</div></div>
+  <div class="composer"><input id="generalChatInput" placeholder="Genel sohbete mesaj yaz..."><button class="gold" style="width:64px" onclick="sendGeneralChatMessage()">➤</button></div>
+</section>
+
+'''
+          text = text[:chat_start] + new_chat + text[dm_start:]
+
+          old_show = '''  if(id==='chats'){
+    const me=currentChatIdentity();
+    const z=document.getElementById('chatIdentityInfo');
+    if(z) z.textContent=`Bu telefonda yazan: ${me.partnerName} • ${me.coupleName}`;
+  }
+  if(id==='dm') startRealtimeChat('dm','ece_kaan','dmMsgs');
+  if(!['dm','eventChat','clubDetail'].includes(id) && realtimeChatUnsub) stopRealtimeChat();'''
+          new_show = '''  if(id==='chats') renderChatsHub();
+  if(!['generalChat','eventChat','clubDetail'].includes(id) && realtimeChatUnsub) stopRealtimeChat();'''
+          if old_show not in text:
+              raise SystemExit('Chat show block not found; refusing partial patch')
+          text = text.replace(old_show, new_show, 1)
+
+          text = text.replace("let currentEvent = 'bogaz';", "let currentEvent = '';", 1)
+
+          anchor = '''function sendMessage(boxId,inputId){
+  return sendRealtimeRoomMessage('dm','ece_kaan',inputId);
+}
+'''
+          if anchor not in text:
+              raise SystemExit('sendMessage anchor not found; refusing partial patch')
+
+          chat_functions = '''function renderChatsHub(){
+  const me=currentChatIdentity();
+  const z=document.getElementById('chatIdentityInfo');
+  if(z) z.textContent=`Bu telefonda yazan: ${me.partnerName} • ${me.coupleName}`;
+
+  const clubWrap=document.getElementById('chatClubRooms');
+  if(clubWrap){
+    clubWrap.innerHTML=Object.entries(clubs || {}).map(([key,c])=>
+      `<button class="listbtn" onclick="openClub('${key}')"><b>${escapeHtml(c.title)}</b><br><span class="muted">Kulüp sohbeti</span></button>`
+    ).join('') || '<div class="card muted">Henüz kulüp sohbeti yok.</div>';
+  }
+
+  const eventWrap=document.getElementById('chatEventRooms');
+  if(eventWrap){
+    const rows=Object.entries(events || {}).sort((a,b)=>String(a[1]?.dateISO || '').localeCompare(String(b[1]?.dateISO || '')));
+    eventWrap.innerHTML=rows.map(([id,e])=>
+      `<button class="listbtn" onclick="openEventChat('${id}')"><b>${escapeHtml(e.title || 'Etkinlik')}</b><br><span class="muted">Etkinlik sohbeti</span></button>`
+    ).join('') || '<div class="card muted">Henüz yayınlanmış etkinlik sohbeti yok.</div>';
+  }
+}
+
+function openGeneralChat(){
+  const me=currentChatIdentity();
+  show('generalChat');
+  const z=document.getElementById('generalChatIdentity');
+  if(z) z.textContent=`Bu telefonda yazan: ${me.partnerName} • ${me.coupleName}`;
+  startRealtimeChat('general','main','generalChatMsgs');
+}
+
+function sendGeneralChatMessage(){
+  return sendRealtimeRoomMessage('general','main','generalChatInput');
+}
+
+'''
+          text = text.replace(anchor, chat_functions + anchor, 1)
+
+          old_rooms = "  const rooms = [];\n  Object.keys(events || {}).forEach(id=>rooms.push(['event',id]));"
+          new_rooms = "  const rooms = [['general','main']];\n  Object.keys(events || {}).forEach(id=>rooms.push(['event',id]));"
+          if old_rooms not in text:
+              raise SystemExit('Notification room anchor not found; refusing partial patch')
+          text = text.replace(old_rooms, new_rooms, 1)
+
+          old_title = "  if(kind === 'club') return (clubs[roomId] && clubs[roomId].title) || 'Kulüp Sohbeti';\n  return 'Sohbet';"
+          new_title = "  if(kind === 'club') return (clubs[roomId] && clubs[roomId].title) || 'Kulüp Sohbeti';\n  if(kind === 'general') return 'PAIRA Genel Sohbet';\n  return 'Sohbet';"
+          if old_title not in text:
+              raise SystemExit('roomTitle anchor not found; refusing partial patch')
+          text = text.replace(old_title, new_title, 1)
+
+          if text == original:
+              raise SystemExit('No changes made')
+          path.write_text(text, encoding='utf-8')
+          print('PAIRA v19.4 chat hub fix applied.')
+
+      - name: Commit chat fix
+        shell: bash
+        run: |
+          git config user.name "PAIRA Hotfix Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Fix chat hub and remove stale demo room"
+          git push
