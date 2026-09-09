@@ -1,0 +1,38 @@
+name: PAIRA v20.3 home icon
+
+on:
+  push:
+    paths:
+      - '.github/workflows/paira-v20-3-home-icon.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Patch index head
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old='<title>PAIRA</title>\n<meta name="paira-build" content="v20.2-partner-save-verify">'
+          new='''<title>PAIRA</title>\n<link rel="manifest" href="/manifest.webmanifest">\n<link rel="icon" type="image/svg+xml" href="/paira-app-icon.svg">\n<meta name="theme-color" content="#050403">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n<meta name="apple-mobile-web-app-title" content="PAIRA">\n<meta name="paira-build" content="v20.3-home-icon">'''
+          if old not in s:
+              raise SystemExit('Expected build marker not found')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Enable PAIRA home screen icon"
+          git push origin main
