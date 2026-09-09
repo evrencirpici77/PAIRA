@@ -1,0 +1,28 @@
+name: PAIRA v20.2 partner save verify
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/paira-v20-2-partner-save-verify.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply v20.2 partner fix
+        run: python tools/paira_v20_2_partner_fix.py
+
+      - name: Commit fix
+        run: |
+          git config user.name "PAIRA Hotfix Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Verify partner business save and reload"
+          git push
