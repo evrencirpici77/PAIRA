@@ -1,0 +1,72 @@
+name: Trace real screen artwork
+
+on:
+  push:
+    branches: [ala-gorsel-deneme]
+    paths:
+      - '.github/workflows/trace-real-screen-artwork.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  trace:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ala-gorsel-deneme
+          fetch-depth: 0
+      - name: Map embedded images to actual screen markup
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re, base64, hashlib, json
+
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          pat=re.compile(r'data:image/(webp|png|jpeg);base64,([A-Za-z0-9+/=]+)')
+          matches=list(pat.finditer(s))
+          report=[]
+          for i,m in enumerate(matches):
+              raw=base64.b64decode(m.group(2))
+              before=s[max(0,m.start()-900):m.start()]
+              after=s[m.end():min(len(s),m.end()+450)]
+              # nearest id/class tags before the image
+              ids=re.findall(r'<[^>]+\bid=["\']([^"\']+)["\'][^>]*>', before)
+              classes=re.findall(r'<[^>]+\bclass=["\']([^"\']+)["\'][^>]*>', before)
+              report.append({
+                  'index':i,
+                  'format':m.group(1),
+                  'bytes':len(raw),
+                  'sha256':hashlib.sha256(raw).hexdigest(),
+                  'nearest_ids':ids[-5:],
+                  'nearest_classes':classes[-5:],
+                  'before_tail':re.sub(r'\s+',' ',before[-650:]),
+                  'after_head':re.sub(r'\s+',' ',after[:350:])
+              })
+          out=Path('_runtime_debug')
+          out.mkdir(exist_ok=True)
+          (out/'embedded_image_map.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+
+          # Also make a stripped HTML copy that preserves full surrounding markup without giant base64 payloads.
+          counter={'i':0}
+          def repl(m):
+              i=counter['i']; counter['i']+=1
+              return f'__EMBEDDED_IMAGE_{i}__.{m.group(1)}'
+          stripped=pat.sub(repl,s)
+          (out/'index_stripped.txt').write_text(stripped,encoding='utf-8')
+          print('mapped',len(matches),'embedded images')
+          PY
+      - name: Commit trace report only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add _runtime_debug/embedded_image_map.json _runtime_debug/index_stripped.txt
+          if git diff --cached --quiet; then
+            echo "No report change"
+          else
+            git commit -m "Map real screen artwork sources on test branch"
+            git push origin ala-gorsel-deneme
+          fi
