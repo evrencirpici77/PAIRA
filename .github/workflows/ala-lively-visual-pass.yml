@@ -1,0 +1,121 @@
+name: ÂLÂ lively visual pass
+
+on:
+  push:
+    branches: [ala-gorsel-deneme]
+    paths:
+      - '.github/workflows/ala-lively-visual-pass.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  enhance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ala-gorsel-deneme
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Pillow
+        run: python -m pip install --quiet pillow
+      - name: Enhance embedded screen artwork and remove old P emblem
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re, base64, io
+          from PIL import Image, ImageEnhance, ImageFilter, ImageDraw
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          pat = re.compile(r'data:image/(webp|png|jpeg);base64,([A-Za-z0-9+/=]+)')
+          matches = list(pat.finditer(s))
+          if not matches:
+              raise SystemExit('No embedded images found')
+
+          replacements = []
+          large_index = -1
+          changed = 0
+
+          for ordinal, m in enumerate(matches):
+              fmt = m.group(1)
+              raw = base64.b64decode(m.group(2))
+              try:
+                  im = Image.open(io.BytesIO(raw)).convert('RGB')
+              except Exception:
+                  continue
+
+              w, h = im.size
+              # Only touch full-screen / large photographic artwork, never tiny icons.
+              if w < 250 or h < 400:
+                  continue
+
+              large_index += 1
+              work = im
+
+              # Warm/lively but still premium. Keep blacks black and golds richer.
+              work = ImageEnhance.Color(work).enhance(1.20)
+              work = ImageEnhance.Contrast(work).enhance(1.09)
+              work = ImageEnhance.Brightness(work).enhance(1.035)
+              work = ImageEnhance.Sharpness(work).enhance(1.06)
+
+              # Splash artwork is the first large embedded screen.
+              # Remove the old circular P emblem without touching login logic or layout.
+              if large_index == 0:
+                  # Coordinates are proportional to the original splash artwork.
+                  x1, x2 = int(w*0.37), int(w*0.63)
+                  y1, y2 = int(h*0.49), int(h*0.62)
+                  # Build a soft dark patch sampled from the surrounding satin background.
+                  border = work.crop((max(0,x1-18), max(0,y1-18), min(w,x2+18), min(h,y2+18)))
+                  blurred = border.filter(ImageFilter.GaussianBlur(radius=max(8, int(w*0.03))))
+                  # Resize/crop center area and feather edges.
+                  patch = blurred.resize((x2-x1, y2-y1))
+                  mask = Image.new('L', (x2-x1, y2-y1), 0)
+                  md = ImageDraw.Draw(mask)
+                  md.rounded_rectangle((0,0,x2-x1-1,y2-y1-1), radius=max(12,int(w*0.05)), fill=235)
+                  mask = mask.filter(ImageFilter.GaussianBlur(radius=max(6,int(w*0.02))))
+                  work.paste(patch, (x1,y1), mask)
+
+              out = io.BytesIO()
+              if fmt == 'png':
+                  work.save(out, format='PNG', optimize=True)
+                  newfmt = 'png'
+              elif fmt == 'jpeg':
+                  work.save(out, format='JPEG', quality=92, optimize=True)
+                  newfmt = 'jpeg'
+              else:
+                  work.save(out, format='WEBP', quality=91, method=6)
+                  newfmt = 'webp'
+
+              data = base64.b64encode(out.getvalue()).decode('ascii')
+              replacements.append((m.start(), m.end(), f'data:image/{newfmt};base64,{data}'))
+              changed += 1
+
+          if changed == 0:
+              raise SystemExit('No large artwork changed')
+
+          for start, end, repl in reversed(replacements):
+              s = s[:start] + repl + s[end:]
+
+          marker = '<meta name="ala-visual-pass" content="lively-v1">'
+          if marker not in s:
+              s = s.replace('</head>', marker + '\n</head>', 1)
+
+          p.write_text(s, encoding='utf-8')
+          print(f'Enhanced {changed} large embedded artworks; removed P emblem from splash artwork')
+          PY
+      - name: Commit visual-only changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No visual change needed"
+            exit 0
+          fi
+          git commit -m "Make ÂLÂ screens warmer and remove old P emblem"
+          git push origin ala-gorsel-deneme
