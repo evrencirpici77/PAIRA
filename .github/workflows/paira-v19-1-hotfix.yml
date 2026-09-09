@@ -1,0 +1,61 @@
+name: PAIRA v19.1 event save hotfix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/paira-v19-1-hotfix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch index.html
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          original = text
+
+          text = text.replace(
+              '<meta name="paira-build" content="v19-realtime-events">',
+              '<meta name="paira-build" content="v19.1-event-save-fix">',
+              1,
+          )
+
+          old_seed = """    // İlk merkezi kurulumda telefondaki mevcut etkinlikleri kaybetmeden Firestore'a taşı.\n    await api.seedEventsIfNeeded(Object.values(events || {}));"""
+          new_seed = """    // İlk merkezi kurulumdaki eski etkinlik aktarımı yeni etkinliğin kaydını bloke etmesin.\n    // Aktarım başarısız olsa bile yeni etkinliği ayrıca kaydetmeyi deniyoruz.\n    try{\n      await api.seedEventsIfNeeded(Object.values(events || {}));\n    }catch(seedErr){\n      console.warn('PAIRA legacy event seed skipped', seedErr);\n    }"""
+          if old_seed in text:
+              text = text.replace(old_seed, new_seed, 1)
+
+          old_error = """  }catch(err){\n    console.warn('PAIRA realtime event save', err);\n    toast('Etkinlik Firebase’e kaydedilemedi');\n  }\n}"""
+          new_error = """  }catch(err){\n    console.warn('PAIRA realtime event save', err);\n    const detail = String(err?.code || err?.message || 'Bilinmeyen Firebase hatası');\n    modal(`\n      <h2 style=\"color:#e7bd72;margin-top:0\">Etkinlik kaydedilemedi</h2>\n      <p class=\"muted\" style=\"line-height:1.55\">Firebase hatası: <b>${escapeHtml(detail)}</b></p>\n      <button class=\"gold\" onclick=\"closeModal()\">Tamam</button>\n    `);\n  }\n}"""
+          if old_error in text:
+              text = text.replace(old_error, new_error, 1)
+
+          if text == original:
+              print('No changes needed; hotfix may already be applied.')
+          else:
+              path.write_text(text, encoding='utf-8')
+              print('PAIRA v19.1 hotfix applied.')
+
+      - name: Commit hotfix
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No index.html changes to commit."
+            exit 0
+          fi
+          git config user.name "PAIRA Hotfix Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Fix Firebase event save flow"
+          git push
