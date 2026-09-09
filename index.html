@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>PAIRA</title>
-<meta name="paira-build" content="v19-realtime-events">
+<meta name="paira-build" content="v19.1-event-save-fix">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
@@ -1962,8 +1962,13 @@ async function saveAdminEvent(){
   try{
     const api = await waitForPairaFirebaseApi();
 
-    // İlk merkezi kurulumda telefondaki mevcut etkinlikleri kaybetmeden Firestore'a taşı.
-    await api.seedEventsIfNeeded(Object.values(events || {}));
+    // İlk merkezi kurulumdaki eski etkinlik aktarımı yeni etkinliğin kaydını bloke etmesin.
+    // Aktarım başarısız olsa bile yeni etkinliği ayrıca kaydetmeyi deniyoruz.
+    try{
+      await api.seedEventsIfNeeded(Object.values(events || {}));
+    }catch(seedErr){
+      console.warn('PAIRA legacy event seed skipped', seedErr);
+    }
 
     // Yeni seçilen yerel görselleri Cloudinary URL'lerine dönüştür. Mevcut URL'ler aynen kalır.
     const syncedPhotos = await api.uploadEventPhotos(id, adminEventPhotos);
@@ -2005,7 +2010,12 @@ async function saveAdminEvent(){
     adminEditingEventId = null;
   }catch(err){
     console.warn('PAIRA realtime event save', err);
-    toast('Etkinlik Firebase’e kaydedilemedi');
+    const detail = String(err?.code || err?.message || 'Bilinmeyen Firebase hatası');
+    modal(`
+      <h2 style="color:#e7bd72;margin-top:0">Etkinlik kaydedilemedi</h2>
+      <p class="muted" style="line-height:1.55">Firebase hatası: <b>${escapeHtml(detail)}</b></p>
+      <button class="gold" onclick="closeModal()">Tamam</button>
+    `);
   }
 }
 
