@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>PAIRA</title>
-<meta name="paira-build" content="v20-real-partners-only">
+<meta name="paira-build" content="v20.1-partner-read-fix">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
@@ -3087,9 +3087,36 @@ function makeBenefitVerifyUrl(row){const identity=getDevicePartnerIdentity();if(
 function openMemberBenefitQr(id=''){const row=(partnerBusinessRows||[]).find(x=>(x.id||x._firebaseId)===id)||{id:'preview',name:'PAIRA Üye İşyeri',offer:'Üye Ayrıcalığı'};const identity=getDevicePartnerIdentity();if(!identity?.inviteCode){modal(`<h2 style="color:#e7bd72;margin-top:0">PAIRA Üye Kartı</h2><div class="card"><b>Aktif üyelik bulunamadı.</b><p class="muted">QR doğrulaması yalnız davet koduyla aktifleşmiş PAIRA üyelerinde çalışır.</p></div><button class="gold" onclick="closeModal()">Tamam</button>`);return;}const verifyUrl=makeBenefitVerifyUrl(row);modal(`<h2 style="color:#e7bd72;margin-top:0">${benefitEsc(row.name||'PAIRA Ayrıcalığı')}</h2><div class="qr-member">${benefitEsc(identity.partnerName||'PAIRA Üyesi')}</div><div class="qr-couple">${benefitEsc(identity.coupleName||'')}</div><div class="qr-shell" id="pairaBenefitQr"></div><div style="text-align:center;color:#f0cf8e;font-weight:800">${benefitEsc(row.offer||'PAIRA Üye Ayrıcalığı')}</div><div class="qr-expiry">İşyeri bu kodu telefon kamerasıyla okutur.<br>Kod yaklaşık 2 dakikada bir yenilenir.</div><button class="out" style="margin-top:12px" onclick="closeModal()">Kapat</button>`);setTimeout(()=>{const box=document.getElementById('pairaBenefitQr');if(!box)return;box.innerHTML='';if(window.QRCode){new QRCode(box,{text:verifyUrl,width:202,height:202,correctLevel:QRCode.CorrectLevel.M});}else{box.innerHTML='<div style="color:#111;text-align:center;padding:20px">QR hazırlanamadı.<br>Sayfayı yenileyin.</div>';}},50);}
 window.benefitPreview=function(){openMemberBenefitQr('');};
 async function verifyMemberQrFromUrl(){const params=new URLSearchParams(location.search);if(params.get('verify')!=='paira')return false;show('memberVerify');const box=document.getElementById('memberVerifyBox'),invite=String(params.get('invite')||'').trim().toUpperCase(),device=String(params.get('device')||'').trim(),bucket=Number(params.get('bucket')||0),offer=String(params.get('offer')||'');if(!invite||!device||!bucket){box.innerHTML='<div class="verify-bad"><div class="verify-icon">✕</div><b>Geçersiz PAIRA kodu</b></div>';return true;}try{const rec=await window.PAIRA_FIREBASE_API.getInvitation(invite),devices=Array.isArray(rec?.partnerDevices)?rec.partnerDevices:[],partnerIndex=devices.indexOf(device),timeOk=Math.abs(Math.floor(Date.now()/120000)-bucket)<=1,active=!!rec&&rec.status==='active'&&devices.filter(Boolean).length>=2&&partnerIndex>=0&&timeOk;if(active){const partnerName=(rec.partnerNames||[])[partnerIndex]||'PAIRA Üyesi';box.innerHTML=`<div class="verify-good"><div class="verify-icon">✓</div><h2 style="margin:0 0 6px">Aktif PAIRA Üyesi</h2><div style="font-size:20px;font-weight:800">${benefitEsc(partnerName)}</div><div style="margin-top:4px">${benefitEsc(rec.name||'')}</div>${offer?`<div style="margin-top:14px;color:#f3d391;font-weight:800">${benefitEsc(offer)}</div>`:''}<div style="margin-top:12px;font-size:12px;opacity:.8">Kod canlı ve geçerli.</div></div>`;}else{box.innerHTML=`<div class="verify-bad"><div class="verify-icon">✕</div><h2 style="margin:0 0 6px">Kod geçerli değil</h2><div>${timeOk?'Üyelik veya cihaz doğrulanamadı.':'Bu QR kodun süresi dolmuş.'}</div></div>`;}}catch(err){console.warn('PAIRA QR verify',err);box.innerHTML='<div class="verify-bad"><div class="verify-icon">!</div><b>Doğrulama yapılamadı.</b><div style="margin-top:8px">İnternet bağlantısını kontrol edin.</div></div>';}return true;}
-function startPartnerBusinessRealtime(){const list=document.getElementById('benefitList');if(list&&!benefitSeedHtml)benefitSeedHtml=list.innerHTML;try{if(partnerBusinessUnsub)partnerBusinessUnsub();partnerBusinessUnsub=window.PAIRA_FIREBASE_API.subscribePartnerBusinesses(rows=>{partnerBusinessRows=Array.isArray(rows)?rows:[];renderPartnerBusinesses();renderPartnerAdmin();});}catch(err){console.warn('PAIRA partner subscribe',err);renderPartnerAdmin();}}
-window.openPartnerBusinessForm=openPartnerBusinessForm;window.savePartnerBusinessFromModal=savePartnerBusinessFromModal;window.togglePartnerBusiness=togglePartnerBusiness;window.removePartnerBusiness=removePartnerBusiness;window.renderPartnerAdmin=renderPartnerAdmin;window.openMemberBenefitQr=openMemberBenefitQr;window.openPartnerMap=openPartnerMap;
-window.addEventListener('paira-firebase-ready',()=>{startPartnerBusinessRealtime();verifyMemberQrFromUrl();},{once:true});
+async function startPartnerBusinessRealtime(){
+  const list=document.getElementById('benefitList');
+  const adminBox=document.getElementById('partnerAdminList');
+  if(list&&!benefitSeedHtml)benefitSeedHtml=list.innerHTML;
+  if(adminBox)adminBox.innerHTML='<div class="partner-empty">İşyeri listesi yükleniyor…</div>';
+  try{
+    const api=window.PAIRA_FIREBASE_API || await waitForPairaFirebaseApi();
+    if(partnerBusinessUnsub)partnerBusinessUnsub();
+    partnerBusinessUnsub=api.subscribePartnerBusinesses((rows,err)=>{
+      if(err){
+        console.warn('PAIRA partner subscribe callback',err);
+        if(adminBox)adminBox.innerHTML='<div class="partner-empty">İşyeri listesi şu anda alınamadı.<br><br><button class="out" onclick="startPartnerBusinessRealtime()">↻ Tekrar Dene</button></div>';
+        return;
+      }
+      partnerBusinessRows=Array.isArray(rows)?rows:[];
+      renderPartnerBusinesses();
+      renderPartnerAdmin();
+    });
+  }catch(err){
+    console.warn('PAIRA partner subscribe',err);
+    if(adminBox)adminBox.innerHTML='<div class="partner-empty">İşyeri listesi su anda alınamadı.<br><br><button class="out" onclick="startPartnerBusinessRealtime()">↻ Tekrar Dene</button></div>';
+  }
+}
+window.openPartnerBusinessForm=openPartnerBusinessForm;window.savePartnerBusinessFromModal=savePartnerBusinessFromModal;window.togglePartnerBusiness=togglePartnerBusiness;window.removePartnerBusiness=removePartnerBusiness;window.renderPartnerAdmin=renderPartnerAdmin;window.openMemberBenefitQr=openMemberBenefitQr;window.openPartnerMap=openPartnerMap;window.startPartnerBusinessRealtime=startPartnerBusinessRealtime;
+if(window.PAIRA_FIREBASE_API){
+  startPartnerBusinessRealtime();
+  verifyMemberQrFromUrl();
+}else{
+  window.addEventListener('paira-firebase-ready',()=>{startPartnerBusinessRealtime();verifyMemberQrFromUrl();},{once:true});
+}
 // ---- /PAIRA v19.8 ----
 
 window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
@@ -3557,8 +3584,20 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
 
 
   function subscribePartnerBusinesses(callback){
-    const q=query(collection(db,"partnerBusinesses"),orderBy("updatedAt","desc"));
-    return onSnapshot(q,snap=>callback(snap.docs.map(d=>({_firebaseId:d.id,...d.data()}))),err=>{console.warn("PAIRA partnerBusinesses snapshot",err);callback([]);});
+    const ref = collection(db,"partnerBusinesses");
+    return onSnapshot(
+      ref,
+      snap=>{
+        const rows = snap.docs
+          .map(d=>({_firebaseId:d.id,...d.data()}))
+          .sort((a,b)=>String(b.updatedAt||"").localeCompare(String(a.updatedAt||"")));
+        callback(rows,null);
+      },
+      err=>{
+        console.warn("PAIRA partnerBusinesses snapshot",err);
+        callback([],err);
+      }
+    );
   }
   async function savePartnerBusiness(row){
     if(!auth.currentUser) throw new Error("Yönetici girişi gerekli");
