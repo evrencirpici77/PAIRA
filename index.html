@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>PAIRA</title>
-<meta name="paira-build" content="v19.5-admin-entry-chat-hub">
+<meta name="paira-build" content="v19.6-real-admin-panel">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
@@ -333,6 +333,25 @@ textarea.form-field{min-height:105px;resize:vertical}
 </section>
 
 
+
+<section id="adminPanel" class="screen page">
+  <div class="head">
+    <button class="back" onclick="show('home')">‹</button>
+    <div><div class="logo" style="font-size:34px">PAIRA</div><div class="sub">YÖNETİCİ PANELİ</div></div>
+    <button class="circle" onclick="pairaAdminLogout();show('home')">⏻</button>
+  </div>
+  <div class="card">
+    <h2 style="color:#efc97d;margin:0 0 6px">Yönetim Merkezi</h2>
+    <div class="muted">Üye, etkinlik, sohbet ve yönetici işlemleri.</div>
+  </div>
+  <button class="listbtn" onclick="pairaRequireAdmin('adminMembers')"><b>👥 Üye Yönetimi</b><br><span class="muted">Davet, onay, çıkarma ve üye kayıtları</span></button>
+  <button class="listbtn" onclick="pairaRequireAdmin('adminEvents')"><b>📅 Etkinlik Yönetimi</b><br><span class="muted">Etkinlik ekle, düzenle ve duyuru yayınla</span></button>
+  <button class="listbtn" onclick="show('chats')"><b>💬 Chat Odaları</b><br><span class="muted">Genel, kulüp ve etkinlik sohbetlerini aç</span></button>
+  <button class="listbtn" onclick="show('clubs')"><b>🛋 Etkinlik Kulüpleri</b><br><span class="muted">Kulüp odalarına ve kulüp sohbetlerine git</span></button>
+  <button class="listbtn" onclick="pairaRequireAdmin('adminInbox')"><b>📥 Yönetici Gelen Kutusu</b><br><span class="muted">Üyelerden gelen talep, öneri ve şikâyetler</span></button>
+  <button class="listbtn" onclick="pairaRequireAdmin('webPublish')"><b>🌐 Web’i Yayınla</b><br><span class="muted">Yayınlama araçları</span></button>
+  <button class="out" style="margin-top:14px" onclick="pairaAdminLogout();show('home')">Yönetici Oturumunu Kapat</button>
+</section>
 
 <section id="adminMembers" class="screen page">
   <div class="head">
@@ -779,7 +798,7 @@ function openMenu(){
   <button class="citybtn" onclick="closeModal();show('clubs')">Etkinlik Kulüpleri</button>
   <button class="citybtn" onclick="closeModal();show('chats')">Chat</button>
   <button class="citybtn" onclick="closeModal();show('profile')">Profil</button>
-  <button class="citybtn" onclick="closeModal();pairaRequireAdmin('adminMembers')">🔐 Yönetici Girişi / Paneli</button>
+  <button class="citybtn" onclick="closeModal();pairaOpenAdminLogin()">🔐 Yönetici Girişi / Paneli</button>
   <button class="citybtn" onclick="closeModal();pairaRequireAdmin('adminMembers')">Üye Yönetimi</button>
   <button class="citybtn" onclick="closeModal();pairaRequireAdmin('adminEvents')">Etkinlik Yönetimi</button>
   <button class="citybtn" onclick="closeModal();pairaRequireAdmin('adminInbox')">Yönetici Gelen Kutusu <span id="menuAdminCount" class="counter" style="float:right">0</span></button>
@@ -3548,6 +3567,15 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
     if (targetScreen === "adminInbox" && window.renderAdminInbox) window.renderAdminInbox();
     if (window.show) window.show(targetScreen);
   }
+
+  window.pairaOpenAdminLogin = async function() {
+    verifiedAdmin = false;
+    pairaRestIdToken = "";
+    try {
+      if (auth.currentUser) await signOut(auth);
+    } catch (_) {}
+    openAdminLogin('adminPanel');
+  };
 
   window.pairaRequireAdmin = async function(targetScreen) {
     if (verifiedAdmin && auth.currentUser) {
