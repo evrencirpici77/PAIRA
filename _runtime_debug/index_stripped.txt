@@ -1,0 +1,3928 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>ÂLÂ</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="/paira-app-icon.svg">
+<meta name="theme-color" content="#050403">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ÂLÂ">
+<meta name="paira-build" content="v20.3-home-icon">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
+button,input,textarea,select{font:inherit}
+body{overflow-x:hidden}
+#app{width:min(100%,480px);min-height:100dvh;margin:auto;background:#050403;position:relative;overflow:hidden}
+.screen{display:none;min-height:100dvh;background:#050403}
+.screen.active{display:block}
+.mock{position:relative;width:100%;line-height:0}
+.mock>img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
+.hot{position:absolute;z-index:20;border:0;background:transparent;color:transparent;padding:0}
+.hot:active{background:rgba(231,187,103,.12);outline:1px solid rgba(231,187,103,.25);border-radius:12px}
+.page{padding:16px 15px 94px;min-height:100dvh;background:
+linear-gradient(rgba(5,4,3,.90),rgba(5,4,3,.98)),
+radial-gradient(circle at 50% 0,#5a3716 0,transparent 40%)}
+.head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.logo{font:42px Georgia,serif;letter-spacing:.13em;text-align:center;color:#e5bd74;line-height:1}
+.sub{color:#d8ae63;text-align:center;letter-spacing:.18em;font-size:12px;margin-top:4px}
+.back,.circle{width:44px;height:44px;border:1px solid #a27a3f;border-radius:50%;background:#0a0706;color:#edca87;font-size:24px}
+.card{border:1px solid #846135;border-radius:17px;background:linear-gradient(145deg,#17120f,#0b0807);padding:14px;margin:10px 0}
+.card h3,.card h2,.card h4{margin:0 0 8px}
+.muted{color:#c4b5a1}
+.gold{width:100%;border:0;border-radius:14px;padding:14px 16px;background:linear-gradient(90deg,#af772d,#f0cf8c,#b17b30);color:#17100a;font-weight:800}
+.out{width:100%;border:1px solid #a67d42;border-radius:14px;padding:13px;background:#0b0807;color:#f2d69e}
+.listbtn{width:100%;text-align:left;border:1px solid #74542e;border-radius:14px;background:#0d0a08;color:#fff;padding:14px;margin:7px 0}
+.event-card{display:flex;gap:12px;align-items:stretch;border:1px solid #846135;border-radius:18px;background:linear-gradient(145deg,#17120f,#0b0807);padding:10px;margin:12px 0;color:#fff;text-align:left}
+.event-card img{width:118px;min-width:118px;height:118px;object-fit:cover;border-radius:14px;border:1px solid #6a4f2d}
+.event-copy{display:flex;flex-direction:column;justify-content:space-between;gap:6px;flex:1}
+.event-copy h3{margin:0;font-size:20px}
+.event-meta{color:#d6c7b1;line-height:1.45;font-size:14px}
+.badge{display:inline-block;padding:7px 10px;border-radius:999px;background:#17110b;border:1px solid #9a753a;color:#f1d59e;font-size:12px}
+.row{display:flex;align-items:center;gap:9px}
+.chat{max-width:84%;padding:11px 13px;border-radius:15px;background:#1c1815;margin:10px 0;line-height:1.35}
+.me{margin-left:auto;background:linear-gradient(90deg,#b47e35,#e4bd73);color:#15100a}
+.composer{position:sticky;bottom:0;display:flex;gap:8px;background:#050403;padding:10px 0}
+.composer input{flex:1;background:#0c0908;border:1px solid #77572f;color:#fff;border-radius:12px;padding:12px}
+.modal{position:fixed;inset:0;background:#000c;display:none;align-items:center;justify-content:center;z-index:100;padding:18px}
+.modal.on{display:flex}
+.modalbox{width:min(430px,100%);background:#0d0907;border:1px solid #9b7138;border-radius:18px;padding:16px;max-height:80dvh;overflow:auto}
+.citybtn{display:block;width:100%;margin:7px 0;padding:12px;border:1px solid #7b5c34;border-radius:12px;background:#0a0807;color:#f6e5c1;text-align:left}
+.code{position:absolute;z-index:40;left:11%;top:45.0%;width:78%;height:7.2%;border:1px solid #d4a660;border-radius:14px;background:rgba(7,5,4,.88);color:#f6e7c7;padding:0 16px;font-size:16px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#17100c;border:1px solid #9e773f;border-radius:999px;color:#f0d39c;padding:10px 14px;opacity:0;pointer-events:none;z-index:110;transition:.18s;white-space:nowrap}
+.toast.on{opacity:1}
+.filtered-members{display:none;position:absolute;z-index:35;left:2.5%;top:23.4%;width:95%;height:63.7%;background:#050403;padding:8px 5px 18px;overflow-y:auto;border-radius:4px}
+.filtered-members.on{display:block}
+.filtered-title{display:flex;align-items:center;justify-content:space-between;color:#e4ba70;font-size:14px;padding:2px 5px 10px}
+.filtered-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.filtered-card{border:1px solid #7d5d34;border-radius:12px;background:#0a0807;padding:0;overflow:hidden}
+.filtered-card img{display:block;width:100%;height:auto}
+.empty-city{grid-column:1/-1;border:1px solid #6f522f;border-radius:14px;padding:25px 14px;text-align:center;color:#c9bba7;background:#0c0907}
+.hide-like{position:absolute;z-index:25;left:34%;top:40.6%;width:31%;height:7.5%;border-radius:16px;background:linear-gradient(145deg,#14100d,#0b0807);border:1px solid #70512b}
+.slider{position:relative}
+.slider img{display:block;width:100%;height:230px;object-fit:cover;border-radius:18px;border:1px solid #6a4f2d}
+.slide-arrow{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:1px solid #b2884a;background:#0c0908cc;color:#f0d39c;font-size:24px}
+.slide-arrow.left{left:10px} .slide-arrow.right{right:10px}
+.dots{display:flex;justify-content:center;gap:6px;margin-top:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:#6f522d}
+.dot.on{background:#efc774}
+.members-pills{display:flex;flex-wrap:wrap;gap:8px}
+.member-pill{padding:8px 11px;border-radius:999px;border:1px solid #7f6036;background:#110d0b;color:#f6deb0;font-size:13px}
+.club-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.section-title{margin:14px 0 8px;color:#efc97d;font-weight:700}
+.suggest-shell{border:1px solid #9b743c;border-radius:18px;background:linear-gradient(145deg,rgba(26,18,12,.96),rgba(8,6,5,.96));overflow:hidden;box-shadow:0 0 24px rgba(224,181,106,.08)}
+.suggest-head{padding:20px 22px;font-size:20px;border-bottom:1px solid rgba(230,189,116,.18);color:#efc97d}
+.suggest-item{width:100%;padding:22px;border:0;border-top:1px solid rgba(230,189,116,.15);background:transparent;color:#f7efe4;text-align:left;font-size:19px;font-weight:600}
+.suggest-item:active{background:rgba(210,164,84,.10)}
+.suggest-bg{background:
+ radial-gradient(circle at 20% 15%, rgba(141,91,26,.20), transparent 32%),
+ radial-gradient(circle at 80% 10%, rgba(217,166,80,.12), transparent 28%),
+ linear-gradient(180deg,#0a0705,#040302 62%,#020201)}
+.club-badge{padding:7px 10px;border-radius:999px;background:#111;border:1px solid #765731;color:#f2d294;font-size:12px}
+.day-chip{padding:8px 12px;border-radius:999px;border:1px solid #8c6b3b;background:#120e0b;color:#f0cb7d}
+
+.form-label{display:block;color:#e7c37f;font-size:13px;margin:12px 2px 5px}
+.form-field{width:100%;padding:12px 13px;border-radius:12px;border:1px solid #76582f;background:#0a0807;color:#fff;outline:none}
+.form-field:focus{border-color:#d3a555;box-shadow:0 0 0 2px rgba(211,165,85,.12)}
+textarea.form-field{min-height:105px;resize:vertical}
+.admin-card{border:1px solid #76582f;border-radius:16px;background:linear-gradient(145deg,#17110d,#0a0705);padding:14px;margin:10px 0}
+.admin-card .type{color:#efc97d;font-weight:800}
+.admin-card .meta{color:#bba98d;font-size:12px;margin-top:4px}
+.admin-card .body{margin-top:10px;line-height:1.45;color:#eee3d4;white-space:pre-wrap}
+.counter{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#b9873f;color:#140d07;font-size:12px;font-weight:800}
+
+
+.profile-edit-hero{
+  border:1px solid #8b6635;border-radius:20px;padding:16px;margin-bottom:14px;
+  background:linear-gradient(145deg,rgba(26,18,12,.98),rgba(8,6,5,.98));
+  box-shadow:0 18px 40px rgba(0,0,0,.32)
+}
+.profile-edit-title{font:28px Georgia,serif;color:#f0ce89;margin:0 0 6px}
+.profile-edit-note{color:#bdae98;line-height:1.45;margin:0}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.interest-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.interest-chip{
+  border:1px solid #74552d;border-radius:999px;background:#0b0807;color:#dfd0b9;
+  padding:9px 12px;font-size:13px
+}
+.interest-chip.on{
+  background:linear-gradient(90deg,#a66f2b,#e5bc72);color:#160f09;border-color:#d8ac61;font-weight:800
+}
+.photo-uploader{
+  border:1px dashed #9d7439;border-radius:18px;padding:14px;background:#0b0807;
+  text-align:center;margin-top:8px
+}
+.photo-uploader input{display:none}
+.photo-add{
+  display:inline-flex;align-items:center;gap:7px;border:1px solid #9b743d;border-radius:999px;
+  padding:10px 14px;color:#f0d197;background:#120d09;cursor:pointer
+}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.photo-card{position:relative;border:1px solid #6e522f;border-radius:13px;overflow:hidden;background:#090706}
+.photo-card img{display:block;width:100%;height:112px;object-fit:cover}
+.photo-card .cover{
+  position:absolute;top:6px;left:6px;border:0;border-radius:999px;padding:5px 7px;
+  background:#0b0807dd;color:#efc97d;font-size:11px
+}
+.photo-card .remove{
+  position:absolute;top:6px;right:6px;width:27px;height:27px;border-radius:50%;
+  border:1px solid #a16464;background:#190b0bdd;color:#ffb1ab
+}
+.save-sticky{
+  position:sticky;bottom:10px;margin-top:16px;z-index:40;box-shadow:0 12px 30px rgba(0,0,0,.45)
+}
+.profile-cover{
+  width:100%;height:260px;object-fit:cover;border-radius:18px;border:1px solid #765932;margin-bottom:12px
+}
+.profile-interests{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.profile-pill{padding:8px 10px;border-radius:999px;border:1px solid #75572f;color:#e8cf9d;background:#100c09;font-size:12px}
+
+
+.search-help{color:#bfae94;font-size:12px;line-height:1.45;margin-top:8px}
+
+
+.admin-event-toolbar{
+  display:flex;gap:9px;align-items:center;justify-content:space-between;margin-bottom:12px
+}
+.admin-event-row{
+  border:1px solid #775831;border-radius:16px;background:linear-gradient(145deg,#17110d,#090705);
+  padding:11px;margin:9px 0
+}
+.admin-event-row .topline{display:flex;gap:10px;align-items:center}
+.admin-event-thumb{width:86px;height:86px;object-fit:cover;border-radius:12px;border:1px solid #694d2a;background:#120d09}
+.admin-event-info{flex:1;min-width:0}
+.admin-event-info b{display:block;color:#f1d49a;font-size:16px;margin-bottom:5px}
+.admin-event-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.danger{
+  border:1px solid #a15555;border-radius:12px;background:#170b0b;color:#ffaaa4;padding:11px;font-weight:700
+}
+.editbtn{
+  border:1px solid #94703b;border-radius:12px;background:#0c0907;color:#f0cf8e;padding:11px;font-weight:700
+}
+.event-admin-photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.event-admin-photo{
+  position:relative;border:1px solid #6d512e;border-radius:12px;overflow:hidden;background:#090705
+}
+.event-admin-photo img{display:block;width:100%;height:105px;object-fit:cover}
+.event-admin-photo button{
+  position:absolute;top:5px;right:5px;width:27px;height:27px;border-radius:50%;
+  border:1px solid #9e5555;background:#190a0add;color:#ffb2ac
+}
+
+
+.member-admin-row{
+  border:1px solid #775831;border-radius:16px;background:linear-gradient(145deg,#17110d,#090705);
+  padding:12px;margin:9px 0
+}
+.member-admin-row .member-title{color:#f1d49a;font-weight:800;font-size:16px}
+.member-admin-row .member-meta{color:#bba98d;font-size:12px;margin-top:4px;line-height:1.45}
+.member-admin-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.status{
+  display:inline-block;padding:6px 9px;border-radius:999px;border:1px solid #76572f;
+  color:#e8cd99;background:#100c09;font-size:11px;font-weight:800
+}
+.status.active{border-color:#4e8f67;color:#9fe0b5;background:#0b1710}
+.status.pending{border-color:#9b743d;color:#f0cf8e;background:#171108}
+.status.out{border-color:#8c5050;color:#ffaaa4;background:#170b0b}
+.codebox{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 11px;border:1px dashed #a77c3e;border-radius:13px;background:#0a0806;margin-top:9px
+}
+.codebox code{color:#f2d596;font-weight:800;letter-spacing:.08em;font-size:14px}
+.smallbtn{
+  border:1px solid #96713c;border-radius:10px;background:#0c0907;color:#f0cf8e;padding:9px 10px;font-size:12px
+}
+
+
+.invite-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+.invite-actions .wide{grid-column:1/-1}
+.smsbtn{
+  border:1px solid #9b743d;border-radius:12px;background:#120d09;color:#f1d59a;
+  padding:11px;font-weight:800
+}
+.wabtn{
+  border:1px solid #4d8a62;border-radius:12px;background:#0b1510;color:#a8e2b8;
+  padding:11px;font-weight:800
+}
+.linkbtn{
+  border:1px solid #765831;border-radius:12px;background:#0c0907;color:#ead1a1;
+  padding:11px;font-weight:800
+}
+.invite-preview{
+  border:1px solid #765831;border-radius:14px;background:#0a0806;padding:12px;
+  color:#ded0bc;line-height:1.45;font-size:13px;white-space:pre-wrap;margin-top:10px
+}
+
+
+.partner-tag{display:inline-block;margin-bottom:5px;padding:4px 7px;border-radius:999px;border:1px solid #7b5a31;background:#100b08;color:#e7c37f;font-size:10px;font-weight:800}
+.waiting-card{border:1px solid #8b6635;border-radius:18px;background:linear-gradient(145deg,#17110d,#090705);padding:16px;text-align:center}
+
+
+.notification-badge{
+  position:absolute;z-index:55;right:3.5%;top:2.2%;min-width:22px;height:22px;padding:0 6px;
+  display:none;align-items:center;justify-content:center;border-radius:999px;
+  background:#c99142;color:#120b06;font-size:11px;font-weight:900;border:1px solid #f0cf8c;
+  box-shadow:0 4px 14px rgba(0,0,0,.45);pointer-events:none
+}
+.notification-badge.on{display:flex}
+.notification-item{position:relative;padding-right:44px}
+.notification-item.unread{border-color:#c6964f;background:linear-gradient(145deg,#21170f,#0d0907)}
+.notification-dot{position:absolute;right:15px;top:16px;width:9px;height:9px;border-radius:50%;background:#e7bd72;box-shadow:0 0 10px rgba(231,189,114,.5)}
+.notification-time{display:block;color:#9f907b;font-size:11px;margin-top:7px}
+.notification-empty{border:1px solid #6f522f;border-radius:16px;padding:28px 16px;text-align:center;color:#bfae94;background:#0b0807}
+
+
+/* PAIRA v19.7 - Ayrıcalıklar preview. Existing home artwork is untouched. */
+.benefit-home-pill{
+  position:absolute;z-index:34;left:18%;top:18.1%;width:64%;height:4.1%;
+  border:1px solid rgba(232,190,112,.82);border-radius:999px;
+  background:linear-gradient(90deg,rgba(8,6,5,.92),rgba(38,25,13,.94),rgba(8,6,5,.92));
+  color:#f0cf8d;display:flex;align-items:center;justify-content:center;
+  letter-spacing:.03em;font-weight:800;font-size:13px;
+  box-shadow:0 8px 24px rgba(0,0,0,.45);
+}
+.benefit-home-pill:active{transform:scale(.985)}
+.benefit-hero{
+  border:1px solid #8c6736;border-radius:20px;padding:18px;margin:4px 0 14px;
+  background:
+    radial-gradient(circle at 85% 20%,rgba(210,159,73,.18),transparent 28%),
+    linear-gradient(145deg,#1b130d,#090605);
+}
+.benefit-hero .eyebrow{color:#d9aa59;letter-spacing:.18em;font-size:11px;font-weight:800}
+.benefit-hero h2{font:30px Georgia,serif;color:#f0cf8e;margin:7px 0 6px}
+.benefit-hero p{color:#c8b9a3;line-height:1.5;margin:0}
+.benefit-chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+.benefit-chips::-webkit-scrollbar{display:none}
+.benefit-chip{
+  flex:0 0 auto;border:1px solid #76572f;border-radius:999px;
+  background:#0c0907;color:#dbc7a6;padding:9px 12px;font-size:12px
+}
+.benefit-chip.on{
+  background:linear-gradient(90deg,#ad762f,#e6bd73);color:#160f09;
+  border-color:#e1b96f;font-weight:900
+}
+.benefit-card{
+  border:1px solid #72522d;border-radius:18px;padding:14px;margin:10px 0;
+  background:linear-gradient(145deg,#17110d,#090705)
+}
+.benefit-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.benefit-icon{
+  width:50px;height:50px;border-radius:15px;border:1px solid #7d5d34;
+  background:#0d0907;display:grid;place-items:center;font-size:25px;flex:0 0 auto
+}
+.benefit-card-copy{flex:1;min-width:0}
+.benefit-card h3{margin:0 0 4px;color:#f3dfb5;font-size:18px}
+.benefit-place{color:#a99a86;font-size:12px}
+.benefit-discount{
+  flex:0 0 auto;padding:7px 9px;border-radius:12px;
+  background:#2b1c0c;border:1px solid #b37d34;color:#f4cb79;
+  font-weight:900;font-size:13px
+}
+.benefit-desc{color:#d0c2ae;line-height:1.45;font-size:13px;margin:12px 0}
+.benefit-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.benefit-small{
+  border:1px solid #76572f;border-radius:12px;background:#0b0807;
+  color:#efd29a;padding:10px;font-weight:700
+}
+.benefit-note{
+  border:1px dashed #72532f;border-radius:15px;padding:13px;margin-top:14px;
+  color:#ad9e89;font-size:12px;line-height:1.5;background:#090705
+}
+
+
+/* PAIRA v19.8 - partner businesses + member QR */
+.partner-admin-toolbar{display:flex;gap:9px;margin:10px 0 14px}
+.partner-admin-toolbar .gold{flex:1}
+.partner-admin-row{border:1px solid #76582f;border-radius:16px;background:linear-gradient(145deg,#17110d,#090705);padding:13px;margin:10px 0}
+.partner-admin-row .partner-title{color:#f1d49a;font-size:17px;font-weight:800}
+.partner-admin-row .partner-meta{color:#bba98d;font-size:12px;line-height:1.45;margin-top:4px}
+.partner-admin-row .partner-offer{display:inline-block;margin-top:8px;padding:6px 9px;border-radius:999px;border:1px solid #9b7138;background:#160f09;color:#f1cc83;font-weight:800}
+.partner-admin-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:10px}
+.partner-photo{width:100%;max-height:170px;object-fit:cover;border-radius:14px;border:1px solid #6d512e;margin-top:10px}
+.qr-shell{background:#fff;border-radius:18px;padding:14px;width:230px;min-height:230px;margin:16px auto;display:grid;place-items:center}
+.qr-shell img,.qr-shell canvas{max-width:202px!important;max-height:202px!important}
+.qr-member{text-align:center;color:#f3dfb5;font-size:20px;font-weight:800}
+.qr-couple{text-align:center;color:#bdae98;margin-top:4px}
+.qr-expiry{text-align:center;color:#d8ae63;font-size:12px;margin-top:9px}
+.verify-good{border:1px solid #2f7a50;background:#0a1b12;color:#bdf3cf;border-radius:18px;padding:18px;text-align:center}
+.verify-bad{border:1px solid #8f3f3f;background:#1a0b0b;color:#ffc2bc;border-radius:18px;padding:18px;text-align:center}
+.verify-icon{font-size:48px;margin-bottom:8px}
+.partner-empty{border:1px dashed #71532f;border-radius:16px;padding:20px;text-align:center;color:#b9aa95}
+
+</style>
+<meta name="ala-visual-pass" content="lively-v1">
+</head>
+<body>
+<div id="app">
+<section id="splash" class="screen active"><div class="mock"><img src="__EMBEDDED_IMAGE_0__.webp" alt="PAIRA giriş"><button class="hot" style="left:16%;top:80%;width:68%;height:9%" onclick="show('invite')"></button></div></section>
+<section id="invite" class="screen"><div class="mock"><img src="__EMBEDDED_IMAGE_1__.webp" alt="Davet kodu"><button class="hot" style="left:2%;top:2%;width:16%;height:9%" onclick="show('splash')"></button><input id="inviteCode" class="code" value="PAIRA2026" placeholder="Davet kodunu girin"><button class="hot" style="left:15%;top:55%;width:70%;height:7%" onclick="enterApp()"></button></div></section>
+<section id="home" class="screen"><div class="mock"><img src="__EMBEDDED_IMAGE_2__.webp" alt="PAIRA ana sayfa">
+<button class="hot" style="left:2%;top:2%;width:16%;height:9%" onclick="openMenu()"></button><button class="hot" style="left:83%;top:2%;width:15%;height:9%" onclick="show('notifications')"></button>
+<button class="benefit-home-pill" onclick="show('benefits')">✨ PAIRA Ayrıcalıkları</button>
+<button class="hot" style="left:3%;top:23%;width:46%;height:16%" onclick="show('events')"></button><button class="hot" style="left:50%;top:23%;width:47%;height:16%" onclick="show('agenda')"></button>
+<button class="hot" style="left:3%;top:39%;width:31%;height:16%" onclick="show('members')"></button><button class="hot" style="left:34%;top:39%;width:33%;height:16%" onclick="show('clubs')"></button>
+<button class="hot" style="left:67%;top:39%;width:30%;height:16%" onclick="show('notifications')"></button><button class="hot" style="left:3%;top:55%;width:47%;height:12%" onclick="show('suggestions')"></button>
+<button class="hot" style="left:50%;top:55%;width:47%;height:12%" onclick="show('chats')"></button><button class="hot" style="left:3%;top:67%;width:94%;height:22%" onclick="openEvent('bogaz')"></button>
+<button class="hot" style="left:0%;top:90%;width:20%;height:10%" onclick="show('home')"></button><button class="hot" style="left:20%;top:90%;width:20%;height:10%" onclick="show('chats')"></button>
+<button class="hot" style="left:40%;top:90%;width:20%;height:10%" onclick="show('agenda')"></button><button class="hot" style="left:60%;top:90%;width:20%;height:10%" onclick="show('members')"></button>
+<button class="hot" style="left:80%;top:90%;width:20%;height:10%" onclick="show('profile')"></button></div></section>
+
+
+<section id="benefits" class="screen page">
+  <div class="head">
+    <button class="back" onclick="show('home')">‹</button>
+    <div><div class="logo" style="font-size:34px">PAIRA</div><div class="sub">AYRICALIKLAR</div></div>
+    <button class="circle" onclick="toast('Yeni ayrıcalıklar geldikçe burada göreceksiniz')">✦</button>
+  </div>
+
+  <div class="benefit-hero">
+    <div class="eyebrow">PAIRA SOCIAL CLUB</div>
+    <h2>Üyelere Özel</h2>
+    <p>Anlaşmalı mekanlar, mağazalar ve seçili deneyimlerde PAIRA üyelerine özel avantajlar.</p>
+  </div>
+
+  <div class="benefit-chips" id="benefitChips">
+    <button class="benefit-chip on" onclick="filterBenefits('all',this)">Tümü</button>
+    <button class="benefit-chip" onclick="filterBenefits('food',this)">☕ Cafe & Restoran</button>
+    <button class="benefit-chip" onclick="filterBenefits('shop',this)">🛍 Mağazalar</button>
+    <button class="benefit-chip" onclick="filterBenefits('care',this)">✦ Bakım</button>
+    <button class="benefit-chip" onclick="filterBenefits('stay',this)">⌂ Otel & Tatil</button>
+  </div>
+
+  <div id="benefitList">
+    <div class="partner-empty">Henüz yayınlanmış anlaşmalı isyeri yok.<br><br>Yeri anlaşmalı yerler eklendikçe burada görünecek.</div>
+  </div>
+
+  <div class="benefit-note">
+    Bu bölümde yalnızca yönetici tarafından eklenen gerçek ve aktif PAIRA anlaşmalı işyerleri gösterilir.
+  </div>
+</section>
+
+<section id="agenda" class="screen"><div class="mock"><img src="__EMBEDDED_IMAGE_3__.webp" alt="PAIRA ajanda">
+<button class="hot" style="left:2%;top:2%;width:16%;height:9%" onclick="openMenu()"></button><button class="hot" style="left:83%;top:2%;width:15%;height:9%" onclick="show('notifications')"></button>
+<button class="hot" style="left:56%;top:22%;width:8%;height:6%" onclick="openAgendaDay('4')"></button><button class="hot" style="left:67%;top:22%;width:8%;height:6%" onclick="openAgendaDay('5')"></button>
+<button class="hot" style="left:22%;top:30%;width:8%;height:6%" onclick="openAgendaDay('8')"></button><button class="hot" style="left:45%;top:30%;width:8%;height:6%" onclick="openAgendaDay('10')"></button>
+<button class="hot" style="left:67%;top:30%;width:13%;height:8%" onclick="openAgendaDay('12')"></button><button class="hot" style="left:90%;top:30%;width:8%;height:6%" onclick="openAgendaDay('13')"></button>
+<button class="hot" style="left:22%;top:37%;width:8%;height:6%" onclick="openAgendaDay('15')"></button><button class="hot" style="left:56%;top:37%;width:8%;height:6%" onclick="openAgendaDay('18')"></button>
+<button class="hot" style="left:67%;top:37%;width:8%;height:6%" onclick="openAgendaDay('19')"></button><button class="hot" style="left:22%;top:45%;width:8%;height:6%" onclick="openAgendaDay('22')"></button>
+<button class="hot" style="left:56%;top:45%;width:8%;height:6%" onclick="openAgendaDay('25')"></button><button class="hot" style="left:67%;top:45%;width:8%;height:6%" onclick="openAgendaDay('26')"></button>
+<button class="hot" style="left:3%;top:52%;width:94%;height:11%" onclick="openEvent('bogaz')"></button><button class="hot" style="left:3%;top:63%;width:94%;height:11%" onclick="openEvent('muzik')"></button>
+<button class="hot" style="left:3%;top:74%;width:94%;height:12%" onclick="openEvent('sunset')"></button><button class="hot" style="left:0%;top:90%;width:20%;height:10%" onclick="show('home')"></button>
+<button class="hot" style="left:20%;top:90%;width:20%;height:10%" onclick="show('chats')"></button><button class="hot" style="left:40%;top:90%;width:20%;height:10%" onclick="show('agenda')"></button>
+<button class="hot" style="left:60%;top:90%;width:20%;height:10%" onclick="show('members')"></button><button class="hot" style="left:80%;top:90%;width:20%;height:10%" onclick="show('profile')"></button></div></section>
+
+<section id="members" class="screen page">
+  <div class="head">
+    <button class="back" onclick="openMenu()">☰</button>
+    <div><div class="logo">PAIRA</div><div class="sub">ÜYELER</div></div>
+    <button class="circle" onclick="show('notifications')">🔔</button>
+  </div>
+  <div class="row" style="gap:8px;margin-bottom:12px">
+    <button class="out" style="flex:1" onclick="openMemberSearch()">⌕ Üye Ara</button>
+    <button class="out" style="flex:1" onclick="cityPicker()">⌖ Şehir</button>
+  </div>
+  <div id="membersList"></div>
+  <div id="filteredMembers" class="filtered-members">
+    <div class="filtered-title"><b id="filteredTitle">Üyeler</b><button class="circle" style="width:34px;height:34px;font-size:17px" onclick="clearCity()">×</button></div>
+    <div id="filteredGrid" class="filtered-grid"></div>
+  </div>
+</section>
+
+<section id="member" class="screen page">
+  <div class="head">
+    <button class="back" onclick="show('members')">‹</button>
+    <div><div class="logo">PAIRA</div><div class="sub">ÜYE PROFİLİ</div></div>
+    <span></span>
+  </div>
+  <div id="memberView"></div>
+</section>
+
+<section id="events" class="screen page"><div class="head"><button class="back" onclick="show('home')">‹</button><div><div class="logo">PAIRA</div><div class="sub">ETKİNLİKLER</div></div><button class="circle" onclick="show('notifications')">🔔</button></div><div id="eventsList"></div></section>
+<section id="dayAgenda" class="screen page"><div class="head"><button class="back" onclick="show('agenda')">‹</button><div><div class="logo">PAIRA</div><div class="sub">GÜNLÜK ETKİNLİKLER</div></div><span></span></div><div id="dayHeader" class="section-title"></div><div id="dayEventsWrap"></div></section>
+<section id="eventDetail" class="screen page"><div class="head"><button class="back" onclick="openMenu()">☰</button><div><div class="logo">PAIRA</div><div class="sub">ETKİNLİK DETAYI</div></div><button class="circle" onclick="show('notifications')">🔔</button></div><button class="out" style="margin-bottom:10px" onclick="closeEvent()">‹ Etkinliklere / Ajandaya Dön</button><div id="eventDetailWrap"></div></section>
+<section id="eventChat" class="screen page"><div class="head"><button class="back" onclick="show('eventDetail')">‹</button><div><div class="logo" style="font-size:34px">PAIRA</div><div class="sub">ETKİNLİK SOHBETİ</div></div><span></span></div><div id="eventChatTitle" class="section-title"></div><div id="eventPartnerIdentity" class="muted" style="font-size:12px;margin:-4px 0 10px"></div><div id="eventMsgs"></div><div class="composer"><input id="eventInput" placeholder="Mesaj yaz..."><button class="gold" style="width:64px" onclick="sendEventMessage()">➤</button></div></section>
+<section id="clubs" class="screen page"><div class="head"><button class="back" onclick="show('home')">‹</button><div><div class="logo">PAIRA</div><div class="sub">ETKİNLİK KULÜPLERİ</div></div><button class="circle" onclick="toast('＋ sadece yöneticiye açık')">＋</button></div><div id="clubsList"></div></section>
+<section id="clubDetail" class="screen page"><div class="head"><button class="back" onclick="show('clubs')">‹</button><div><div class="logo">PAIRA</div><div class="sub">KULÜP ODASI</div></div><span></span></div><div id="clubDetailWrap"></div></section>
+<section id="notifications" class="screen page"><div class="head"><button class="back" onclick="show('home')">‹</button><div><div class="logo">PAIRA</div><div class="sub">BİLDİRİMLER</div></div><button class="circle" onclick="markAllNotificationsRead()">✓</button></div>
+<div class="card" style="margin-bottom:12px"><div class="row" style="justify-content:space-between"><b>Bildirim Merkezi</b><span id="notificationUnreadCount" class="counter">0</span></div><div class="muted" style="font-size:12px;margin-top:6px">Yeni mesajlar, etkinlik duyuruları ve yönetici bildirimleri burada görünür.</div></div>
+<div id="notificationsList"><div class="notification-empty">Bildirimler yükleniyor...</div></div>
+</section>
+
+<section id="suggestions" class="screen page suggest-bg">
+  <div class="head">
+    <button class="back" onclick="show('home')">‹</button>
+    <div><div class="logo" style="font-size:34px">PAIRA</div><div class="sub">ÖNERİLER</div></div>
+    <span></span>
+  </div>
+  <div class="suggest-shell">
+    <div class="suggest-head">Lütfen Seçiniz</div>
+    <button class="suggest-item" onclick="openSuggestionForm('event')">Etkinlik Öner</button>
+    <button class="suggest-item" onclick="openSuggestionForm('friend')">Arkadaş Öner</button>
+    <button class="suggest-item" onclick="openSuggestionForm('rating')">Bizi Değerlendirin</button>
+    <button class="suggest-item" onclick="openSuggestionForm('complaint')">Şikâyet</button>
+  </div>
+</section>
+
+<section id="chats" class="screen page">
+  <div class="head"><button class="back" onclick="show('home')">‹</button><div><div class="logo">PAIRA</div><div class="sub">CHAT</div></div><span></span></div>
+  <div class="card"><b id="chatIdentityInfo">Partner kimliği aktif</b><div class="muted" style="font-size:12px;margin-top:4px">Aynı çift hesabındaki iki partner mesajlarda ayrı isimle görünür.</div></div>
+  <button class="listbtn" onclick="openGeneralChat()"><b>PAIRA Genel Sohbet</b><br><span class="muted">Tüm PAIRA üyeleri</span></button>
+  <div class="section-title">Kulüp Sohbetleri</div>
+  <div id="chatClubRooms"></div>
+  <div class="section-title">Etkinlik Sohbetleri</div>
+  <div id="chatEventRooms"></div>
+  <div class="card muted">Bireysel çift sohbetleri henüz aktif değil.</div>
+</section>
+
+<section id="generalChat" class="screen page">
+  <div class="head"><button class="back" onclick="show('chats')">‹</button><div><div class="logo">PAIRA</div><div class="sub">GENEL SOHBET</div></div><span></span></div>
+  <div class="muted" id="generalChatIdentity" style="font-size:12px;margin-bottom:10px"></div>
+  <div id="generalChatMsgs"><div class="muted" style="padding:12px 2px">Sohbet yükleniyor...</div></div>
+  <div class="composer"><input id="generalChatInput" placeholder="Genel sohbete mesaj yaz..."><button class="gold" style="width:64px" onclick="sendGeneralChatMessage()">➤</button></div>
+</section>
+
+<section id="dm" class="screen page">
+  <div class="head"><button class="back" onclick="show('chats')">‹</button><div><div class="logo">PAIRA</div><div class="sub">BİREYSEL SOHBET</div></div><span></span></div>
+  <div class="card muted" style="text-align:center;padding:26px 18px">Henüz gerçek bir üye sohbeti seçilmedi.</div>
+</section>
+
+
+
+<section id="adminPanel" class="screen page">
+  <div class="head">
+    <button class="back" onclick="show('home')">‹</button>
+    <div><div class="logo" style="font-size:34px">PAIRA</div><div class="sub">YÖNETİCİ PANELİ</div></div>
+    <button class="circle" onclick="pairaAdminLogout();show('home')">⏻</button>
+  </div>
+  <div class="card">
+    <h2 style="color:#efc97d;margin:0 0 6px">Yönetim Merkezi</h2>
+    <div class="muted">Üye, etkinlik, sohbet ve yönetici işlemleri.</div>
+  </div>
+  <button class="listbtn" onclick="pairaRequireAdmin('adminMembers')"><b>👥 Üye Yönetimi</b><br><span class="muted">Davet, onay, çıkarma ve üye kayıtları</span></button>
+  <button class="listbtn" onclick="pairaRequireAdmin('adminEvents')"><b>📅 Etkinlik Yönetimi</b><br><span class="muted">Etkinlik ekle, düzenle ve duyuru yayınla</span></button>
+  <button class="listbtn" onclick="show('adminPartners');renderPartnerAdmin()"><b>🤝 Üye İşyeri Yönetimi</b><br><span class="muted">Anlaşmalı mekan ekle, indirimi düzenle veya pasife al</span></button>
+  <button class="listbtn" onclick="show('chats')"><b>💬 Chat Odaları</b><br><span class="muted">Genel, kulüp ve etkinlik sohbetlerini aç</span></button>
+  <button class="listbtn" onclick="show('clubs')"><b>🛋 Etkinlik Kulüpleri</b><br><span class="muted">Kulüp odalarına ve kulüp sohbetlerine git</span></button>
+  <button class="listbtn" onclick="pairaRequireAdmin('adminInbox')"><b>📥 Yönetici Gelen Kutusu</b><br><span class="muted">Üyelerden gelen talep, öneri ve şikâyetler</span></button>
+  <button class="listbtn" onclick="pairaRequireAdmin('webPublish')"><b>🌐 Web’i Yayınla</b><br><span class="muted">Yayınlama araçları</span></button>
+  <button class="out" style="margin-top:14px" onclick="pairaAdminLogout();show('home')">Yönetici Oturumunu Kapat</button>
+</section>
+
+
+<section id="adminPartners" class="screen page">
+  <div class="head">
+    <button class="back" onclick="show('adminPanel')">‹</button>
+    <div><div class="logo" style="font-size:32px">PAIRA</div><div class="sub">ÜYE İŞYERLERİ</div></div>
+    <button class="circle" onclick="openPartnerBusinessForm()">＋</button>
+  </div>
+  <div class="card">
+    <h2 style="color:#efc97d;margin:0 0 6px">Anlaşmalı İşyerleri</h2>
+    <div class="muted">Buradan eklediğiniz aktif işyerleri PAIRA Ayrıcalıkları bölümünde tüm üyelere görünür.</div>
+  </div>
+  <div class="partner-admin-toolbar"><button class="gold" onclick="openPartnerBusinessForm()">＋ Yeni İşyeri Ekle</button></div>
+  <div id="partnerAdminList"><div class="partner-empty">İşyeri listesi yükleniyor…</div></div>
+</section>
+
+<section id="memberVerify" class="screen page">
+  <div class="head">
+    <div style="width:44px"></div>
+    <div><div class="logo" style="font-size:32px">PAIRA</div><div class="sub">ÜYELİK DOĞRULAMA</div></div>
+    <div style="width:44px"></div>
+  </div>
+  <div id="memberVerifyBox" class="card" style="text-align:center"><div class="muted">Üyelik kontrol ediliyor…</div></div>
+</section>
+
+<section id="adminMembers" class="screen page">
+  <div class="head">
+    <button class="back" onclick="show('home')">‹</button>
+    <div><div class="logo" style="font-size:34px">PAIRA</div><div class="sub">ÜYE YÖNETİMİ</div></div>
+    <button class="circle" onclick="openInviteMemberForm()">＋</button>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div>
+        <b>Üyeler & Davet Kodları</b>
+        <div class="muted" style="font-size:12px;margin-top:4px">
+          Yeni çift daveti oluşturabilir, üyeliğe alabilir veya üyelikten çıkarabilirsiniz.
+        </div>
+      </div>
+      <span id="adminMemberCount" class="counter">0</span>
+    </div>
+  </div>
+
+  <button class="gold" onclick="openInviteMemberForm()">＋ Yeni Davet Oluştur</button>
+
+  <div class="section-title">Bekleyen Davetler</div>
+  <div id="adminPendingMembers"></div>
+
+  <div class="section-title">Aktif Üyeler</div>
+  <div id="adminActiveMembers"></div>
+
+  <div class="section-title">Çıkarılan Üyeler</div>
+  <div id="adminRemovedMembers"></div>
+</section>
+<section id="adminEvents" class="screen page">
+  <div class="head">
+    <button class="back" onclick="show('home')">‹</button>
+    <div><div class="logo" style="font-size:34px">PAIRA</div><div class="sub">ETKİNLİK YÖNETİMİ</div></div>
+    <button class="circle" onclick="openAdminEventForm()">＋</button>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div>
+        <b>Etkinlikleri Yönet</b>
+        <div class="muted" style="font-size:12px;margin-top:4px">Yeni etkinlik ekleyebilir, düzenleyebilir veya yayından kaldırabilirsiniz.</div>
+      </div>
+      <span id="adminEventCount" class="counter">0</span>
+    </div>
+  </div>
+
+  <button class="gold" onclick="openAdminEventForm()">＋ Yeni Etkinlik Ekle</button>
+  <div id="adminEventList" style="margin-top:12px"></div>
+</section>
+<section id="adminInbox" class="screen page">
+  <div class="head">
+    <button class="back" onclick="show('home')">‹</button>
+    <div><div class="logo" style="font-size:34px">PAIRA</div><div class="sub">YÖNETİCİ GELEN KUTUSU</div></div>
+    <button class="circle" onclick="clearAdminInbox()">✓</button>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="row" style="justify-content:space-between">
+      <b>Üye Formları</b>
+      <span id="adminInboxCount" class="counter">0</span>
+    </div>
+    <p class="muted" style="margin-bottom:0">Etkinlik önerileri, arkadaş önerileri, değerlendirmeler ve şikâyetler burada görünür.</p>
+  </div>
+  <div id="adminInboxList"></div>
+</section>
+
+<section id="profile" class="screen page">
+  <div class="head">
+    <button class="back" onclick="show('home')">‹</button>
+    <div><div class="logo">PAIRA</div><div class="sub">PROFİL</div></div>
+    <button class="circle" onclick="show('settings')">⚙</button>
+  </div>
+  <div id="profileView"></div>
+</section>
+
+
+<section id="profileEdit" class="screen page">
+  <div class="head">
+    <button class="back" onclick="show('profile')">‹</button>
+    <div><div class="logo">PAIRA</div><div class="sub">PROFİL DÜZENLE</div></div>
+    <span></span>
+  </div>
+
+  <div class="profile-edit-hero">
+    <h2 class="profile-edit-title">Sizi Anlatalım</h2>
+    <p class="profile-edit-note">İstediğiniz alanları doldurun. Boş bıraktığınız bilgiler profilinizde görünmez.</p>
+  </div>
+
+  <label class="form-label">Çift adı</label>
+  <input id="pe_name" class="form-field" placeholder="Örn. Evren & Gamze">
+
+  <label class="form-label">Şehir</label>
+  <input id="pe_city" class="form-field" placeholder="İstanbul">
+
+  <label class="form-label">Çocuk sayısı</label>
+  <select id="pe_children" class="form-field">
+    <option value="">Belirtmek istemiyorum</option>
+    <option>Çocuk yok</option>
+    <option>1 çocuk</option>
+    <option>2 çocuk</option>
+    <option>3+</option>
+  </select>
+
+  <label class="form-label">Kendimizi anlatalım</label>
+  <textarea id="pe_about" class="form-field" placeholder="Nasıl bir çiftsiniz, nelerden hoşlanırsınız, nasıl insanlarla tanışmak istersiniz?"></textarea>
+
+  <label class="form-label">İlgi alanları</label>
+  <div id="pe_interests" class="interest-grid"></div>
+
+  <label class="form-label">Fotoğraflar</label>
+  <div class="photo-uploader">
+    <label class="photo-add" for="pe_photos">＋ Fotoğraf Ekle</label>
+    <input id="pe_photos" type="file" accept="image/*" multiple onchange="handleProfilePhotos(event)">
+    <div class="muted" style="font-size:12px;margin-top:8px">En fazla 5 fotoğraf. Bir fotoğrafı ana profil fotoğrafı seçebilirsiniz.</div>
+    <div id="pe_photo_grid" class="photo-grid"></div>
+  </div>
+
+  <button class="gold save-sticky" onclick="saveProfileEdit()">Profili Kaydet</button>
+</section>
+
+<section id="settings" class="screen page"><div class="head"><button class="back" onclick="show('profile')">‹</button><div><div class="logo">PAIRA</div><div class="sub">AYARLAR</div></div><span></span></div><button class="listbtn" onclick="show('profileEdit')">👤 Profilimi Düzenle</button><button class="listbtn" onclick="toast('Gizlilik ayarları açıldı')">🔒 Gizlilik ve Güvenlik</button><button class="listbtn" onclick="toast('Bildirim ayarları açıldı')">🔔 Bildirim Ayarları</button></section>
+
+<section id="gallery" class="screen page">
+  <div class="head">
+    <button class="back" onclick="show('profile')">‹</button>
+    <div><div class="logo">PAIRA</div><div class="sub">FOTOĞRAFLAR</div></div>
+    <span></span>
+  </div>
+  <div id="galleryView" class="photo-grid"></div>
+</section>
+
+</div>
+<div id="modal" class="modal"><div id="modalbox" class="modalbox"></div></div><div id="toast" class="toast"></div>
+
+<script>
+const DEFAULT_EVENTS = {"bogaz": {"id": "bogaz", "title": "Boğaz’da Akşam Yemeği", "date": "26 Eylül 2026", "time": "19:00 - 22:00", "location": "Beykoz, İstanbul", "capacity": "24 / 40 kişi", "desc": "Boğaz manzarasında seçkin çiftlerle keyifli bir akşam.", "images": ["__EMBEDDED_IMAGE_4__.webp", "__EMBEDDED_IMAGE_5__.webp", "__EMBEDDED_IMAGE_6__.webp"]}, "muzik": {"id": "muzik", "title": "Canlı Müzik Buluşması", "date": "12 Eylül 2026", "time": "21:00 - 00:00", "location": "Şişli, İstanbul", "capacity": "18 / 60 kişi", "desc": "Canlı müzik, kokteyller ve samimi sohbetler.", "images": ["__EMBEDDED_IMAGE_7__.webp", "__EMBEDDED_IMAGE_8__.webp", "__EMBEDDED_IMAGE_9__.webp"]}, "sunset": {"id": "sunset", "title": "Sunset Rooftop Gathering", "date": "12 Eylül 2026", "time": "17:00 - 20:00", "location": "Levent, İstanbul", "capacity": "32 / 50 kişi", "desc": "Gün batımında lounge eşliğinde sosyal buluşma.", "images": ["__EMBEDDED_IMAGE_10__.webp", "__EMBEDDED_IMAGE_11__.webp", "__EMBEDDED_IMAGE_12__.webp"]}, "brunch": {"id": "brunch", "title": "Pazar Gurme Brunch", "date": "5 Eylül 2026", "time": "11:00 - 14:00", "location": "Nişantaşı, İstanbul", "capacity": "16 / 24 kişi", "desc": "Hafta sonuna lezzet dolu bir başlangıç.", "images": ["__EMBEDDED_IMAGE_13__.webp", "__EMBEDDED_IMAGE_14__.webp", "__EMBEDDED_IMAGE_15__.webp"]}, "wine": {"id": "wine", "title": "Şarap & Sohbet", "date": "19 Eylül 2026", "time": "20:00 - 23:00", "location": "Galata, İstanbul", "capacity": "12 / 20 kişi", "desc": "Şarap eşleşmeleri ve samimi tanışmalar.", "images": ["__EMBEDDED_IMAGE_16__.webp", "__EMBEDDED_IMAGE_17__.webp", "__EMBEDDED_IMAGE_18__.webp"]}};
+let events = JSON.parse(localStorage.getItem('paira_events_v10') || 'null') || JSON.parse(JSON.stringify(DEFAULT_EVENTS));
+const agendaDays = {"4": ["brunch"], "5": ["brunch"], "8": ["muzik"], "10": ["sunset"], "12": ["muzik", "sunset", "bogaz"], "13": ["muzik"], "15": ["bogaz"], "18": ["wine"], "19": ["wine"], "22": ["bogaz"], "25": ["bogaz"], "26": ["bogaz"]};
+const membersData = [];
+const clubs = {
+  "gurme": {"title":"Gurme Kulübü","desc":"Lezzet buluşmaları ve yeni tatlar","defaultMembers":[],"defaultChat":[]},
+  "seyahat": {"title":"Seyahat Kulübü","desc":"Yeni rotalar ve hafta sonu kaçamakları","defaultMembers":[],"defaultChat":[]},
+  "sanat": {"title":"Sanat & Kültür","desc":"Sergi, konser ve kültür etkinlikleri","defaultMembers":[],"defaultChat":[]},
+  "wellness": {"title":"Wellness & Yaşam","desc":"İyi yaşam, spa ve özel deneyimler","defaultMembers":[],"defaultChat":[]}
+};
+const currentUser = "PAIRA Üyesi";
+const defaultState = {
+  joinedEvents: {},
+  eventMessages: {
+    bogaz:[], muzik:[], sunset:[], brunch:[], wine:[]
+  },
+  clubMembers: {
+    gurme:[...clubs.gurme.defaultMembers],
+    seyahat:[...clubs.seyahat.defaultMembers],
+    sanat:[...clubs.sanat.defaultMembers],
+    wellness:[...clubs.wellness.defaultMembers]
+  },
+  clubMessages: {
+    gurme:[...clubs.gurme.defaultChat],
+    seyahat:[...clubs.seyahat.defaultChat],
+    sanat:[...clubs.sanat.defaultChat],
+    wellness:[...clubs.wellness.defaultChat]
+  }
+};
+let state = JSON.parse(localStorage.getItem('paira_state_v5') || JSON.stringify(defaultState));
+if(!state.adminInbox) state.adminInbox = [];
+if(!state.clubMembers) state.clubMembers = defaultState.clubMembers;
+if(!state.clubMessages) state.clubMessages = defaultState.clubMessages;
+if(!state.eventMessages) state.eventMessages = defaultState.eventMessages;
+if(!state.joinedEvents) state.joinedEvents = {};
+
+if(!state.adminMembers){
+  state.adminMembers = membersData.map((m,i)=>({
+    id:'seed_'+i,
+    name:m.name,
+    city:m.city,
+    contact:'',
+    contact2:'',
+    partnerPhones:['',''],
+    status:'active',
+    inviteCode:'',
+    usedDevices:[],
+    partnerDevices:['',''],
+    maxUses:2,
+    createdAt:new Date().toLocaleString('tr-TR')
+  }));
+}
+if(!Array.isArray(state.adminMembers)) state.adminMembers = [];
+state.adminMembers = state.adminMembers.map(m => {
+  if(!Array.isArray(m.partnerPhones)) m.partnerPhones = [m.contact || '', m.contact2 || ''];
+  if(m.partnerPhones.length < 2) m.partnerPhones = [m.partnerPhones[0] || '', m.partnerPhones[1] || ''];
+  if(!Array.isArray(m.partnerDevices)) m.partnerDevices = Array.isArray(m.usedDevices) ? [m.usedDevices[0] || '', m.usedDevices[1] || ''] : ['', ''];
+  if(m.partnerDevices.length < 2) m.partnerDevices = [m.partnerDevices[0] || '', m.partnerDevices[1] || ''];
+  if(typeof m.contact === 'undefined') m.contact = m.partnerPhones[0] || '';
+  if(typeof m.contact2 === 'undefined') m.contact2 = m.partnerPhones[1] || '';
+  if(!Array.isArray(m.partnerNames)){
+    const parts = String(m.name || '').split('&').map(x=>x.trim()).filter(Boolean);
+    m.partnerNames = [parts[0] || '1. Partner', parts[1] || '2. Partner'];
+  }
+  return m;
+});
+
+
+// V16 cleanup: eski demo/robot üyeleri yalnızca yerel örnek verilerden temizle.
+const ROBOT_MEMBER_NAMES = new Set([
+  'Deniz & Mert','Ece & Kaan','Selin & Emre','Aylin & Burak','Zeynep & Can',
+  'Melis & Alp','Aslı & Kerem','Duygu & Mert','Elif & Serkan','Mert & Duygu'
+]);
+state.adminMembers = (state.adminMembers || []).filter(m => !String(m.id || '').startsWith('seed_'));
+Object.keys(state.clubMembers || {}).forEach(k => {
+  state.clubMembers[k] = (state.clubMembers[k] || []).filter(name => !ROBOT_MEMBER_NAMES.has(String(name)));
+});
+Object.keys(state.clubMessages || {}).forEach(k => {
+  state.clubMessages[k] = (state.clubMessages[k] || []).filter(m => !ROBOT_MEMBER_NAMES.has(String((m && m.name) || '')));
+});
+Object.keys(state.eventMessages || {}).forEach(k => {
+  state.eventMessages[k] = (state.eventMessages[k] || []).filter(m => !ROBOT_MEMBER_NAMES.has(String((m && m.name) || '')));
+});
+if(state.profile && state.profile.name === 'Ece & Kaan'){
+  state.profile.name=''; state.profile.city=''; state.profile.children=''; state.profile.about='';
+  state.profile.interests=[]; state.profile.photos=[]; state.profile.coverIndex=0;
+}
+try{ localStorage.setItem('paira_state_v5', JSON.stringify(state)); }catch(_e){}
+
+
+if(!state.profile){
+  state.profile = {
+    name:"",
+    city:"",
+    children:"",
+    about:"",
+    interests:[],
+    photos:[],
+    coverIndex:0
+  };
+}
+delete state.profile.age1;
+delete state.profile.age2;
+if(!Array.isArray(state.profile.interests)) state.profile.interests = [];
+if(!Array.isArray(state.profile.photos)) state.profile.photos = [];
+if(typeof state.profile.coverIndex !== 'number') state.profile.coverIndex = 0;
+
+let currentEvent = '';
+let currentSlide = 0;
+let eventReturnScreen = 'events';
+let currentClub = 'gurme';
+let historyStack = ['home'];
+
+function persist(){ localStorage.setItem('paira_state_v5', JSON.stringify(state)); }
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='profile'){ renderProfileView(); ensureSharedProfileSync(); }
+  if(id==='members'){ renderMembersView(); ensureSharedProfileSync(); ensureMembersDirectorySync(); }
+  if(id==='member'){ renderSelectedMemberView(); ensureSharedProfileSync(); ensureMembersDirectorySync(); }
+  if(id==='profileEdit'){ loadProfileEdit(); ensureSharedProfileSync(); }
+  if(id==='gallery'){ renderGalleryView(); ensureSharedProfileSync(); }
+  if(id==='notifications'){ ensureNotificationsSync(); renderNotifications(); }
+  if(['home','events','agenda','dayAgenda','eventDetail','eventChat','adminEvents'].includes(id)){ ensureEventsSync(); }
+  if(id==='adminEvents'){ ensureEventsSeededForAdmin(); }
+  if(id==='chats') renderChatsHub();
+  if(!['generalChat','eventChat','clubDetail'].includes(id) && realtimeChatUnsub) stopRealtimeChat();
+  if(historyStack[historyStack.length-1] !== id) historyStack.push(id);
+}
+function goBack(){
+  historyStack.pop();
+  const prev = historyStack.pop() || 'home';
+  show(prev);
+}
+let pendingInvitePartner = null;
+
+function chooseInvitePartner(rec, retryAfter=true){
+  modal(`<h2 style="color:#e7bd72;margin-top:0">Partner Seçimi</h2>
+    <div class="card">
+      <b>${escapeHtml(rec.name || 'Çift')}</b>
+      <p class="muted" style="margin-bottom:0">
+        Davet iki telefona ayrı gider. Lütfen bu telefonda hangi partnerin onay vereceğini seçin.
+      </p>
+    </div>
+    <button class="gold" onclick="setInvitePartnerAndContinue(1, ${retryAfter ? 'true' : 'false'})">1. Partner</button>
+    <button class="out" style="margin-top:8px" onclick="setInvitePartnerAndContinue(2, ${retryAfter ? 'true' : 'false'})">2. Partner</button>
+    <button class="out" style="margin-top:8px" onclick="closeModal()">İptal</button>`);
+}
+
+function setInvitePartnerAndContinue(partner, retryAfter){
+  pendingInvitePartner = partner;
+  closeModal();
+  if(retryAfter) enterApp();
+}
+
+async function enterApp(){
+  const v = document.getElementById('inviteCode').value.trim().toUpperCase();
+  if(v.length < 6) return toast('Davet kodunu kontrol et');
+
+  if(v === 'PAIRA2026'){
+    historyStack = ['home'];
+    show('home');
+    return;
+  }
+
+  let rec = null;
+
+  // Web davetlerinde daima Firebase'deki en güncel kaydı kullan.
+  // Eski telefon localStorage verisi, aktifleşmiş hesabın üstüne yazmaya çalışmasın.
+  try{
+    if(!window.PAIRA_FIREBASE_API){
+      await new Promise((resolve,reject)=>{
+        const t=setTimeout(()=>reject(new Error('Firebase hazır değil')),5000);
+        window.addEventListener('paira-firebase-ready',()=>{clearTimeout(t);resolve();},{once:true});
+      });
+    }
+    rec = await window.PAIRA_FIREBASE_API.getInvitation(v);
+    if(rec && rec.status !== 'removed'){
+      state.adminMembers = state.adminMembers || [];
+      const idx = state.adminMembers.findIndex(m => (m.inviteCode || '').toUpperCase() === v);
+      if(idx >= 0) state.adminMembers[idx] = rec;
+      else state.adminMembers.unshift(rec);
+    }
+  }catch(err){
+    console.warn('PAIRA invite lookup', err);
+    // Yalnız yerel dosya testlerinde eski local kayıtla devam etmeye izin ver.
+    if(location.protocol === 'file:' || location.protocol === 'content:'){
+      rec = (state.adminMembers || []).find(m => (m.inviteCode || '').toUpperCase() === v && m.status !== 'removed');
+    }
+    if(!rec){
+      toast('Davet Firebase’den doğrulanamadı');
+      return;
+    }
+  }
+
+  if(!rec || rec.status === 'removed'){
+    toast('Davet kodu geçersiz');
+    return;
+  }
+
+  rec.partnerPhones = rec.partnerPhones || [rec.contact || '', rec.contact2 || ''];
+  rec.partnerDevices = rec.partnerDevices || ['', ''];
+
+  // Daha önce onaylanmış telefon tekrar davet kodu seçmek zorunda kalmasın.
+  // Aktif çift hesabında cihaz hangi partnere kayıtlıysa doğrudan o kimlikle aç.
+  const returningDeviceId = getDeviceId();
+  const returningPartnerIndex = rec.partnerDevices.findIndex(d => d === returningDeviceId);
+  const invitationAlreadyActive = rec.status === 'active' || rec.partnerDevices.filter(Boolean).length >= 2;
+  if(invitationAlreadyActive){
+    if(returningPartnerIndex >= 0){
+      pendingInvitePartner = returningPartnerIndex + 1;
+      setDevicePartnerIdentity(rec, returningPartnerIndex);
+      state.adminMembers = state.adminMembers || [];
+      const activeIdx = state.adminMembers.findIndex(m => (m.inviteCode || m._firebaseId || '').toUpperCase() === v);
+      if(activeIdx >= 0) state.adminMembers[activeIdx] = rec;
+      else state.adminMembers.unshift(rec);
+      persist();
+      historyStack = ['home'];
+      show('home');
+      ensureSharedProfileSync();
+      toast('Ortak hesap açıldı ✓');
+      return;
+    }
+    toast('Bu çift hesabı iki onaylı telefona bağlı. Onaylı telefonlardan giriş yapın.');
+    return;
+  }
+
+  if(!pendingInvitePartner){
+    chooseInvitePartner(rec, true);
+    return;
+  }
+
+  const pIndex = pendingInvitePartner - 1;
+  const deviceId = returningDeviceId;
+
+  // Partner onayını atomik transaction ile yap. Böylece iki telefon birbirinin
+  // onayını eski veriyle ezemez ve aynı anda onay verseler bile 2/2 korunur.
+  try{
+    if(!window.PAIRA_FIREBASE_API) throw new Error('Firebase hazır değil');
+    rec = await window.PAIRA_FIREBASE_API.approveInvitationPartner(
+      rec.inviteCode || rec._firebaseId,
+      pIndex,
+      deviceId
+    );
+  }catch(err){
+    const msg = String(err?.message || err || '');
+    console.warn('PAIRA invite approval transaction', err);
+    if(msg.includes('DEVICE_OTHER_PARTNER')){
+      toast('Bu telefon diğer partner için kayıtlı. Kendi partner linkinizi açın.');
+    }else if(msg.includes('PARTNER_ALREADY_OTHER_DEVICE')){
+      toast('Bu partner başka bir telefonda zaten onaylandı.');
+    }else if(msg.includes('INVITE_REMOVED')){
+      toast('Bu davet artık aktif değil.');
+    }else{
+      toast('Onay Firebase’e kaydedilemedi');
+    }
+    return;
+  }
+
+  rec.partnerPhones = rec.partnerPhones || [rec.contact || '', rec.contact2 || ''];
+  rec.partnerDevices = rec.partnerDevices || ['', ''];
+  setDevicePartnerIdentity(rec, pIndex);
+
+  // Ekrandaki yerel kaydı da Firebase'deki son durumla eşitle.
+  state.adminMembers = state.adminMembers || [];
+  const recIdx = state.adminMembers.findIndex(m => (m.inviteCode || m._firebaseId || '').toUpperCase() === v);
+  if(recIdx >= 0) state.adminMembers[recIdx] = rec;
+  else state.adminMembers.unshift(rec);
+
+  const bothApproved = rec.partnerDevices.filter(Boolean).length >= 2;
+  persist();
+  renderAdminMembers();
+
+  if(!bothApproved){
+    modal(`<h2 style="color:#e7bd72;margin-top:0">Onayınız Tamam ✓</h2>
+      <div class="waiting-card">
+        <b>${escapeHtml((rec.partnerNames || [])[pIndex] || 'Partner')}</b>
+        <p class="muted">Sizin telefonunuz onaylandı.</p>
+        <p style="margin-bottom:0">Diğer partner kendi telefonundan onay verince çift hesabı açılacak.</p>
+      </div>
+      <button class="gold" style="margin-top:12px" onclick="closeModal()">Tamam</button>`);
+    return;
+  }
+
+  historyStack = ['home'];
+  show('home');
+  ensureSharedProfileSync();
+  toast('İki partner de onay verdi. Ortak hesap açıldı ✓');
+}
+function toast(t){
+  const z=document.getElementById('toast'); z.textContent=t; z.classList.add('on');
+  clearTimeout(window._tt); window._tt=setTimeout(()=>z.classList.remove('on'),1500);
+}
+function modal(html){ document.getElementById('modalbox').innerHTML=html; document.getElementById('modal').classList.add('on'); }
+function closeModal(){ document.getElementById('modal').classList.remove('on'); }
+document.getElementById('modal').addEventListener('click', e=>{ if(e.target.id==='modal') closeModal(); });
+
+
+function filterBenefits(cat, btn){
+  document.querySelectorAll('#benefitChips .benefit-chip').forEach(x=>x.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  document.querySelectorAll('#benefitList [data-benefit-cat]').forEach(card=>{
+    card.style.display = (cat==='all' || card.dataset.benefitCat===cat) ? '' : 'none';
+  });
+}
+function benefitPreview(){
+  modal(`<h2 style="color:#e7bd72;margin-top:0">PAIRA Üye Ayrıcalığı</h2>
+    <div class="card">
+      <b>Üyelik doğrulaması</b>
+      <p class="muted" style="margin-bottom:0">Gerçek anlaşmalı işletmeleri eklediğimizde burada üyeye özel doğrulama ve kullanım bilgisi gösterilecek.</p>
+    </div>
+    <button class="gold" onclick="closeModal()">Tamam</button>`);
+}
+function benefitLocationPreview(){
+  toast('Gerçek mekan eklenince yol tarifi aktif olacak');
+}
+
+function openMenu(){
+  modal(`<h2 style="color:#e7bd72">PAIRA</h2>
+  <button class="citybtn" onclick="closeModal();show('home')">Ana Sayfa</button>
+  <button class="citybtn" onclick="closeModal();show('events')">Etkinlikler</button>
+  <button class="citybtn" onclick="closeModal();show('agenda')">Ajanda</button>
+  <button class="citybtn" onclick="closeModal();show('members')">Üyeler</button>
+  <button class="citybtn" onclick="closeModal();show('clubs')">Etkinlik Kulüpleri</button>
+  <button class="citybtn" onclick="closeModal();show('benefits')">✨ PAIRA Ayrıcalıkları</button>
+  <button class="citybtn" onclick="closeModal();show('chats')">Chat</button>
+  <button class="citybtn" onclick="closeModal();show('profile')">Profil</button>
+  <button class="citybtn" onclick="closeModal();pairaOpenAdminLogin()">🔐 Yönetici Girişi / Paneli</button>
+  <button class="citybtn" onclick="closeModal();pairaRequireAdmin('adminMembers')">Üye Yönetimi</button>
+  <button class="citybtn" onclick="closeModal();pairaRequireAdmin('adminEvents')">Etkinlik Yönetimi</button>
+  <button class="citybtn" onclick="closeModal();pairaRequireAdmin('adminInbox')">Yönetici Gelen Kutusu <span id="menuAdminCount" class="counter" style="float:right">0</span></button>
+  <button class="citybtn" onclick="closeModal();pairaRequireAdmin('webPublish')">Web’i Yayınla</button>`);
+}
+
+
+let selectedMember = 'self';
+let directoryMembers = [];
+let membersDirectoryUnsub = null;
+let membersDirectorySeq = 0;
+let membersDirectoryReady = false;
+
+function memberCardFromProfile(profile){
+  const p = profile || {};
+  const id = String(p._firebaseId || '').trim();
+  if(!id) return null;
+  const photos = Array.isArray(p.photos) ? p.photos.filter(Boolean) : [];
+  const coverIndex = Math.max(0, Math.min(Number.isInteger(p.coverIndex) ? p.coverIndex : 0, Math.max(photos.length-1,0)));
+  return {
+    id,
+    name:String(p.name || 'PAIRA Üyesi').trim() || 'PAIRA Üyesi',
+    city:String(p.city || '').trim(),
+    img:photos[coverIndex] || '',
+    profile:p
+  };
+}
+
+function currentCoupleMember(){
+  const p = state.profile || {};
+  const me = currentChatIdentity();
+  const id = sharedProfileAccountId() || 'self';
+  const name = String(p.name || me.coupleName || 'PAIRA Üyesi').trim();
+  const city = String(p.city || '').trim();
+  const photos = Array.isArray(p.photos) ? p.photos : [];
+  const coverIndex = Math.max(0, Math.min(Number.isInteger(p.coverIndex) ? p.coverIndex : 0, Math.max(photos.length-1,0)));
+  const img = photos[coverIndex] || defaultProfilePhoto() || '';
+  return { id, name, city, img, profile:p, isSelf:true };
+}
+
+function realMembersData(){
+  const self = currentCoupleMember();
+  const byId = new Map();
+  (directoryMembers || []).forEach(m=>{
+    if(m && m.id) byId.set(String(m.id), m);
+  });
+  // Kendi profilimiz Firestore anlık görüntüsünden daha yeniyse yerel ortak profili kullan.
+  byId.set(String(self.id), self);
+  return [...byId.values()].sort((a,b)=>{
+    if(a.isSelf && !b.isSelf) return -1;
+    if(b.isSelf && !a.isSelf) return 1;
+    return String(a.name || '').localeCompare(String(b.name || ''), 'tr');
+  });
+}
+
+async function applyMembersDirectorySnapshot(rows, seq){
+  try{
+    const api = await waitForPairaFirebaseApi();
+    const checked = await Promise.all((rows || []).map(async profile=>{
+      const id = String(profile?._firebaseId || '').trim();
+      if(!id) return null;
+      try{
+        const inv = await api.getInvitation(id);
+        if(!inv) return null;
+        const devices = Array.isArray(inv.partnerDevices) ? inv.partnerDevices.filter(Boolean) : [];
+        const active = inv.status !== 'removed' && (inv.status === 'active' || devices.length >= 2);
+        return active ? memberCardFromProfile(profile) : null;
+      }catch(_){
+        return null;
+      }
+    }));
+    if(seq !== membersDirectorySeq) return;
+    directoryMembers = checked.filter(Boolean);
+    membersDirectoryReady = true;
+    const active = document.querySelector('.screen.active');
+    if(active && active.id === 'members') renderMembersView();
+    if(active && active.id === 'member') renderSelectedMemberView();
+  }catch(err){
+    console.warn('PAIRA member directory filter', err);
+  }
+}
+
+async function ensureMembersDirectorySync(){
+  if(membersDirectoryUnsub) return;
+  try{
+    const api = await waitForPairaFirebaseApi();
+    membersDirectoryUnsub = api.subscribeCoupleProfiles((rows)=>{
+      const seq = ++membersDirectorySeq;
+      applyMembersDirectorySnapshot(rows, seq);
+    },(err)=>{
+      membersDirectoryReady = true;
+      console.warn('PAIRA member directory sync', err);
+      const active = document.querySelector('.screen.active');
+      if(active && active.id === 'members') renderMembersView();
+    });
+  }catch(err){
+    membersDirectoryReady = true;
+    console.warn('PAIRA member directory start', err);
+  }
+}
+
+function renderMembersView(){
+  const wrap = document.getElementById('membersList');
+  if(!wrap) return;
+  const list = realMembersData();
+  const selfId = String(currentCoupleMember().id);
+  wrap.innerHTML = list.map(m=>`
+    <button class="event-card" style="width:100%" onclick="openRealMember('${m.id}')">
+      ${m.img ? `<img src="${m.img}" alt="${escapeHtml(m.name)}">` : `<div style="width:118px;min-width:118px;height:118px;border-radius:14px;border:1px solid #6a4f2d;display:grid;place-items:center;font-size:34px">♙</div>`}
+      <div class="event-copy">
+        <div><h3>${escapeHtml(m.name)}</h3>${m.city ? `<div class="event-meta">📍 ${escapeHtml(m.city)}</div>` : ''}</div>
+        <span class="badge">${String(m.id)===selfId ? 'Sizin çift hesabınız' : 'Aktif üye'}</span>
+      </div>
+    </button>
+  `).join('') + `
+    <div class="card" style="text-align:center;padding:18px">
+      <div class="muted">${membersDirectoryReady ? `${list.length} aktif çift • Yeni onaylanan çiftler otomatik olarak burada görünür.` : 'Aktif üyeler Firebase’den yükleniyor...'}</div>
+    </div>`;
+}
+
+function openRealMember(id){
+  selectedMember = id || 'self';
+  show('member');
+}
+
+function renderSelectedMemberView(){
+  const wrap = document.getElementById('memberView');
+  if(!wrap) return;
+  const list = realMembersData();
+  const m = list.find(x=>String(x.id)===String(selectedMember)) || list[0];
+  if(!m){
+    wrap.innerHTML = '<div class="card muted">Üye profili bulunamadı.</div>';
+    return;
+  }
+  const p = m.profile || {};
+  const photos = Array.isArray(p.photos) ? p.photos : [];
+  const cover = m.img || '';
+  wrap.innerHTML = `
+    ${cover ? `<img class="profile-cover" src="${cover}" alt="${escapeHtml(m.name)}">` : ''}
+    <div class="card">
+      <h2>${escapeHtml(m.name)}</h2>
+      ${m.city ? `<p>📍 ${escapeHtml(m.city)}</p>` : ''}
+      ${p.children ? `<p>👶 ${escapeHtml(p.children)}</p>` : ''}
+      ${p.about ? `<p class="muted">${escapeHtml(p.about)}</p>` : ''}
+      ${(p.interests||[]).length ? `<div class="profile-interests">${p.interests.map(x=>`<span class="profile-pill">${escapeHtml(x)}</span>`).join('')}</div>` : ''}
+    </div>
+    ${photos.length > 1 ? `<div class="photo-grid">${photos.map(src=>`<div class="photo-card"><img src="${src}" alt="Üye fotoğrafı"></div>`).join('')}</div>` : ''}`;
+}
+
+function openMemberSearch(){
+  modal(`<h2 style="color:#e7bd72;margin-top:0">Üye Ara</h2>
+    <label class="form-label">İsim veya şehir</label>
+    <input id="memberSearchQuery" class="form-field" placeholder="Örn. Evren, Gamze, İstanbul"
+      onkeydown="if(event.key==='Enter'){performMemberSearch()}">
+    <div class="search-help">Çift adı, kişi adı veya şehir yazarak arama yapabilirsiniz.</div>
+    <button class="gold" style="margin-top:14px" onclick="performMemberSearch()">Ara</button>
+    <button class="out" style="margin-top:8px" onclick="closeModal()">İptal</button>`);
+  setTimeout(()=>{
+    const el = document.getElementById('memberSearchQuery');
+    if(el) el.focus();
+  }, 50);
+}
+
+function renderMemberOverlay(list, titleText){
+  const wrap = document.getElementById('filteredMembers');
+  const grid = document.getElementById('filteredGrid');
+  const title = document.getElementById('filteredTitle');
+
+  title.textContent = titleText;
+  grid.innerHTML = list.length
+    ? list.map((m)=>`
+        <button class="filtered-card" onclick="openRealMember('${m.id || 'self'}')">
+          ${m.img ? `<img src="${m.img}" alt="${escapeHtml(m.name)}">` : `<div style="height:105px;display:grid;place-items:center;font-size:28px">♙</div>`}
+          <div style="padding:8px;color:#f0d39c;font-size:12px">${escapeHtml(m.name)}</div>
+        </button>
+      `).join('')
+    : '<div class="empty-city">Eşleşen üye bulunamadı.</div>';
+
+  wrap.classList.add('on');
+}
+
+function performMemberSearch(){
+  const input = document.getElementById('memberSearchQuery');
+  const q = input ? input.value.trim().toLocaleLowerCase('tr-TR') : '';
+  if(!q){
+    toast('Arama için bir isim veya şehir yaz');
+    return;
+  }
+
+  const list = realMembersData().filter(m => {
+    const name = (m.name || '').toLocaleLowerCase('tr-TR');
+    const city = (m.city || '').toLocaleLowerCase('tr-TR');
+    return name.includes(q) || city.includes(q);
+  });
+
+  closeModal();
+  renderMemberOverlay(list, `"${q}" • ${list.length} çift`);
+  toast(list.length ? 'Arama sonuçları listelendi' : 'Sonuç bulunamadı');
+}
+
+function cityPicker(){
+  const cities = [...new Set(realMembersData().map(m=>String(m.city || '').trim()).filter(Boolean))]
+    .sort((a,b)=>a.localeCompare(b,'tr'));
+  modal(`<h2>Şehir</h2>
+    <button class="citybtn" onclick="closeModal();clearCity()">Tümü</button>
+    ${cities.map(city=>`<button class="citybtn" onclick="closeModal();selectCity('${city.replace(/'/g,"\\'")}')">${escapeHtml(city)}</button>`).join('') || '<div class="muted">Henüz şehir bilgisi olan üye yok.</div>'}`);
+}
+function selectCity(city){
+  const list = realMembersData().filter(m=>m.city===city);
+  renderMemberOverlay(list, city+' • '+list.length+' çift');
+  toast(city+' seçildi');
+}
+function clearCity(){ document.getElementById('filteredMembers').classList.remove('on'); toast('Tüm şehirler'); }
+function reportMenu(){
+  modal(`<h2>Üye İşlemleri</h2>
+  <button class="citybtn" onclick="closeModal();toast('Şikâyet kaydedildi')">⚠ Şikâyet Et</button>
+  <button class="citybtn" onclick="closeModal();toast('Kullanıcı engellendi')">⊘ Engelle</button>
+  <button class="citybtn" onclick="closeModal()">İptal</button>`);
+}
+let realtimeChatUnsub = null;
+let realtimeChatKey = '';
+
+function waitForPairaFirebaseApi(){
+  if(window.PAIRA_FIREBASE_API) return Promise.resolve(window.PAIRA_FIREBASE_API);
+  return new Promise((resolve,reject)=>{
+    const timer=setTimeout(()=>reject(new Error('Firebase hazır değil')),7000);
+    window.addEventListener('paira-firebase-ready',()=>{
+      clearTimeout(timer);
+      resolve(window.PAIRA_FIREBASE_API);
+    },{once:true});
+  });
+}
+
+function stopRealtimeChat(){
+  if(typeof realtimeChatUnsub === 'function'){
+    try{ realtimeChatUnsub(); }catch(_){ }
+  }
+  realtimeChatUnsub = null;
+  realtimeChatKey = '';
+}
+
+function renderRealtimeMessages(boxId, messages){
+  const box=document.getElementById(boxId);
+  if(!box) return;
+  if(!messages.length){
+    box.innerHTML='<div class="muted" style="padding:12px 2px">Henüz mesaj yok.</div>';
+    return;
+  }
+  box.innerHTML=messages.map(m=>`
+    <div class="chat ${isMyMessage(m)?'me':''}">
+      <div class="partner-tag">${escapeHtml(messageSenderLabel(m))}</div>
+      <div>${escapeHtml(m.text || '')}</div>
+    </div>`).join('');
+  setTimeout(()=>window.scrollTo(0,document.body.scrollHeight),30);
+}
+
+async function startRealtimeChat(kind, roomId, boxId){
+  const key=`${kind}:${roomId}:${boxId}`;
+  if(realtimeChatKey===key && realtimeChatUnsub) return;
+  stopRealtimeChat();
+  realtimeChatKey=key;
+  const box=document.getElementById(boxId);
+  if(box) box.innerHTML='<div class="muted" style="padding:12px 2px">Sohbet yükleniyor...</div>';
+  try{
+    const api=await waitForPairaFirebaseApi();
+    realtimeChatUnsub=api.subscribeChatMessages(kind,roomId,
+      msgs=>renderRealtimeMessages(boxId,msgs),
+      err=>{
+        console.warn('PAIRA realtime chat',err);
+        if(box) box.innerHTML='<div class="muted" style="padding:12px 2px">Chat bağlantısı kurulamadı.</div>';
+      });
+  }catch(err){
+    console.warn('PAIRA realtime chat start',err);
+    if(box) box.innerHTML='<div class="muted" style="padding:12px 2px">Chat bağlantısı kurulamadı.</div>';
+  }
+}
+
+
+const NOTIFICATION_STARTED_KEY = 'paira_notifications_started_v18';
+const NOTIFICATION_LAST_READ_KEY = 'paira_notifications_last_read_v18';
+let notificationStartedAt = Number(localStorage.getItem(NOTIFICATION_STARTED_KEY) || 0);
+if(!notificationStartedAt){
+  notificationStartedAt = Date.now();
+  localStorage.setItem(NOTIFICATION_STARTED_KEY, String(notificationStartedAt));
+}
+let notificationLastRead = Number(localStorage.getItem(NOTIFICATION_LAST_READ_KEY) || notificationStartedAt);
+let systemNotificationRows = [];
+let chatNotificationRows = new Map();
+let systemNotificationUnsub = null;
+let chatNotificationUnsubs = [];
+let notificationsSyncStarted = false;
+let currentNotificationFeed = [];
+
+function ensureHomeNotificationBadge(){
+  const home = document.getElementById('home');
+  const mock = home && home.querySelector('.mock');
+  if(!mock || document.getElementById('homeNotificationBadge')) return;
+  const badge = document.createElement('span');
+  badge.id = 'homeNotificationBadge';
+  badge.className = 'notification-badge';
+  badge.textContent = '0';
+  mock.appendChild(badge);
+}
+
+function notificationTimeText(ts){
+  const n = Number(ts || 0);
+  if(!n) return '';
+  try{
+    return new Date(n).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  }catch(_){ return ''; }
+}
+
+function roomTitle(kind, roomId){
+  if(kind === 'event') return (events[roomId] && events[roomId].title) || 'Etkinlik Sohbeti';
+  if(kind === 'club') return (clubs[roomId] && clubs[roomId].title) || 'Kulüp Sohbeti';
+  if(kind === 'general') return 'PAIRA Genel Sohbet';
+  return 'Sohbet';
+}
+
+function buildNotificationFeed(){
+  const myDevice = getDeviceId();
+  const systemRows = (systemNotificationRows || []).map(n=>({
+    id:'sys_'+String(n.id || n._firebaseId || n.clientAt || Math.random()),
+    source:'system',
+    type:String(n.type || 'announcement'),
+    title:String(n.title || 'PAIRA Bildirimi'),
+    body:String(n.body || ''),
+    eventId:String(n.eventId || ''),
+    clientAt:Number(n.clientAt || 0)
+  }));
+
+  const chatRows = [];
+  chatNotificationRows.forEach((messages,key)=>{
+    const [kind,roomId] = key.split(':');
+    (messages || []).forEach(m=>{
+      const ts = Number(m.clientAt || 0);
+      if(!ts || ts < notificationStartedAt) return;
+      if(String(m.deviceId || '') === String(myDevice || '')) return;
+      chatRows.push({
+        id:'chat_'+kind+'_'+roomId+'_'+String(m.id || ts),
+        source:'chat',
+        type:'message',
+        kind,
+        roomId,
+        title:`💬 ${roomTitle(kind,roomId)}`,
+        body:`${String(m.partnerName || 'Partner')} • ${String(m.coupleName || 'Çift')}: ${String(m.text || '')}`,
+        clientAt:ts
+      });
+    });
+  });
+
+  const seen = new Set();
+  currentNotificationFeed = [...systemRows,...chatRows]
+    .filter(n=>n.clientAt > 0)
+    .sort((a,b)=>b.clientAt-a.clientAt)
+    .filter(n=>{ if(seen.has(n.id)) return false; seen.add(n.id); return true; })
+    .slice(0,120);
+  return currentNotificationFeed;
+}
+
+function updateNotificationCounters(){
+  ensureHomeNotificationBadge();
+  const feed = buildNotificationFeed();
+  const unread = feed.filter(n=>n.clientAt > notificationLastRead).length;
+  const a = document.getElementById('notificationUnreadCount');
+  if(a) a.textContent = unread;
+  const b = document.getElementById('homeNotificationBadge');
+  if(b){
+    b.textContent = unread > 99 ? '99+' : String(unread);
+    b.classList.toggle('on', unread > 0);
+  }
+}
+
+function renderNotifications(){
+  updateNotificationCounters();
+  const wrap = document.getElementById('notificationsList');
+  if(!wrap) return;
+  const feed = currentNotificationFeed;
+  if(!feed.length){
+    wrap.innerHTML = '<div class="notification-empty">Henüz yeni bildirim yok.</div>';
+    return;
+  }
+  wrap.innerHTML = feed.map((n,i)=>{
+    const unread = n.clientAt > notificationLastRead;
+    const icon = n.type === 'event_new' ? '🗓' : n.type === 'event_update' ? '✏️' : n.type === 'announcement' ? '📣' : '';
+    const title = icon && !String(n.title).startsWith(icon) ? `${icon} ${n.title}` : n.title;
+    return `<button class="listbtn notification-item ${unread?'unread':''}" onclick="openNotificationItem(${i})">
+      <b>${escapeHtml(title)}</b><br>
+      <span class="muted">${escapeHtml(n.body || '')}</span>
+      <span class="notification-time">${escapeHtml(notificationTimeText(n.clientAt))}</span>
+      ${unread?'<span class="notification-dot"></span>':''}
+    </button>`;
+  }).join('');
+}
+
+function markAllNotificationsRead(){
+  notificationLastRead = Date.now();
+  localStorage.setItem(NOTIFICATION_LAST_READ_KEY, String(notificationLastRead));
+  renderNotifications();
+  toast('Tüm bildirimler okundu ✓');
+}
+
+function openNotificationItem(index){
+  const n = currentNotificationFeed[index];
+  if(!n) return;
+  if(n.source === 'chat'){
+    if(n.kind === 'event' && events[n.roomId]) return openEventChat(n.roomId);
+    if(n.kind === 'club' && clubs[n.roomId]) return openClub(n.roomId);
+    return show('chats');
+  }
+  if((n.type === 'event_new' || n.type === 'event_update')){
+    if(n.eventId && events[n.eventId]) return openEvent(n.eventId);
+    show('events');
+    toast('Etkinlikler ekranı açıldı');
+    return;
+  }
+}
+
+function stopNotificationChatSubscriptions(){
+  chatNotificationUnsubs.forEach(fn=>{ try{ fn(); }catch(_){} });
+  chatNotificationUnsubs = [];
+  chatNotificationRows.clear();
+}
+
+async function startNotificationChatSubscriptions(api){
+  stopNotificationChatSubscriptions();
+  const rooms = [['general','main']];
+  Object.keys(events || {}).forEach(id=>rooms.push(['event',id]));
+  Object.keys(clubs || {}).forEach(id=>rooms.push(['club',id]));
+  rooms.forEach(([kind,roomId])=>{
+    try{
+      const unsub = api.subscribeChatMessages(kind,roomId,(rows)=>{
+        chatNotificationRows.set(`${kind}:${roomId}`, rows || []);
+        updateNotificationCounters();
+        const active = document.querySelector('.screen.active');
+        if(active && active.id === 'notifications') renderNotifications();
+      },err=>console.warn('PAIRA notification chat sync',kind,roomId,err));
+      chatNotificationUnsubs.push(unsub);
+    }catch(err){ console.warn('PAIRA notification room start',kind,roomId,err); }
+  });
+}
+
+async function ensureNotificationsSync(){
+  if(notificationsSyncStarted) return;
+  notificationsSyncStarted = true;
+  try{
+    const api = await waitForPairaFirebaseApi();
+    systemNotificationUnsub = api.subscribeSystemNotifications((rows)=>{
+      systemNotificationRows = rows || [];
+      updateNotificationCounters();
+      const active = document.querySelector('.screen.active');
+      if(active && active.id === 'notifications') renderNotifications();
+    },err=>{
+      console.warn('PAIRA system notification sync',err);
+      notificationsSyncStarted = false;
+    });
+    await startNotificationChatSubscriptions(api);
+  }catch(err){
+    console.warn('PAIRA notification sync start',err);
+    notificationsSyncStarted = false;
+  }
+}
+
+async function refreshNotificationChatSubscriptions(){
+  try{
+    const api = await waitForPairaFirebaseApi();
+    await startNotificationChatSubscriptions(api);
+  }catch(err){ console.warn('PAIRA notification room refresh',err); }
+}
+
+async function publishSystemNotification(payload){
+  try{
+    const api = await waitForPairaFirebaseApi();
+    await api.createSystemNotification(payload);
+    return true;
+  }catch(err){
+    console.warn('PAIRA publish notification',err);
+    toast('Bildirim yayınlanamadı');
+    return false;
+  }
+}
+
+function openAdminAnnouncementForm(){
+  modal(`<h2 style="color:#e7bd72;margin-top:0">Üyelere Duyuru Gönder</h2>
+    <label class="form-label">Başlık</label>
+    <input id="an_title" class="form-field" maxlength="120" placeholder="Örn. PAIRA duyurusu">
+    <label class="form-label">Mesaj</label>
+    <textarea id="an_body" class="form-field" maxlength="800" placeholder="Üyelere iletilecek duyuru"></textarea>
+    <button class="gold" style="margin-top:14px" onclick="sendAdminAnnouncement()">📣 Duyuruyu Yayınla</button>
+    <button class="out" style="margin-top:8px" onclick="closeModal()">İptal</button>`);
+}
+
+async function sendAdminAnnouncement(){
+  const title = getField('an_title');
+  const body = getField('an_body');
+  if(!title || !body) return toast('Başlık ve mesaj gerekli');
+  const ok = await publishSystemNotification({type:'announcement',title,body,eventId:''});
+  if(ok){ closeModal(); toast('Duyuru tüm üyelere yayınlandı ✓'); }
+}
+
+async function sendRealtimeRoomMessage(kind, roomId, inputId){
+  const i=document.getElementById(inputId), v=i ? i.value.trim() : '';
+  if(!v) return;
+  const me=currentChatIdentity();
+  try{
+    const api=await waitForPairaFirebaseApi();
+    await api.sendChatMessage(kind,roomId,{
+      partnerName:me.partnerName,
+      coupleName:me.coupleName,
+      text:v,
+      deviceId:getDeviceId()
+    });
+    i.value='';
+  }catch(err){
+    console.warn('PAIRA chat send',err);
+    toast('Mesaj gönderilemedi');
+  }
+}
+
+function renderChatsHub(){
+  const me=currentChatIdentity();
+  const z=document.getElementById('chatIdentityInfo');
+  if(z) z.textContent=`Bu telefonda yazan: ${me.partnerName} • ${me.coupleName}`;
+
+  const clubWrap=document.getElementById('chatClubRooms');
+  if(clubWrap){
+    clubWrap.innerHTML=Object.entries(clubs || {}).map(([key,c])=>
+      `<button class="listbtn" onclick="openClub('${key}')"><b>${escapeHtml(c.title)}</b><br><span class="muted">Kulüp sohbeti</span></button>`
+    ).join('') || '<div class="card muted">Henüz kulüp sohbeti yok.</div>';
+  }
+
+  const eventWrap=document.getElementById('chatEventRooms');
+  if(eventWrap){
+    const rows=Object.entries(events || {}).sort((a,b)=>String(a[1]?.dateISO || '').localeCompare(String(b[1]?.dateISO || '')));
+    eventWrap.innerHTML=rows.map(([id,e])=>
+      `<button class="listbtn" onclick="openEventChat('${id}')"><b>${escapeHtml(e.title || 'Etkinlik')}</b><br><span class="muted">Etkinlik sohbeti</span></button>`
+    ).join('') || '<div class="card muted">Henüz yayınlanmış etkinlik sohbeti yok.</div>';
+  }
+}
+
+function openGeneralChat(){
+  const me=currentChatIdentity();
+  show('generalChat');
+  const z=document.getElementById('generalChatIdentity');
+  if(z) z.textContent=`Bu telefonda yazan: ${me.partnerName} • ${me.coupleName}`;
+  startRealtimeChat('general','main','generalChatMsgs');
+}
+
+function sendGeneralChatMessage(){
+  return sendRealtimeRoomMessage('general','main','generalChatInput');
+}
+
+function sendMessage(boxId,inputId){
+  return sendRealtimeRoomMessage('dm','ece_kaan',inputId);
+}
+
+function formTemplate(title, fieldsHtml, type){
+  return `<h2 style="color:#e7bd72;margin-top:0">${title}</h2>
+    <div>${fieldsHtml}</div>
+    <button class="gold" style="margin-top:14px" onclick="submitSuggestionForm('${type}')">Yöneticiye Gönder</button>
+    <button class="out" style="margin-top:8px" onclick="closeModal()">İptal</button>`;
+}
+
+function openSuggestionForm(type){
+  let fields = '';
+  let title = '';
+  if(type === 'event'){
+    title = 'Etkinlik Öner';
+    fields = `
+      <label class="form-label">Etkinlik adı</label><input id="sf_title" class="form-field" placeholder="Örn. Boğaz turu, tadım gecesi">
+      <label class="form-label">Şehir / Bölge</label><input id="sf_city" class="form-field" placeholder="İstanbul / Kadıköy">
+      <label class="form-label">Tarih</label><input id="sf_date" class="form-field" type="date">
+      <label class="form-label">Tahmini kişi sayısı</label><input id="sf_people" class="form-field" type="number" min="1" placeholder="20">
+      <label class="form-label">Açıklama</label><textarea id="sf_note" class="form-field" placeholder="Etkinlik fikrini anlatın"></textarea>`;
+  } else if(type === 'friend'){
+    title = 'Arkadaş Öner';
+    fields = `
+      <label class="form-label">Önerdiğiniz çiftin adı</label><input id="sf_name" class="form-field" placeholder="Ad Soyad / Çift adı">
+      <label class="form-label">Şehir</label><input id="sf_city" class="form-field" placeholder="İstanbul">
+      <label class="form-label">İletişim bilgisi</label><input id="sf_contact" class="form-field" placeholder="Telefon veya e-posta">
+      <label class="form-label">Kısa not</label><textarea id="sf_note" class="form-field" placeholder="Neden PAIRA'ya uygun olduğunu düşünüyorsunuz?"></textarea>`;
+  } else if(type === 'rating'){
+    title = 'Bizi Değerlendirin';
+    fields = `
+      <label class="form-label">Puan</label>
+      <select id="sf_rating" class="form-field">
+        <option value="">Puan seçin</option><option>5 - Çok iyi</option><option>4 - İyi</option><option>3 - Orta</option><option>2 - Geliştirilebilir</option><option>1 - Kötü</option>
+      </select>
+      <label class="form-label">Yorumunuz</label><textarea id="sf_note" class="form-field" placeholder="PAIRA hakkında düşüncelerinizi yazın"></textarea>`;
+  } else {
+    title = 'Şikâyet';
+    fields = `
+      <label class="form-label">Konu</label>
+      <select id="sf_subject" class="form-field">
+        <option value="">Konu seçin</option><option>Üye davranışı</option><option>Etkinlik</option><option>Mesaj / Chat</option><option>Uygulama sorunu</option><option>Diğer</option>
+      </select>
+      <label class="form-label">İlgili kişi / etkinlik</label><input id="sf_related" class="form-field" placeholder="Varsa isim veya etkinlik adı">
+      <label class="form-label">Açıklama</label><textarea id="sf_note" class="form-field" placeholder="Şikâyetinizi ayrıntılı yazın"></textarea>`;
+  }
+  modal(formTemplate(title, fields, type));
+}
+
+function getField(id){
+  const el = document.getElementById(id);
+  return el ? String(el.value || '').trim() : '';
+}
+
+function submitSuggestionForm(type){
+  const labels = {event:'Etkinlik Önerisi', friend:'Arkadaş Önerisi', rating:'Değerlendirme', complaint:'Şikâyet'};
+  let data = {};
+  if(type === 'event'){
+    data = {title:getField('sf_title'), city:getField('sf_city'), date:getField('sf_date'), people:getField('sf_people'), note:getField('sf_note')};
+    if(!data.title || !data.note) return toast('Etkinlik adı ve açıklama gerekli');
+  } else if(type === 'friend'){
+    data = {name:getField('sf_name'), city:getField('sf_city'), contact:getField('sf_contact'), note:getField('sf_note')};
+    if(!data.name || !data.contact) return toast('İsim ve iletişim bilgisi gerekli');
+  } else if(type === 'rating'){
+    data = {rating:getField('sf_rating'), note:getField('sf_note')};
+    if(!data.rating) return toast('Lütfen puan seç');
+  } else {
+    data = {subject:getField('sf_subject'), related:getField('sf_related'), note:getField('sf_note')};
+    if(!data.subject || !data.note) return toast('Konu ve açıklama gerekli');
+  }
+
+  state.adminInbox = state.adminInbox || [];
+  state.adminInbox.unshift({
+    id: Date.now(),
+    type: type,
+    label: labels[type],
+    sender: currentUser,
+    createdAt: new Date().toLocaleString('tr-TR'),
+    data: data
+  });
+  persist();
+  closeModal();
+  updateAdminCounters();
+  toast('Yöneticiye gönderildi ✓');
+}
+
+function formatSubmission(item){
+  const d = item.data || {};
+  let body = '';
+  if(item.type === 'event'){
+    body = `Etkinlik: ${d.title || '-'}\nŞehir: ${d.city || '-'}\nTarih: ${d.date || '-'}\nKişi: ${d.people || '-'}\n\n${d.note || ''}`;
+  } else if(item.type === 'friend'){
+    body = `Çift: ${d.name || '-'}\nŞehir: ${d.city || '-'}\nİletişim: ${d.contact || '-'}\n\n${d.note || ''}`;
+  } else if(item.type === 'rating'){
+    body = `Puan: ${d.rating || '-'}\n\n${d.note || ''}`;
+  } else {
+    body = `Konu: ${d.subject || '-'}\nİlgili: ${d.related || '-'}\n\n${d.note || ''}`;
+  }
+  return `<div class="admin-card">
+    <div class="type">${item.label}</div>
+    <div class="meta">${item.sender} • ${item.createdAt}</div>
+    <div class="body">${escapeHtml(body)}</div>
+  </div>`;
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function renderAdminInbox(){
+  const list = state.adminInbox || [];
+  const count = document.getElementById('adminInboxCount');
+  if(count) count.textContent = list.length;
+  const wrap = document.getElementById('adminInboxList');
+  if(wrap) wrap.innerHTML = list.length ? list.map(formatSubmission).join('') : '<div class="card muted">Henüz gönderilmiş form yok.</div>';
+  updateAdminCounters();
+}
+
+function updateAdminCounters(){
+  const n = (state.adminInbox || []).length;
+  const a = document.getElementById('adminInboxCount');
+  if(a) a.textContent = n;
+  const b = document.getElementById('menuAdminCount');
+  if(b) b.textContent = n;
+}
+
+function clearAdminInbox(){
+  state.adminInbox = [];
+  persist();
+  renderAdminInbox();
+  toast('Gelen kutusu temizlendi');
+}
+
+
+let sharedProfileUnsub = null;
+let sharedProfileKey = '';
+
+function sharedProfileAccountId(){
+  const p = getDevicePartnerIdentity();
+  // Ortak profil için iki telefonda da kesin aynı olan anahtar davet kodudur.
+  // Eski sürümlerde memberId öne alındığı için aynı çift iki farklı profile düşebiliyordu.
+  return String((p && (p.inviteCode || p.memberId)) || '').trim().toUpperCase();
+}
+
+function sharedProfilePayload(){
+  const p = state.profile || {};
+  const me = currentChatIdentity();
+  return {
+    name:String(p.name || me.coupleName || '').slice(0,120),
+    city:String(p.city || '').slice(0,80),
+    age1:'',
+    age2:'',
+    children:String(p.children || '').slice(0,40),
+    about:String(p.about || '').slice(0,1200),
+    interests:Array.isArray(p.interests) ? p.interests.map(x=>String(x).slice(0,60)).slice(0,30) : [],
+    photos:Array.isArray(p.photos) ? p.photos.filter(x=>/^https?:\/\//i.test(String(x))).slice(0,5) : [],
+    coverIndex:Number.isInteger(p.coverIndex) ? p.coverIndex : 0,
+    updatedAt:Date.now(),
+    updatedBy:String(me.partnerName || 'Partner').slice(0,80)
+  };
+}
+
+function applySharedProfile(remote){
+  if(!remote || typeof remote !== 'object') return;
+  const local = state.profile || {};
+  state.profile = {
+    ...local,
+    name:remote.name ?? local.name,
+    city:remote.city ?? local.city,
+    children:remote.children ?? local.children,
+    about:remote.about ?? local.about,
+    interests:Array.isArray(remote.interests) ? [...remote.interests] : (local.interests || []),
+    photos:Array.isArray(remote.photos) ? [...remote.photos] : (Array.isArray(local.photos) ? local.photos : []),
+    coverIndex:Number.isInteger(remote.coverIndex) ? remote.coverIndex : (typeof local.coverIndex === 'number' ? local.coverIndex : 0)
+  };
+  try{ persist(); }catch(_){ }
+
+  const active = document.querySelector('.screen.active');
+  if(active && active.id === 'profile') renderProfileView();
+  if(active && active.id === 'gallery') renderGalleryView();
+  if(active && active.id === 'members') renderMembersView();
+  if(active && active.id === 'member') renderSelectedMemberView();
+}
+
+function stopSharedProfileSync(){
+  if(typeof sharedProfileUnsub === 'function'){
+    try{ sharedProfileUnsub(); }catch(_){ }
+  }
+  sharedProfileUnsub = null;
+  sharedProfileKey = '';
+}
+
+async function ensureSharedProfileSync(){
+  const accountId = sharedProfileAccountId();
+  if(!accountId) return;
+  if(sharedProfileKey === accountId && sharedProfileUnsub) return;
+
+  stopSharedProfileSync();
+  sharedProfileKey = accountId;
+
+  try{
+    const api = await waitForPairaFirebaseApi();
+    const existing = await api.getCoupleProfile(accountId);
+    if(existing){
+      applySharedProfile(existing);
+    }else{
+      await api.saveCoupleProfile(accountId, sharedProfilePayload());
+    }
+    sharedProfileUnsub = api.subscribeCoupleProfile(accountId, applySharedProfile, err=>{
+      console.warn('PAIRA shared profile sync', err);
+    });
+  }catch(err){
+    console.warn('PAIRA shared profile start', err);
+  }
+}
+
+const PROFILE_INTERESTS = [
+  "Gurme","Seyahat","Canlı Müzik","Deniz","Sanat","Wellness",
+  "Hafta Sonu","Doğa","Spor","Dans","Tiyatro","Şarap Tadımı"
+];
+let editingInterests = [];
+let editingPhotos = [];
+let editingCoverIndex = 0;
+
+function defaultProfilePhoto(){
+  return '';
+}
+
+function loadProfileEdit(){
+  const p = state.profile || {};
+  document.getElementById('pe_name').value = p.name || '';
+  document.getElementById('pe_city').value = p.city || '';
+  document.getElementById('pe_children').value = p.children || '';
+  document.getElementById('pe_about').value = p.about || '';
+  editingInterests = [...(p.interests || [])];
+  editingPhotos = [...(p.photos || [])];
+  editingCoverIndex = Math.min(p.coverIndex || 0, Math.max(0, editingPhotos.length-1));
+  renderInterestEditor();
+  renderPhotoEditor();
+}
+
+function renderInterestEditor(){
+  const wrap = document.getElementById('pe_interests');
+  if(!wrap) return;
+  wrap.innerHTML = PROFILE_INTERESTS.map(x => `
+    <button type="button" class="interest-chip ${editingInterests.includes(x)?'on':''}" onclick="toggleInterest('${x}')">${x}</button>
+  `).join('');
+}
+
+function toggleInterest(name){
+  if(editingInterests.includes(name)){
+    editingInterests = editingInterests.filter(x=>x!==name);
+  }else{
+    editingInterests.push(name);
+  }
+  renderInterestEditor();
+}
+
+function handleProfilePhotos(event){
+  const files = Array.from(event.target.files || []);
+  if(!files.length) return;
+  const remaining = Math.max(0, 5 - editingPhotos.length);
+  if(remaining <= 0){
+    toast('En fazla 5 fotoğraf eklenebilir');
+    event.target.value = '';
+    return;
+  }
+  const chosen = files.slice(0, remaining);
+  let completed = 0;
+
+  chosen.forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      compressProfileImage(e.target.result, compressed=>{
+        editingPhotos.push(compressed);
+        completed++;
+        if(completed === chosen.length){
+          if(editingPhotos.length === chosen.length) editingCoverIndex = 0;
+          renderPhotoEditor();
+          event.target.value = '';
+          if(files.length > remaining) toast('5 fotoğraf sınırı uygulandı');
+        }
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function compressProfileImage(dataUrl, done){
+  const img = new Image();
+  img.onload = ()=>{
+    const max = 900;
+    let w = img.width, h = img.height;
+    if(Math.max(w,h) > max){
+      const r = max / Math.max(w,h);
+      w = Math.round(w*r); h = Math.round(h*r);
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img,0,0,w,h);
+    done(canvas.toDataURL('image/jpeg',0.76));
+  };
+  img.src = dataUrl;
+}
+
+function renderPhotoEditor(){
+  const grid = document.getElementById('pe_photo_grid');
+  if(!grid) return;
+  if(!editingPhotos.length){
+    grid.innerHTML = '<div class="muted" style="grid-column:1/-1;padding:12px 0">Henüz fotoğraf eklenmedi.</div>';
+    return;
+  }
+  grid.innerHTML = editingPhotos.map((src,i)=>`
+    <div class="photo-card">
+      <img src="${src}" alt="Profil fotoğrafı ${i+1}">
+      <button type="button" class="cover" onclick="setCoverPhoto(${i})">${i===editingCoverIndex?'★ Ana':'☆ Ana yap'}</button>
+      <button type="button" class="remove" onclick="removeProfilePhoto(${i})">×</button>
+    </div>
+  `).join('');
+}
+
+function setCoverPhoto(i){
+  editingCoverIndex = i;
+  renderPhotoEditor();
+  toast('Ana fotoğraf seçildi');
+}
+
+function removeProfilePhoto(i){
+  editingPhotos.splice(i,1);
+  if(editingCoverIndex >= editingPhotos.length) editingCoverIndex = Math.max(0, editingPhotos.length-1);
+  if(i < editingCoverIndex) editingCoverIndex--;
+  renderPhotoEditor();
+}
+
+async function saveProfileEdit(){
+  const name = document.getElementById('pe_name').value.trim();
+  const city = document.getElementById('pe_city').value.trim();
+  if(!name){
+    toast('Çift adı gerekli');
+    return;
+  }
+  state.profile = {
+    name,
+    city,
+    age1:'',
+    age2:'',
+    children:document.getElementById('pe_children').value,
+    about:document.getElementById('pe_about').value.trim(),
+    interests:[...editingInterests],
+    photos:[...editingPhotos],
+    coverIndex:editingCoverIndex
+  };
+  try{
+    persist();
+  }catch(err){
+    toast('Fotoğraflar çok büyük. Birkaçını azaltıp tekrar deneyin.');
+    return;
+  }
+
+  const accountId = sharedProfileAccountId();
+  if(accountId){
+    try{
+      const api = await waitForPairaFirebaseApi();
+      const uploadedPhotos = await api.uploadCoupleProfilePhotos(accountId, state.profile.photos || []);
+      state.profile.photos = uploadedPhotos;
+      editingPhotos = [...uploadedPhotos];
+      if(state.profile.coverIndex >= uploadedPhotos.length){
+        state.profile.coverIndex = Math.max(0, uploadedPhotos.length - 1);
+        editingCoverIndex = state.profile.coverIndex;
+      }
+      persist();
+      await api.saveCoupleProfile(accountId, sharedProfilePayload());
+    }catch(err){
+      console.warn('PAIRA shared profile save', err);
+      toast('Profil veya fotoğraflar kaydedilemedi');
+      return;
+    }
+  }
+
+  renderProfileView();
+  toast('Ortak profil kaydedildi ✓');
+  setTimeout(()=>show('profile'),350);
+}
+
+function renderProfileView(){
+  const wrap = document.getElementById('profileView');
+  if(!wrap) return;
+  const p = state.profile || {};
+  const photos = p.photos || [];
+  const cover = photos.length ? photos[Math.min(p.coverIndex||0, photos.length-1)] : defaultProfilePhoto();
+  wrap.innerHTML = `
+    ${cover ? `<img class="profile-cover" src="${cover}" alt="Ana profil fotoğrafı">` : ''}
+    <div class="card">
+      <h2>${escapeHtml(p.name || 'Profil')}</h2>
+      ${p.city ? `<p>📍 ${escapeHtml(p.city)}</p>` : ''}
+      ${p.children ? `<p>👶 ${escapeHtml(p.children)}</p>` : ''}
+      ${p.about ? `<p class="muted">${escapeHtml(p.about)}</p>` : ''}
+      ${(p.interests||[]).length ? `<div class="profile-interests">${p.interests.map(x=>`<span class="profile-pill">${escapeHtml(x)}</span>`).join('')}</div>` : ''}
+    </div>
+    <button class="gold" onclick="show('profileEdit')">Profili Düzenle</button>
+    <button class="out" style="margin-top:10px" onclick="show('gallery')">📷 Fotoğrafları Gör (${photos.length})</button>
+  `;
+}
+
+function renderGalleryView(){
+  const wrap = document.getElementById('galleryView');
+  if(!wrap) return;
+  const photos = (state.profile && state.profile.photos) || [];
+  wrap.innerHTML = photos.length
+    ? photos.map((src,i)=>`<div class="photo-card"><img src="${src}" style="height:150px" alt="Fotoğraf ${i+1}"></div>`).join('')
+    : '<div class="card muted" style="grid-column:1/-1">Henüz fotoğraf eklenmedi.</div>';
+}
+
+let adminEditingEventId = null;
+let adminEventPhotos = [];
+
+// V19: Etkinlikler artık Firestore'dan gerçek zamanlı senkronize edilir.
+let eventsRealtimeUnsub = null;
+let eventsSyncStarted = false;
+let eventsRemoteInitialized = false;
+let eventsSeedAttemptInFlight = false;
+
+function normalizeRealtimeEvent(row){
+  if(!row || row.kind === 'meta') return null;
+  const id = String(row.id || row._firebaseId || '').trim();
+  if(!id) return null;
+  const dateISO = String(row.dateISO || '');
+  const startTime = String(row.startTime || '');
+  const endTime = String(row.endTime || '');
+  return {
+    id,
+    title:String(row.title || 'Etkinlik'),
+    dateISO,
+    date:String(row.date || (dateISO ? formatAdminDate(dateISO) : '')),
+    startTime,
+    endTime,
+    time:String(row.time || (startTime ? (endTime ? `${startTime} - ${endTime}` : startTime) : '')),
+    location:String(row.location || ''),
+    capacity:String(row.capacity || ''),
+    desc:String(row.desc || ''),
+    images:Array.isArray(row.images) ? row.images.slice(0,3).map(String) : [],
+    updatedAt:Number(row.updatedAt || 0)
+  };
+}
+
+function rerenderEventsAfterRealtimeUpdate(){
+  const active = document.querySelector('.screen.active');
+  if(active && active.id === 'events') renderEventsList();
+  if(active && active.id === 'adminEvents') renderAdminEvents();
+  if(active && active.id === 'dayAgenda'){
+    const chip = document.querySelector('#dayHeader .day-chip');
+    const m = chip && String(chip.textContent || '').match(/(\d{1,2})/);
+    if(m) openAgendaDay(m[1]);
+  }
+  if(active && ['eventDetail','eventChat'].includes(active.id) && currentEvent && !events[currentEvent]){
+    toast('Bu etkinlik artık yayında değil');
+    show('events');
+  }else if(active && active.id === 'eventDetail' && currentEvent && events[currentEvent]){
+    renderEventDetail();
+  }
+}
+
+function applyRealtimeEvents(rows, initialized){
+  eventsRemoteInitialized = initialized === true;
+  const mapped = {};
+  (rows || []).forEach(row=>{
+    const e = normalizeRealtimeEvent(row);
+    if(e) mapped[e.id] = e;
+  });
+
+  // Firestore daha önce başlatıldıysa boş liste de gerçektir. İlk kurulumdan önce ise
+  // mevcut yerel etkinlikleri admin ilk girişte merkezi koleksiyona taşıyabilsin.
+  if(eventsRemoteInitialized || Object.keys(mapped).length){
+    events = mapped;
+    try{ persistEvents(); }catch(_e){}
+    rerenderEventsAfterRealtimeUpdate();
+    refreshNotificationChatSubscriptions();
+  }
+}
+
+async function ensureEventsSync(){
+  if(eventsSyncStarted) return;
+  eventsSyncStarted = true;
+  try{
+    const api = await waitForPairaFirebaseApi();
+    eventsRealtimeUnsub = api.subscribeEvents((rows, initialized)=>{
+      applyRealtimeEvents(rows, initialized);
+    }, err=>{
+      console.warn('PAIRA realtime events sync', err);
+      eventsSyncStarted = false;
+    });
+  }catch(err){
+    console.warn('PAIRA realtime events start', err);
+    eventsSyncStarted = false;
+  }
+}
+
+async function ensureEventsSeededForAdmin(){
+  if(eventsSeedAttemptInFlight || eventsRemoteInitialized) return;
+  eventsSeedAttemptInFlight = true;
+  try{
+    const api = await waitForPairaFirebaseApi();
+    const seeded = await api.seedEventsIfNeeded(Object.values(events || {}));
+    if(seeded) eventsRemoteInitialized = true;
+  }catch(err){
+    // Admin oturumu yoksa sessizce bekle. Admin paneli açıldığında tekrar denenir.
+    if(!String(err?.code || '').includes('permission-denied')) console.warn('PAIRA event seed', err);
+  }finally{
+    eventsSeedAttemptInFlight = false;
+  }
+}
+
+function persistEvents(){
+  try{
+    localStorage.setItem('paira_events_v10', JSON.stringify(events));
+  }catch(err){
+    toast('Etkinlik görselleri çok büyük. Daha az veya daha küçük fotoğraf deneyin.');
+    throw err;
+  }
+}
+
+function formatAdminDate(dateISO){
+  if(!dateISO) return '';
+  const months = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  const p = dateISO.split('-');
+  if(p.length!==3) return dateISO;
+  return `${parseInt(p[2],10)} ${months[parseInt(p[1],10)-1]} ${p[0]}`;
+}
+
+function renderAdminEvents(){
+  const screen = document.getElementById('adminEvents');
+  if(screen && !document.getElementById('adminAnnouncementBtn')){
+    const list = document.getElementById('adminEventList');
+    if(list){
+      const btn = document.createElement('button');
+      btn.id = 'adminAnnouncementBtn';
+      btn.className = 'out';
+      btn.style.marginTop = '10px';
+      btn.textContent = '📣 Üyelere Duyuru Gönder';
+      btn.onclick = openAdminAnnouncementForm;
+      list.parentNode.insertBefore(btn, list);
+    }
+  }
+  const ids = Object.keys(events);
+  const count = document.getElementById('adminEventCount');
+  if(count) count.textContent = ids.length;
+  const wrap = document.getElementById('adminEventList');
+  if(!wrap) return;
+
+  wrap.innerHTML = ids.length ? ids.map(id=>{
+    const e = events[id];
+    const img = (e.images && e.images[0]) || '';
+    return `<div class="admin-event-row">
+      <div class="topline">
+        ${img ? `<img class="admin-event-thumb" src="${img}" alt="${escapeHtml(e.title)}">` : `<div class="admin-event-thumb"></div>`}
+        <div class="admin-event-info">
+          <b>${escapeHtml(e.title)}</b>
+          <div class="muted" style="font-size:12px">${escapeHtml(e.date || '')} • ${escapeHtml(e.time || '')}</div>
+          <div class="muted" style="font-size:12px;margin-top:3px">📍 ${escapeHtml(e.location || '')}</div>
+        </div>
+      </div>
+      <div class="admin-event-actions">
+        <button class="editbtn" onclick="openAdminEventForm('${id}')">Düzenle</button>
+        <button class="danger" onclick="deleteAdminEvent('${id}')">Yayından Kaldır</button>
+      </div>
+    </div>`;
+  }).join('') : '<div class="card muted">Henüz etkinlik yok.</div>';
+}
+
+function openAdminEventForm(id=null){
+  adminEditingEventId = id;
+  const e = id && events[id] ? events[id] : {};
+  adminEventPhotos = [...(e.images || [])];
+
+  modal(`<h2 style="color:#e7bd72;margin-top:0">${id ? 'Etkinliği Düzenle' : 'Yeni Etkinlik Ekle'}</h2>
+    <label class="form-label">Etkinlik adı</label>
+    <input id="ae_title" class="form-field" value="${escapeAttr(e.title || '')}" placeholder="Etkinlik adı">
+
+    <label class="form-label">Tarih</label>
+    <input id="ae_date" class="form-field" type="date" value="${escapeAttr(e.dateISO || '')}">
+
+    <div class="form-grid">
+      <div><label class="form-label">Başlangıç</label><input id="ae_start" class="form-field" type="time" value="${escapeAttr(e.startTime || '')}"></div>
+      <div><label class="form-label">Bitiş</label><input id="ae_end" class="form-field" type="time" value="${escapeAttr(e.endTime || '')}"></div>
+    </div>
+
+    <label class="form-label">Mekan / Şehir</label>
+    <input id="ae_location" class="form-field" value="${escapeAttr(e.location || '')}" placeholder="Örn. Beykoz, İstanbul">
+
+    <label class="form-label">Kapasite</label>
+    <input id="ae_capacity" class="form-field" value="${escapeAttr(e.capacity || '')}" placeholder="Örn. 40 kişi">
+
+    <label class="form-label">Açıklama</label>
+    <textarea id="ae_desc" class="form-field" placeholder="Etkinlik açıklaması">${escapeHtml(e.desc || '')}</textarea>
+
+    <label class="form-label">Etkinlik görselleri</label>
+    <div class="photo-uploader">
+      <label class="photo-add" for="ae_photos">＋ Fotoğraf Ekle</label>
+      <input id="ae_photos" type="file" accept="image/*" multiple onchange="handleAdminEventPhotos(event)">
+      <div class="muted" style="font-size:12px;margin-top:8px">En fazla 3 görsel. İlanda kaydırılarak gösterilir.</div>
+      <div id="ae_photo_grid" class="event-admin-photo-grid"></div>
+    </div>
+
+    <button class="gold" style="margin-top:14px" onclick="saveAdminEvent()">${id ? 'Değişiklikleri Kaydet' : 'Etkinliği Yayınla'}</button>
+    <button class="out" style="margin-top:8px" onclick="closeModal()">İptal</button>`);
+
+  renderAdminEventPhotoGrid();
+}
+
+function handleAdminEventPhotos(event){
+  const files = Array.from(event.target.files || []);
+  const remaining = Math.max(0, 3 - adminEventPhotos.length);
+  if(remaining <= 0){
+    toast('En fazla 3 fotoğraf eklenebilir');
+    event.target.value = '';
+    return;
+  }
+
+  const chosen = files.slice(0, remaining);
+  let done = 0;
+  chosen.forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      compressProfileImage(ev.target.result, compressed=>{
+        adminEventPhotos.push(compressed);
+        done++;
+        if(done === chosen.length){
+          renderAdminEventPhotoGrid();
+          event.target.value = '';
+          if(files.length > remaining) toast('3 fotoğraf sınırı uygulandı');
+        }
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderAdminEventPhotoGrid(){
+  const grid = document.getElementById('ae_photo_grid');
+  if(!grid) return;
+  grid.innerHTML = adminEventPhotos.length ? adminEventPhotos.map((src,i)=>`
+    <div class="event-admin-photo">
+      <img src="${src}" alt="Etkinlik fotoğrafı ${i+1}">
+      <button type="button" onclick="removeAdminEventPhoto(${i})">×</button>
+    </div>`).join('') : '<div class="muted" style="grid-column:1/-1;padding:10px 0">Henüz görsel eklenmedi.</div>';
+}
+
+function removeAdminEventPhoto(i){
+  adminEventPhotos.splice(i,1);
+  renderAdminEventPhotoGrid();
+}
+
+async function saveAdminEvent(){
+  const title = getField('ae_title');
+  const dateISO = getField('ae_date');
+  const startTime = getField('ae_start');
+  const endTime = getField('ae_end');
+  const location = getField('ae_location');
+  const capacity = getField('ae_capacity');
+  const desc = getField('ae_desc');
+
+  if(!title || !dateISO || !startTime || !location){
+    toast('Ad, tarih, başlangıç saati ve mekan gerekli');
+    return;
+  }
+
+  const id = adminEditingEventId || ('event_' + Date.now());
+  const wasEdit = !!adminEditingEventId;
+  const previous = events[id] || {};
+
+  try{
+    const api = await waitForPairaFirebaseApi();
+
+    // İlk merkezi kurulumdaki eski etkinlik aktarımı yeni etkinliğin kaydını bloke etmesin.
+    // Aktarım başarısız olsa bile yeni etkinliği ayrıca kaydetmeyi deniyoruz.
+    try{
+      await api.seedEventsIfNeeded(Object.values(events || {}));
+    }catch(seedErr){
+      console.warn('PAIRA legacy event seed skipped', seedErr);
+    }
+
+    // Yeni seçilen yerel görselleri Cloudinary URL'lerine dönüştür. Mevcut URL'ler aynen kalır.
+    const syncedPhotos = await api.uploadEventPhotos(id, adminEventPhotos);
+    const nextEvent = {
+      ...previous,
+      id,
+      title,
+      dateISO,
+      date: formatAdminDate(dateISO),
+      startTime,
+      endTime,
+      time: endTime ? `${startTime} - ${endTime}` : startTime,
+      location,
+      capacity: capacity || 'Kapasite belirtilmedi',
+      desc,
+      images:[...syncedPhotos],
+      updatedAt:Date.now()
+    };
+
+    await api.saveEvent(id, nextEvent);
+    events[id] = nextEvent;
+    eventsRemoteInitialized = true;
+    if(!state.eventMessages[id]) state.eventMessages[id] = [];
+    persistEvents();
+    persist();
+
+    closeModal();
+    renderEventsList();
+    renderAdminEvents();
+    toast(wasEdit ? 'Etkinlik tüm üyelerde güncellendi ✓' : 'Etkinlik tüm üyelere yayınlandı ✓');
+
+    await publishSystemNotification({
+      type: wasEdit ? 'event_update' : 'event_new',
+      title: wasEdit ? `${title} güncellendi` : `Yeni etkinlik: ${title}`,
+      body: `${formatAdminDate(dateISO)} • ${startTime}${location ? ' • '+location : ''}`,
+      eventId:id
+    });
+    refreshNotificationChatSubscriptions();
+    adminEditingEventId = null;
+  }catch(err){
+    console.warn('PAIRA realtime event save', err);
+    const detail = String(err?.code || err?.message || 'Bilinmeyen Firebase hatası');
+    modal(`
+      <h2 style="color:#e7bd72;margin-top:0">Etkinlik kaydedilemedi</h2>
+      <p class="muted" style="line-height:1.55">Firebase hatası: <b>${escapeHtml(detail)}</b></p>
+      <button class="gold" onclick="closeModal()">Tamam</button>
+    `);
+  }
+}
+
+async function deleteAdminEvent(id){
+  const e = events[id];
+  if(!e) return;
+  if(!confirm(`"${e.title}" etkinliğini yayından kaldırmak istiyor musun?`)) return;
+
+  try{
+    const api = await waitForPairaFirebaseApi();
+    await api.seedEventsIfNeeded(Object.values(events || {}));
+    await api.deleteEvent(id);
+
+    delete events[id];
+    if(state.joinedEvents) delete state.joinedEvents[id];
+    if(state.eventMessages) delete state.eventMessages[id];
+    persistEvents();
+    persist();
+
+    renderEventsList();
+    renderAdminEvents();
+    toast('Etkinlik tüm üyelerden kaldırıldı ✓');
+    await publishSystemNotification({
+      type:'event_removed',
+      title:`Etkinlik kaldırıldı: ${e.title}`,
+      body:`${e.date || ''}${e.location ? ' • '+e.location : ''}`,
+      eventId:id
+    });
+    refreshNotificationChatSubscriptions();
+  }catch(err){
+    console.warn('PAIRA realtime event delete', err);
+    toast('Etkinlik yayından kaldırılamadı');
+  }
+}
+
+function escapeAttr(s){
+  return escapeHtml(String(s || '')).replace(/`/g,'&#96;');
+}
+
+
+
+function setDevicePartnerIdentity(rec, partnerIndex){
+  const partnerName = (rec.partnerNames || [])[partnerIndex] || `${partnerIndex+1}. Partner`;
+  localStorage.setItem('paira_partner_identity_v14', JSON.stringify({
+    memberId: rec.id || rec.inviteCode || rec._firebaseId,
+    inviteCode: rec.inviteCode || rec._firebaseId || '',
+    coupleName: rec.name,
+    city: rec.city || '',
+    partnerIndex,
+    partnerName
+  }));
+
+  // Davet hesabı açıldığında telefondaki örnek profil adı yerine gerçek çift adını kullan.
+  state.profile = state.profile || {};
+  if(rec.name) state.profile.name = rec.name;
+  if(rec.city && (!state.profile.city || state.profile.city === 'Bodrum')) state.profile.city = rec.city;
+}
+
+function getDevicePartnerIdentity(){
+  try{return JSON.parse(localStorage.getItem('paira_partner_identity_v14') || 'null');}
+  catch(err){return null;}
+}
+
+function currentChatIdentity(){
+  const p = getDevicePartnerIdentity();
+  if(p && p.partnerName) return {partnerName:p.partnerName,coupleName:p.coupleName || 'Çift'};
+  const coupleName = (state.profile && state.profile.name) || 'Çift';
+  const parts = String(coupleName).split('&').map(x=>x.trim());
+  return {partnerName:parts[0] || 'Partner',coupleName};
+}
+
+function messageSenderLabel(m){
+  if(m.partnerName && m.coupleName) return `${m.partnerName} • ${m.coupleName}`;
+  if(m.name) return m.name;
+  return 'Üye';
+}
+
+function isMyMessage(m){
+  const me=currentChatIdentity();
+  return m.partnerName===me.partnerName && m.coupleName===me.coupleName;
+}
+
+function getDeviceId(){
+  let id = localStorage.getItem('paira_device_id_v1');
+  if(!id){
+    id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem('paira_device_id_v1', id);
+  }
+  return id;
+}
+
+function generateInviteCode(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  do{
+    code = 'PAIRA-';
+    for(let i=0;i<6;i++) code += chars[Math.floor(Math.random()*chars.length)];
+  }while((state.adminMembers || []).some(m => m.inviteCode === code));
+  return code;
+}
+
+function openInviteMemberForm(){
+  modal(`<h2 style="color:#e7bd72;margin-top:0">Yeni Çift Daveti</h2>
+    <label class="form-label">1. partner adı</label>
+    <input id="mi_partner1" class="form-field" placeholder="Örn. Ece">
+
+    <label class="form-label">1. partner telefon numarası</label>
+    <input id="mi_contact1" class="form-field" inputmode="tel" placeholder="+90 5xx xxx xx xx">
+
+    <label class="form-label">2. partner adı</label>
+    <input id="mi_partner2" class="form-field" placeholder="Örn. Kaan">
+
+    <label class="form-label">2. partner telefon numarası</label>
+    <input id="mi_contact2" class="form-field" inputmode="tel" placeholder="+90 5xx xxx xx xx">
+
+    <label class="form-label">Şehir</label>
+    <input id="mi_city" class="form-field" placeholder="İstanbul">
+
+    <div class="card" style="margin-top:14px">
+      <b>Tek çift hesabı, iki ayrı partner kimliği</b>
+      <p class="muted" style="margin-bottom:0">
+        İkisi aynı hesabı kullanır. Chat mesajlarında hangi partnerin yazdığı ayrıca görünür.
+        İki partner de kendi telefonundan onay vermeden hesap açılmaz.
+      </p>
+    </div>
+
+    <button class="gold" onclick="createMemberInvite()">Davet Kodu Oluştur</button>
+    <button class="out" style="margin-top:8px" onclick="closeModal()">İptal</button>`);
+}
+
+async function createMemberInvite(){
+  const partner1 = getField('mi_partner1');
+  const partner2 = getField('mi_partner2');
+  const city = getField('mi_city');
+  const contact1 = getField('mi_contact1');
+  const contact2 = getField('mi_contact2');
+
+  if(!partner1 || !partner2 || !contact1 || !contact2){
+    toast('İki partnerin adı ve telefon numarası gerekli');
+    return;
+  }
+
+  const name = `${partner1} & ${partner2}`;
+  const code = generateInviteCode();
+  const rec = {
+    id:'member_' + Date.now(),
+    name,
+    partnerNames:[partner1, partner2],
+    city,
+    contact: contact1,
+    contact2: contact2,
+    partnerPhones:[contact1, contact2],
+    status:'pending',
+    inviteCode:code,
+    usedDevices:[],
+    partnerDevices:['',''],
+    maxUses:2,
+    createdAt:new Date().toISOString()
+  };
+
+  try{
+    if(!window.PAIRA_FIREBASE_API) throw new Error('Firebase henüz hazır değil.');
+    await window.PAIRA_FIREBASE_API.saveInvitation(code, rec);
+    state.adminMembers = state.adminMembers || [];
+    state.adminMembers.unshift(rec);
+    closeModal();
+    renderAdminMembers();
+    showInviteCreated(rec.id);
+    toast('Davet Firebase’e kaydedildi ✓');
+  }catch(err){
+    console.warn('Create invitation', err);
+    toast('Davet kaydedilemedi');
+  }
+}
+
+function showInviteCreated(id){
+  const m = (state.adminMembers || []).find(x=>x.id===id);
+  if(!m) return;
+  const phone1 = partnerPhoneFor(m, 1);
+  const phone2 = partnerPhoneFor(m, 2);
+  const d1 = (m.partnerDevices && m.partnerDevices[0]) ? 'Onay verdi ✓' : 'Bekliyor';
+  const d2 = (m.partnerDevices && m.partnerDevices[1]) ? 'Onay verdi ✓' : 'Bekliyor';
+  modal(`<h2 style="color:#e7bd72;margin-top:0">Davet Hazır</h2>
+    <div class="card">
+      <b>${escapeHtml(m.name)}</b>
+      <div class="muted" style="margin-top:4px">${escapeHtml(m.city || '')}</div>
+      <div class="codebox">
+        <code>${m.inviteCode}</code>
+        <button class="smallbtn" onclick="copyInviteCode('${m.inviteCode}')">Kopyala</button>
+      </div>
+      <p class="muted" style="font-size:12px;margin-bottom:0">
+        Onay durumu: ${(m.partnerDevices || []).filter(Boolean).length}/2 partner
+      </p>
+
+      <div class="card" style="margin-top:12px">
+        <b>${escapeHtml((m.partnerNames || [])[0] || '1. Partner')}</b>
+        <div class="muted" style="margin-top:4px">${escapeHtml(phone1 || '-')} • ${d1}</div>
+        <div class="invite-actions" style="margin-top:10px">
+          <button class="smsbtn" onclick="sendInviteSMS('${m.id}', 1)">SMS ile Gönder</button>
+          <button class="wabtn" onclick="sendInviteWhatsApp('${m.id}', 1)">WhatsApp ile Gönder</button>
+          <button class="linkbtn wide" onclick="copyInviteLink('${m.id}', 1)">1. Partner Linkini Kopyala</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <b>${escapeHtml((m.partnerNames || [])[1] || '2. Partner')}</b>
+        <div class="muted" style="margin-top:4px">${escapeHtml(phone2 || '-')} • ${d2}</div>
+        <div class="invite-actions" style="margin-top:10px">
+          <button class="smsbtn" onclick="sendInviteSMS('${m.id}', 2)">SMS ile Gönder</button>
+          <button class="wabtn" onclick="sendInviteWhatsApp('${m.id}', 2)">WhatsApp ile Gönder</button>
+          <button class="linkbtn wide" onclick="copyInviteLink('${m.id}', 2)">2. Partner Linkini Kopyala</button>
+        </div>
+      </div>
+
+      <div class="invite-preview">${escapeHtml(buildInviteMessage(m, 1))}</div>
+    </div>
+    <button class="gold" onclick="closeModal()">Tamam</button>`);
+}
+
+async function copyInviteCode(code){
+  try{
+    await navigator.clipboard.writeText(code);
+    toast('Davet kodu kopyalandı');
+  }catch(err){
+    const ta = document.createElement('textarea');
+    ta.value = code;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    toast('Davet kodu kopyalandı');
+  }
+}
+
+
+function normalizePhone(phone){
+  let digits = String(phone || '').replace(/\D/g,'');
+  if(digits.startsWith('0')) digits = '90' + digits.slice(1);
+  if(digits.length === 10 && digits.startsWith('5')) digits = '90' + digits;
+  return digits;
+}
+
+function partnerPhoneFor(m, partner){
+  const arr = m.partnerPhones || [m.contact || '', m.contact2 || ''];
+  return arr[(partner || 1) - 1] || '';
+}
+
+function isPublicWeb(){
+  return location.protocol === 'https:' || location.protocol === 'http:';
+}
+
+function inviteLinkFor(code, partner){
+  if(!isPublicWeb()) return '';
+  const u = new URL(window.location.href);
+  u.search = '';
+  u.hash = '';
+  u.searchParams.set('invite', code);
+  if(partner) u.searchParams.set('partner', String(partner));
+  return u.toString();
+}
+
+function buildInviteMessage(m, partner){
+  const link = inviteLinkFor(m.inviteCode, partner);
+  const partnerName = (m.partnerNames || [])[partner-1] || `${partner}. partner`;
+  const linkText = link || '[Web sitesi yayına alındığında güvenli davet bağlantısı burada oluşacak]';
+  return `PAIRA Social Club'a davet edildiniz.
+
+${partnerName}, bu davet sizin telefonunuz içindir.
+Davet kodunuz: ${m.inviteCode}
+
+Lütfen kendi telefonunuzdan onay verin:
+${linkText}
+
+İki partner de onay verdiğinde ortak çift hesabı açılır. Chat mesajlarında hangi partnerin yazdığı ayrıca görünür.`;
+}
+
+function sendInviteSMS(id, partner){
+  if(!isPublicWeb()){
+    toast('Önce PAIRA web sitesini yayına almalıyız');
+    return;
+  }
+  const m = (state.adminMembers || []).find(x=>x.id===id);
+  if(!m) return;
+  const phone = normalizePhone(partnerPhoneFor(m, partner));
+  if(phone.length < 10){
+    toast('Geçerli bir telefon numarası gir');
+    return;
+  }
+  const body = buildInviteMessage(m, partner);
+  const sep = /iPhone|iPad|iPod/i.test(navigator.userAgent) ? '&' : '?';
+  window.location.href = `sms:+${phone}${sep}body=${encodeURIComponent(body)}`;
+}
+
+function sendInviteWhatsApp(id, partner){
+  if(!isPublicWeb()){
+    toast('Önce PAIRA web sitesini yayına almalıyız');
+    return;
+  }
+  const m = (state.adminMembers || []).find(x=>x.id===id);
+  if(!m) return;
+  const phone = normalizePhone(partnerPhoneFor(m, partner));
+  if(phone.length < 10){
+    toast('Geçerli bir telefon numarası gir');
+    return;
+  }
+  const body = buildInviteMessage(m, partner);
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(body)}`, '_blank');
+}
+
+async function copyInviteLink(id, partner){
+  if(!isPublicWeb()){
+    toast('Önce PAIRA web sitesini yayına almalıyız');
+    return;
+  }
+  const m = (state.adminMembers || []).find(x=>x.id===id);
+  if(!m) return;
+  const link = inviteLinkFor(m.inviteCode, partner);
+  try{
+    await navigator.clipboard.writeText(link);
+    toast('Davet bağlantısı kopyalandı');
+  }catch(err){
+    const ta = document.createElement('textarea');
+    ta.value = link;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    toast('Davet bağlantısı kopyalandı');
+  }
+}
+
+function applyInviteFromLink(){
+  try{
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('invite');
+    const partner = params.get('partner');
+    if(!code) return;
+    const input = document.getElementById('inviteCode');
+    if(input) input.value = code.toUpperCase();
+    pendingInvitePartner = partner ? parseInt(partner, 10) : null;
+    historyStack = ['invite'];
+    show('invite');
+    toast(partner ? `${partner}. partner daveti açıldı` : 'Davet kodu bağlantıdan dolduruldu');
+  }catch(err){}
+}
+
+async function approveMember(id){
+  const m = (state.adminMembers || []).find(x=>x.id===id);
+  if(!m) return;
+  m.status = 'active';
+  try{
+    await window.PAIRA_FIREBASE_API.saveInvitation(m.inviteCode || m._firebaseId, m);
+    renderAdminMembers();
+    toast('Üyeliğe alındı ✓');
+  }catch(err){ toast('Firebase güncellemesi başarısız'); }
+}
+
+async function removeMember(id){
+  const m = (state.adminMembers || []).find(x=>x.id===id);
+  if(!m) return;
+  if(!confirm(`"${m.name}" üyelikten çıkarılsın mı?`)) return;
+  m.status = 'removed';
+  try{
+    await window.PAIRA_FIREBASE_API.saveInvitation(m.inviteCode || m._firebaseId, m);
+    renderAdminMembers();
+    toast('Üyelikten çıkarıldı');
+  }catch(err){ toast('Firebase güncellemesi başarısız'); }
+}
+
+async function restoreMember(id){
+  const m = (state.adminMembers || []).find(x=>x.id===id);
+  if(!m) return;
+  m.status = 'active';
+  try{
+    await window.PAIRA_FIREBASE_API.saveInvitation(m.inviteCode || m._firebaseId, m);
+    renderAdminMembers();
+    toast('Üyelik tekrar açıldı');
+  }catch(err){ toast('Firebase güncellemesi başarısız'); }
+}
+
+async function deleteInvite(id){
+  const idx = (state.adminMembers || []).findIndex(x=>x.id===id);
+  if(idx < 0) return;
+  const m = state.adminMembers[idx];
+  if(!confirm('Bu kayıt silinsin mi?')) return;
+  try{
+    await window.PAIRA_FIREBASE_API.removeInvitation(m.inviteCode || m._firebaseId);
+    state.adminMembers.splice(idx,1);
+    renderAdminMembers();
+    toast('Kayıt Firebase’den silindi');
+  }catch(err){ toast('Firebase silme işlemi başarısız'); }
+}
+
+function memberAdminCard(m){
+  const used = (m.partnerDevices || m.usedDevices || []).filter(Boolean).length;
+  const phones = m.partnerPhones || [m.contact || '', m.contact2 || ''];
+  const p1Done = !!((m.partnerDevices || [])[0]);
+  const p2Done = !!((m.partnerDevices || [])[1]);
+  const statusClass = m.status === 'active' ? 'active' : (m.status === 'removed' ? 'out' : 'pending');
+  const statusText = m.status === 'active' ? 'Aktif' : (m.status === 'removed' ? 'Çıkarıldı' : 'Bekliyor');
+
+  let actions = '';
+  if(m.status === 'pending'){
+    actions = `
+      <button class="editbtn" onclick="showInviteCreated('${m.id}')">Davet Bilgisi</button>
+      <button class="danger" onclick="deleteInvite('${m.id}')">Daveti Sil</button>`;
+  }else if(m.status === 'active'){
+    actions = `
+      <button class="editbtn" onclick="showInviteCreated('${m.id}')">Davet Bilgisi</button>
+      <button class="danger" onclick="removeMember('${m.id}')">Üyeyi Çıkar</button>`;
+  }else{
+    actions = `
+      <button class="editbtn" onclick="restoreMember('${m.id}')">Tekrar Üyeliğe Al</button>
+      <button class="danger" onclick="deleteInvite('${m.id}')">Kaydı Sil</button>`;
+  }
+
+  return `<div class="member-admin-row">
+    <div class="row" style="justify-content:space-between;align-items:flex-start">
+      <div>
+        <div class="member-title">${escapeHtml(m.name)}</div>
+        <div class="member-meta">
+          ${m.city ? '📍 ' + escapeHtml(m.city) + '<br>' : ''}
+          ${escapeHtml((m.partnerNames || [])[0] || '1. Partner')}: ${escapeHtml(phones[0] || '-')} • ${p1Done ? 'Onay verdi ✓' : 'Bekliyor'}<br>
+          ${escapeHtml((m.partnerNames || [])[1] || '2. Partner')}: ${escapeHtml(phones[1] || '-')} • ${p2Done ? 'Onay verdi ✓' : 'Bekliyor'}<br>
+          Oluşturma: ${escapeHtml(m.createdAt || '')}
+        </div>
+      </div>
+      <span class="status ${statusClass}">${statusText}</span>
+    </div>
+
+    ${m.inviteCode ? `<div class="codebox">
+      <code>${m.inviteCode}</code>
+      <button class="smallbtn" onclick="copyInviteCode('${m.inviteCode}')">Kopyala</button>
+    </div>
+    <div class="member-meta">Partner onayı: ${used}/2</div>` : ''}
+
+    <div class="member-admin-actions">${actions}</div>
+  </div>`;
+}
+
+function renderAdminMembers(){
+  const all = state.adminMembers || [];
+  const pending = all.filter(m=>m.status==='pending');
+  const active = all.filter(m=>m.status==='active');
+  const removed = all.filter(m=>m.status==='removed');
+
+  const count = document.getElementById('adminMemberCount');
+  if(count) count.textContent = active.length;
+
+  const p = document.getElementById('adminPendingMembers');
+  const a = document.getElementById('adminActiveMembers');
+  const r = document.getElementById('adminRemovedMembers');
+
+  if(p) p.innerHTML = pending.length ? pending.map(memberAdminCard).join('') : '<div class="card muted">Bekleyen davet yok.</div>';
+  if(a) a.innerHTML = active.length ? active.map(memberAdminCard).join('') : '<div class="card muted">Aktif üye yok.</div>';
+  if(r) r.innerHTML = removed.length ? removed.map(memberAdminCard).join('') : '<div class="card muted">Çıkarılan üye yok.</div>';
+}
+function renderEventsList(){
+  const ids = Object.keys(events);
+  const wrap = document.getElementById('eventsList');
+  if(!wrap) return;
+  wrap.innerHTML = ids.length ? ids.map(id=>{
+    const e = events[id];
+    const img = (e.images && e.images[0]) || '';
+    const photoCount = (e.images || []).length;
+    return `<button class="event-card" onclick="openEvent('${id}')">
+      ${img ? `<img src="${img}" alt="${escapeHtml(e.title)}">` : `<div class="admin-event-thumb"></div>`}
+      <div class="event-copy"><div><h3>${escapeHtml(e.title)}</h3><div class="event-meta">${escapeHtml(e.date || '')} • ${escapeHtml(e.time || '')}<br>${escapeHtml(e.location || '')}</div></div>
+      <div class="row" style="justify-content:space-between"><span class="badge">📷 ${photoCount} foto</span><span class="badge">Detayı Gör</span></div></div></button>`;
+  }).join('') : '<div class="card muted">Henüz yayınlanmış etkinlik yok.</div>';
+}
+function openAgendaDay(day){
+  const staticIds = (agendaDays[day] || []).filter(id => !!events[id]);
+  const dynamicIds = Object.keys(events).filter(id => {
+    const e = events[id];
+    if(!e.dateISO) return false;
+    const parts = e.dateISO.split('-');
+    return parts.length===3 && String(parseInt(parts[2],10))===String(parseInt(day,10)) && parts[1]==='09' && parts[0]==='2026';
+  });
+  const ids = [...new Set([...staticIds, ...dynamicIds])];
+  document.getElementById('dayHeader').innerHTML = `<span class="day-chip">${day} Eylül 2026</span> <span class="muted">${ids.length} etkinlik</span>`;
+  document.getElementById('dayEventsWrap').innerHTML = ids.length ? ids.map(id=>{
+    const e = events[id];
+    const img = (e.images && e.images[0]) || '';
+    return `<button class="event-card" onclick="openEvent('${id}')">
+      ${img ? `<img src="${img}" alt="${escapeHtml(e.title)}">` : `<div class="admin-event-thumb"></div>`}
+      <div class="event-copy"><div><h3>${escapeHtml(e.title)}</h3><div class="event-meta">${escapeHtml(e.time || '')}<br>${escapeHtml(e.location || '')}</div></div><span class="badge">Detayı Gör</span></div></button>`;
+  }).join('') : `<div class="card muted">Bu günde etkinlik görünmüyor.</div>`;
+  show('dayAgenda');
+}
+function openEvent(id){
+  const active = document.querySelector('.screen.active');
+  if(active && active.id !== 'eventDetail' && active.id !== 'eventChat'){
+    eventReturnScreen = active.id;
+  }
+  currentEvent = id;
+  currentSlide = 0;
+  renderEventDetail();
+  show('eventDetail');
+  ensureEventAttendanceSync(id);
+}
+function closeEvent(){
+  show(eventReturnScreen || 'events');
+}
+
+let eventAttendanceUnsub = null;
+let eventAttendanceKey = '';
+
+function stopEventAttendanceSync(){
+  if(typeof eventAttendanceUnsub === 'function'){
+    try{ eventAttendanceUnsub(); }catch(_){ }
+  }
+  eventAttendanceUnsub = null;
+  eventAttendanceKey = '';
+}
+
+function applyEventAttendance(eventId, remote){
+  state.joinedEvents = state.joinedEvents || {};
+  if(remote && remote.joined === true) state.joinedEvents[eventId] = true;
+  else delete state.joinedEvents[eventId];
+  persist();
+  if(currentEvent === eventId){
+    const active = document.querySelector('.screen.active');
+    if(active && active.id === 'eventDetail') renderEventDetail();
+  }
+}
+
+async function ensureEventAttendanceSync(eventId){
+  const accountId = sharedProfileAccountId();
+  if(!eventId || !accountId) return;
+  const key = `${eventId}__${accountId}`;
+  if(eventAttendanceKey === key && eventAttendanceUnsub) return;
+
+  stopEventAttendanceSync();
+  eventAttendanceKey = key;
+
+  try{
+    const api = await waitForPairaFirebaseApi();
+    const existing = await api.getEventAttendance(eventId, accountId);
+    applyEventAttendance(eventId, existing);
+    eventAttendanceUnsub = api.subscribeEventAttendance(eventId, accountId, (row)=>{
+      applyEventAttendance(eventId, row);
+    }, (err)=>{
+      console.warn('PAIRA event attendance sync', err);
+    });
+  }catch(err){
+    console.warn('PAIRA event attendance start', err);
+  }
+}
+
+function shareEventWhatsApp(id){
+  const e = events[id];
+  if(!e) return;
+  const text = [
+    `PAIRA • ${e.title}`,
+    `📅 ${e.date}`,
+    `🕖 ${e.time}`,
+    `📍 ${e.location}`,
+    e.capacity ? `👥 ${e.capacity}` : '',
+    '',
+    e.desc || '',
+    '',
+    'PAIRA Social Club',
+    'https://paira-social-club.vercel.app'
+  ].filter(Boolean).join('\n');
+  window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+}
+
+function renderEventDetail(){
+  const e = events[currentEvent];
+  if(!e){
+    const wrap=document.getElementById('eventDetailWrap');
+    if(wrap) wrap.innerHTML='<div class="card muted">Bu etkinlik artık yayında değil.</div>';
+    return;
+  }
+  const imgs = Array.isArray(e.images) ? e.images : [];
+  if(currentSlide >= imgs.length) currentSlide = 0;
+  const joined = !!state.joinedEvents[currentEvent];
+  const buttons = joined
+    ? `<button class="gold" style="opacity:.75">Katılıyorum ✓</button><button class="out" style="margin-top:10px;border-color:#b96060;color:#ffb2ac" onclick="leaveEvent('${currentEvent}')">Etkinlikten Ayrıl</button>`
+    : `<button class="gold" onclick="joinEvent('${currentEvent}')">Etkinliğe Katıl</button>`;
+  const media = imgs.length ? `
+    <div class="slider"><img id="slideImg" src="${imgs[currentSlide]}" alt="${escapeHtml(e.title)}">
+      ${imgs.length > 1 ? `<button class="slide-arrow left" onclick="slideEvent(-1)">‹</button><button class="slide-arrow right" onclick="slideEvent(1)">›</button>` : ''}</div>
+    <div class="dots">${imgs.map((_,i)=>`<span class="dot ${i===currentSlide?'on':''}"></span>`).join('')}</div>`
+    : `<div class="card muted" style="text-align:center;padding:28px 14px">Etkinlik görseli yok.</div>`;
+  document.getElementById('eventDetailWrap').innerHTML = `
+    ${media}
+    <div class="card"><h2>${e.title}</h2><div class="row" style="justify-content:space-between;flex-wrap:wrap"><span class="badge">🗓 ${e.date}</span><span class="badge">⏰ ${e.time}</span></div>
+      <p style="margin-top:12px">📍 ${e.location}</p><p class="muted">${e.desc}</p><p>👥 ${e.capacity}</p><p class="muted">Bu etkinlik ilanına en fazla 3 görsel eklenebilir. Görseller kaydırılarak gezilir.</p></div>
+    ${buttons}<button class="out" style="margin-top:10px" onclick="shareEventWhatsApp('${currentEvent}')">🟢 WhatsApp'ta Paylaş</button><button class="out" style="margin-top:10px" onclick="openEventChat('${currentEvent}')">💬 Etkinlik Chat Odası</button>`;
+}
+function slideEvent(dir){
+  const e = events[currentEvent];
+  const len = e && Array.isArray(e.images) ? e.images.length : 0;
+  if(!len) return;
+  currentSlide = (currentSlide + dir + len) % len;
+  renderEventDetail();
+}
+async function setSharedEventAttendance(id, joined){
+  const accountId = sharedProfileAccountId();
+  const me = currentChatIdentity();
+  state.joinedEvents = state.joinedEvents || {};
+  const wasJoined = !!state.joinedEvents[id];
+
+  if(joined) state.joinedEvents[id] = true;
+  else delete state.joinedEvents[id];
+  persist();
+  renderEventDetail();
+
+  if(!accountId){
+    toast(joined ? 'Etkinliğe katıldın ✓' : 'Etkinlikten ayrıldın');
+    return;
+  }
+
+  try{
+    const api = await waitForPairaFirebaseApi();
+    await api.setEventAttendance(id, accountId, {
+      joined,
+      inviteCode:accountId,
+      coupleName:me.coupleName,
+      partnerName:me.partnerName,
+      deviceId:getDeviceId()
+    });
+    toast(joined ? 'Çift olarak etkinliğe katıldınız ✓' : 'Çift olarak etkinlikten ayrıldınız');
+  }catch(err){
+    console.warn('PAIRA event attendance save', err);
+    if(wasJoined) state.joinedEvents[id] = true;
+    else delete state.joinedEvents[id];
+    persist();
+    renderEventDetail();
+    toast('Etkinlik katılımı kaydedilemedi');
+  }
+}
+function joinEvent(id){ return setSharedEventAttendance(id, true); }
+function leaveEvent(id){ return setSharedEventAttendance(id, false); }
+function openEventChat(id){
+  currentEvent = id;
+  const e = events[id];
+  document.getElementById('eventChatTitle').textContent = e.title;
+  const me=currentChatIdentity();
+  const pi=document.getElementById('eventPartnerIdentity');
+  if(pi) pi.textContent=`Bu telefonda yazan: ${me.partnerName} • ${me.coupleName}`;
+  show('eventChat');
+  startRealtimeChat('event',id,'eventMsgs');
+}
+function sendEventMessage(){
+  return sendRealtimeRoomMessage('event',currentEvent,'eventInput');
+}
+const clubMembershipUnsubs = new Map();
+
+function clubMembershipEventId(key){
+  return `club_${String(key || '').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,70)}`;
+}
+
+function isCurrentCoupleInClub(key){
+  const me = currentChatIdentity();
+  const members = state.clubMembers[key] || [];
+  return members.includes(me.coupleName) || members.includes(currentUser);
+}
+
+function applyClubMembership(key, remote){
+  const me = currentChatIdentity();
+  state.clubMembers[key] = state.clubMembers[key] || [];
+  state.clubMembers[key] = state.clubMembers[key].filter(n => n !== currentUser && n !== me.coupleName);
+  if(remote && remote.joined === true) state.clubMembers[key].push(me.coupleName);
+  persist();
+  renderClubs();
+  if(currentClub === key){
+    const active = document.querySelector('.screen.active');
+    if(active && active.id === 'clubDetail') renderClubDetail();
+  }
+}
+
+async function ensureClubMembershipSync(key){
+  const accountId = sharedProfileAccountId();
+  if(!key || !accountId || clubMembershipUnsubs.has(key)) return;
+  try{
+    const api = await waitForPairaFirebaseApi();
+    const eventId = clubMembershipEventId(key);
+    const existing = await api.getEventAttendance(eventId, accountId);
+    applyClubMembership(key, existing);
+    const unsub = api.subscribeEventAttendance(eventId, accountId, row=>{
+      applyClubMembership(key, row);
+    }, err=>{
+      console.warn('PAIRA club membership sync', key, err);
+      clubMembershipUnsubs.delete(key);
+    });
+    clubMembershipUnsubs.set(key, unsub);
+  }catch(err){
+    console.warn('PAIRA club membership start', key, err);
+  }
+}
+
+function ensureAllClubMembershipSync(){
+  Object.keys(clubs || {}).forEach(key=>ensureClubMembershipSync(key));
+}
+
+async function setSharedClubMembership(key, joined){
+  const accountId = sharedProfileAccountId();
+  const me = currentChatIdentity();
+  const wasJoined = isCurrentCoupleInClub(key);
+
+  applyClubMembership(key, joined ? {joined:true} : {joined:false});
+
+  if(!accountId){
+    toast(joined ? 'Kulübe katıldın ✓' : 'Kulüpten ayrıldın');
+    return true;
+  }
+
+  try{
+    const api = await waitForPairaFirebaseApi();
+    await api.setEventAttendance(clubMembershipEventId(key), accountId, {
+      joined,
+      inviteCode:accountId,
+      coupleName:me.coupleName,
+      partnerName:me.partnerName,
+      deviceId:getDeviceId()
+    });
+    toast(joined ? 'Çift olarak kulübe katıldınız ✓' : 'Çift olarak kulüpten ayrıldınız');
+    return true;
+  }catch(err){
+    console.warn('PAIRA club membership save', err);
+    applyClubMembership(key, wasJoined ? {joined:true} : {joined:false});
+    toast('Kulüp üyeliği kaydedilemedi');
+    return false;
+  }
+}
+
+function renderClubs(){
+  document.getElementById('clubsList').innerHTML = Object.entries(clubs).map(([key,c])=>{
+    const count = (state.clubMembers[key] || []).length;
+    return `<button class="listbtn" onclick="openClub('${key}')"><div class="club-top"><div><b>${c.title}</b><div class="muted" style="margin-top:4px">${c.desc}</div></div><span class="club-badge">${count} üye</span></div></button>`;
+  }).join('');
+}
+function openClub(key){
+  currentClub = key;
+  renderClubDetail();
+  show('clubDetail');
+  ensureClubMembershipSync(key);
+}
+function renderClubDetail(){
+  const c = clubs[currentClub];
+  const me=currentChatIdentity();
+  const members = state.clubMembers[currentClub] || [];
+  const joined = isCurrentCoupleInClub(currentClub);
+  const actionButtons = joined
+    ? `<button class="gold" style="opacity:.75">Kulübe Katıldın ✓</button><button class="out" style="margin-top:10px;border-color:#b96060;color:#ffb2ac" onclick="leaveClub('${currentClub}')">Kulüpten Ayrıl</button>`
+    : `<button class="gold" onclick="joinClub('${currentClub}')">Kulübe Katıl</button>`;
+  document.getElementById('clubDetailWrap').innerHTML = `
+    <div class="card"><h2>${c.title}</h2><p class="muted">${c.desc}</p><div class="row" style="justify-content:space-between;flex-wrap:wrap"><span class="badge">${members.length} üye</span><span class="badge">Kalıcı üyelik</span></div></div>
+    ${actionButtons}
+    <div class="section-title">Üye Listesi</div>
+    <div class="members-pills">${members.map(n=>`<span class="member-pill">${escapeHtml(n)}</span>`).join('') || '<span class="muted">Henüz üye yok</span>'}</div>
+    <div class="section-title">Kulüp Chat Odası</div>
+    <div class="muted" style="font-size:12px;margin-bottom:8px">Bu telefonda yazan: ${escapeHtml(me.partnerName)} • ${escapeHtml(me.coupleName)}</div>
+    <div id="clubMsgs"><div class="muted" style="padding:12px 2px">Sohbet yükleniyor...</div></div>
+    <div class="composer"><input id="clubInput" placeholder="Kulüp odasına mesaj yaz..."><button class="gold" style="width:64px" onclick="sendClubMessage()">➤</button></div>`;
+  startRealtimeChat('club',currentClub,'clubMsgs');
+}
+function joinClub(key){ return setSharedClubMembership(key, true); }
+function leaveClub(key){ return setSharedClubMembership(key, false); }
+async function sendClubMessage(){
+  if(!isCurrentCoupleInClub(currentClub)){
+    const ok = await setSharedClubMembership(currentClub, true);
+    if(!ok) return;
+  }
+  return sendRealtimeRoomMessage('club',currentClub,'clubInput');
+}
+renderEventsList();
+renderAdminMembers();
+renderAdminEvents();
+renderClubs();
+ensureAllClubMembershipSync();
+renderAdminInbox();
+updateAdminCounters();
+renderProfileView();
+persist();
+ensureHomeNotificationBadge();
+ensureNotificationsSync();
+
+async function resumeApprovedDeviceSession(){
+  try{
+    const params = new URLSearchParams(window.location.search);
+    // Partner davet linki açılmışsa normal davet akışı çalışsın.
+    if(params.get('invite')) return;
+
+    const saved = getDevicePartnerIdentity();
+    const code = String(saved?.inviteCode || '').trim().toUpperCase();
+    if(!code) return;
+
+    const api = await waitForPairaFirebaseApi();
+    const rec = await api.getInvitation(code);
+    if(!rec || rec.status === 'removed') return;
+
+    rec.partnerDevices = rec.partnerDevices || ['', ''];
+    const deviceId = getDeviceId();
+    const idx = rec.partnerDevices.findIndex(d => d === deviceId);
+    if(idx < 0) return;
+
+    setDevicePartnerIdentity(rec, idx);
+    state.adminMembers = state.adminMembers || [];
+    const recIdx = state.adminMembers.findIndex(m => (m.inviteCode || m._firebaseId || '').toUpperCase() === code);
+    if(recIdx >= 0) state.adminMembers[recIdx] = rec;
+    else state.adminMembers.unshift(rec);
+    persist();
+    historyStack = ['home'];
+    show('home');
+    ensureSharedProfileSync();
+  }catch(err){
+    console.warn('PAIRA returning session', err);
+  }
+}
+
+setTimeout(applyInviteFromLink, 50);
+setTimeout(resumeApprovedDeviceSession, 650);
+
+// ---- PAIRA v19.8 partner businesses + member QR ----
+let partnerBusinessRows = [];
+let partnerBusinessUnsub = null;
+let benefitSeedHtml = '';
+function benefitEsc(v){return String(v ?? '').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function partnerCatMeta(cat){const m={food:{icon:'🍽',label:'Cafe & Restoran'},shop:{icon:'🛍',label:'Mağaza'},care:{icon:'✦',label:'Bakım'},stay:{icon:'⌂',label:'Otel & Tatil'},other:{icon:'◆',label:'Diğer'}};return m[cat]||m.other;}
+function activePartnerBusinesses(){return (partnerBusinessRows||[]).filter(x=>x&&x.active!==false);}
+function renderPartnerBusinesses(){
+  const list=document.getElementById('benefitList'); if(!list)return;
+  const rows=activePartnerBusinesses();
+  if(!rows.length){if(benefitSeedHtml)list.innerHTML=benefitSeedHtml;return;}
+  list.innerHTML=rows.map(row=>{const meta=partnerCatMeta(row.category);const place=[row.district,row.city].filter(Boolean).join(' • ');const photo=row.photoUrl?`<img class="partner-photo" src="${benefitEsc(row.photoUrl)}" alt="${benefitEsc(row.name)}">`:'';return `<div class="benefit-card" data-benefit-cat="${benefitEsc(row.category||'other')}"><div class="benefit-card-top"><div class="benefit-icon">${meta.icon}</div><div class="benefit-card-copy"><h3>${benefitEsc(row.name||'PAIRA Üye İşyeri')}</h3><div class="benefit-place">${benefitEsc(place||meta.label)}</div></div><div class="benefit-discount">${benefitEsc(row.offer||'PAIRA')}</div></div>${photo}<div class="benefit-desc">${benefitEsc(row.description||'PAIRA üyelerine özel ayrıcalık.')}</div><div class="benefit-actions"><button class="benefit-small" onclick="openMemberBenefitQr('${benefitEsc(row.id||row._firebaseId||'')}')">Avantajı Kullan</button><button class="benefit-small" onclick="openPartnerMap('${benefitEsc(row.id||row._firebaseId||'')}')">Yol Tarifi</button></div></div>`;}).join('');
+}
+function renderPartnerAdmin(){
+  const box=document.getElementById('partnerAdminList'); if(!box)return; const rows=partnerBusinessRows||[];
+  if(!rows.length){box.innerHTML='<div class="partner-empty">Henüz gerçek bir üye işyeri eklenmedi.<br><br>“Yeni İşyeri Ekle” ile başlayabilirsiniz.</div>';return;}
+  box.innerHTML=rows.map(row=>{const meta=partnerCatMeta(row.category);const place=[row.district,row.city].filter(Boolean).join(' • ');return `<div class="partner-admin-row"><div class="partner-title">${meta.icon} ${benefitEsc(row.name||'İşyeri')}</div><div class="partner-meta">${benefitEsc(meta.label)}${place?' • '+benefitEsc(place):''}<br>${row.active===false?'Pasif':'Aktif'}</div><div class="partner-offer">${benefitEsc(row.offer||'PAIRA Ayrıcalığı')}</div><div class="partner-admin-actions"><button class="editbtn" onclick="openPartnerBusinessForm('${benefitEsc(row.id||row._firebaseId||'')}')">Düzenle</button><button class="editbtn" onclick="togglePartnerBusiness('${benefitEsc(row.id||row._firebaseId||'')}')">${row.active===false?'Aktifleştir':'Pasife Al'}</button><button class="danger" onclick="removePartnerBusiness('${benefitEsc(row.id||row._firebaseId||'')}')">Sil</button></div></div>`;}).join('');
+}
+function openPartnerBusinessForm(id=''){
+  const row=(partnerBusinessRows||[]).find(x=>(x.id||x._firebaseId)===id)||{};
+  modal(`<h2 style="color:#e7bd72;margin-top:0">${id?'Üye İşyerini Düzenle':'Yeni Üye İşyeri'}</h2><input type="hidden" id="pbId" value="${benefitEsc(id)}"><label class="form-label">İşyeri adı</label><input class="form-field" id="pbName" value="${benefitEsc(row.name||'')}" placeholder="Örn. Moda Bistro"><label class="form-label">Kategori</label><select class="form-field" id="pbCategory">${[['food','Cafe & Restoran'],['shop','Mağaza'],['care','Bakım'],['stay','Otel & Tatil'],['other','Diğer']].map(([v,l])=>`<option value="${v}" ${String(row.category||'food')===v?'selected':''}>${l}</option>`).join('')}</select><label class="form-label">PAIRA avantajı</label><input class="form-field" id="pbOffer" value="${benefitEsc(row.offer||'')}" placeholder="Örn. %20 indirim"><div class="form-grid"><div><label class="form-label">Semt</label><input class="form-field" id="pbDistrict" value="${benefitEsc(row.district||'')}" placeholder="Moda"></div><div><label class="form-label">Şehir</label><input class="form-field" id="pbCity" value="${benefitEsc(row.city||'İstanbul')}" placeholder="İstanbul"></div></div><label class="form-label">Kısa açıklama</label><textarea class="form-field" id="pbDescription" placeholder="İndirim hangi ürün veya hizmetlerde geçerli?">${benefitEsc(row.description||'')}</textarea><label class="form-label">Adres</label><textarea class="form-field" id="pbAddress" placeholder="Açık adres">${benefitEsc(row.address||'')}</textarea><label class="form-label">Telefon</label><input class="form-field" id="pbPhone" value="${benefitEsc(row.phone||'')}" placeholder="05…"><label class="form-label">Instagram / web</label><input class="form-field" id="pbSocial" value="${benefitEsc(row.social||'')}" placeholder="@mekan veya web adresi"><label class="form-label">Google Maps bağlantısı</label><input class="form-field" id="pbMapUrl" value="${benefitEsc(row.mapUrl||'')}" placeholder="İsteğe bağlı"><label class="form-label">Fotoğraf bağlantısı</label><input class="form-field" id="pbPhotoUrl" value="${benefitEsc(row.photoUrl||'')}" placeholder="İsteğe bağlı"><label style="display:flex;align-items:center;gap:10px;margin:14px 2px;color:#ecd3a3"><input type="checkbox" id="pbActive" ${row.active===false?'':'checked'}> Aktif olarak yayınla</label><button class="gold" onclick="savePartnerBusinessFromModal()">Kaydet ve Yayınla</button><button class="out" style="margin-top:8px" onclick="closeModal()">Vazgeç</button>`);
+}
+async function savePartnerBusinessFromModal(){
+  const name=(document.getElementById('pbName')?.value||'').trim(),
+        offer=(document.getElementById('pbOffer')?.value||'').trim();
+  if(!name){toast('İşyeri adını yazın');return;}
+  if(!offer){toast('PAIRA avantajını yazın');return;}
+  const existingId=document.getElementById('pbId')?.value||'',
+        id=existingId||('partner_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7));
+  const row={
+    id,
+    name,
+    category:document.getElementById('pbCategory')?.value||'other',
+    offer,
+    district:(document.getElementById('pbDistrict')?.value||'').trim(),
+    city:(document.getElementById('pbCity')?.value||'').trim(),
+    description:(document.getElementById('pbDescription')?.value||'').trim(),
+    address:(document.getElementById('pbAddress')?.value||'').trim(),
+    phone:(document.getElementById('pbPhone')?.value||'').trim(),
+    social:(document.getElementById('pbSocial')?.value||'').trim(),
+    mapUrl:(document.getElementById('pbMapUrl')?.value||'').trim(),
+    photoUrl:(document.getElementById('pbPhotoUrl')?.value||'').trim(),
+    active:!!document.getElementById('pbActive')?.checked,
+    updatedAt:new Date().toISOString()
+  };
+  try{
+    const api=window.PAIRA_FIREBASE_API || await waitForPairaFirebaseApi();
+    if(!api?.savePartnerBusiness) throw new Error('Firebase hazır değil');
+    const saved=await api.savePartnerBusiness(row);
+    const savedId=String(saved?.id||saved?._firebaseId||id);
+    const next=(partnerBusinessRows||[]).filter(x=>String(x?.id||x?._firebaseId||'')!==savedId);
+    next.unshift(saved);
+    partnerBusinessRows=next.sort((a,b)=>String(b.updatedAt||"").localeCompare(String(a.updatedAt||"")));
+    renderPartnerAdmin();
+    renderPartnerBusinesses();
+    closeModal();
+    toast(existingId?'İşyeri güncellendi ✓':'İşyeri yayınlandı ✓');
+    setTimeout(()=>startPartnerBusinessRealtime(),250);
+  }catch(err){
+    console.warn('PAIRA partner save',err);
+    toast('İşyeri kaydedilemedi');
+  }
+}
+async function togglePartnerBusiness(id){const row=(partnerBusinessRows||[]).find(x=>(x.id||x._firebaseId)===id);if(!row)return;try{await window.PAIRA_FIREBASE_API.savePartnerBusiness({...row,id,active:row.active===false,updatedAt:new Date().toISOString()});toast(row.active===false?'İşyeri aktifleştirildi':'İşyeri pasife alındı');}catch(err){toast('Güncelleme başarısız');}}
+async function removePartnerBusiness(id){const row=(partnerBusinessRows||[]).find(x=>(x.id||x._firebaseId)===id);if(!row)return;if(!confirm(`"${row.name}" işyerini silmek istiyor musunuz?`))return;try{await window.PAIRA_FIREBASE_API.deletePartnerBusiness(id);toast('İşyeri silindi');}catch(err){toast('Silme başarısız');}}
+function openPartnerMap(id){const row=(partnerBusinessRows||[]).find(x=>(x.id||x._firebaseId)===id);if(!row){benefitLocationPreview();return;}let url=String(row.mapUrl||'').trim();if(!url&&row.address)url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(row.address);if(!url){toast('Bu işyerine henüz konum eklenmedi');return;}window.open(url,'_blank','noopener');}
+function makeBenefitVerifyUrl(row){const identity=getDevicePartnerIdentity();if(!identity?.inviteCode)return '';const u=new URL(location.origin+location.pathname);u.searchParams.set('verify','paira');u.searchParams.set('invite',identity.inviteCode);u.searchParams.set('device',getDeviceId());u.searchParams.set('bucket',String(Math.floor(Date.now()/120000)));if(row?.id||row?._firebaseId)u.searchParams.set('business',row.id||row._firebaseId);if(row?.offer)u.searchParams.set('offer',row.offer);return u.toString();}
+function openMemberBenefitQr(id=''){const row=(partnerBusinessRows||[]).find(x=>(x.id||x._firebaseId)===id)||{id:'preview',name:'PAIRA Üye İşyeri',offer:'Üye Ayrıcalığı'};const identity=getDevicePartnerIdentity();if(!identity?.inviteCode){modal(`<h2 style="color:#e7bd72;margin-top:0">PAIRA Üye Kartı</h2><div class="card"><b>Aktif üyelik bulunamadı.</b><p class="muted">QR doğrulaması yalnız davet koduyla aktifleşmiş PAIRA üyelerinde çalışır.</p></div><button class="gold" onclick="closeModal()">Tamam</button>`);return;}const verifyUrl=makeBenefitVerifyUrl(row);modal(`<h2 style="color:#e7bd72;margin-top:0">${benefitEsc(row.name||'PAIRA Ayrıcalığı')}</h2><div class="qr-member">${benefitEsc(identity.partnerName||'PAIRA Üyesi')}</div><div class="qr-couple">${benefitEsc(identity.coupleName||'')}</div><div class="qr-shell" id="pairaBenefitQr"></div><div style="text-align:center;color:#f0cf8e;font-weight:800">${benefitEsc(row.offer||'PAIRA Üye Ayrıcalığı')}</div><div class="qr-expiry">İşyeri bu kodu telefon kamerasıyla okutur.<br>Kod yaklaşık 2 dakikada bir yenilenir.</div><button class="out" style="margin-top:12px" onclick="closeModal()">Kapat</button>`);setTimeout(()=>{const box=document.getElementById('pairaBenefitQr');if(!box)return;box.innerHTML='';if(window.QRCode){new QRCode(box,{text:verifyUrl,width:202,height:202,correctLevel:QRCode.CorrectLevel.M});}else{box.innerHTML='<div style="color:#111;text-align:center;padding:20px">QR hazırlanamadı.<br>Sayfayı yenileyin.</div>';}},50);}
+window.benefitPreview=function(){openMemberBenefitQr('');};
+async function verifyMemberQrFromUrl(){const params=new URLSearchParams(location.search);if(params.get('verify')!=='paira')return false;show('memberVerify');const box=document.getElementById('memberVerifyBox'),invite=String(params.get('invite')||'').trim().toUpperCase(),device=String(params.get('device')||'').trim(),bucket=Number(params.get('bucket')||0),offer=String(params.get('offer')||'');if(!invite||!device||!bucket){box.innerHTML='<div class="verify-bad"><div class="verify-icon">✕</div><b>Geçersiz PAIRA kodu</b></div>';return true;}try{const rec=await window.PAIRA_FIREBASE_API.getInvitation(invite),devices=Array.isArray(rec?.partnerDevices)?rec.partnerDevices:[],partnerIndex=devices.indexOf(device),timeOk=Math.abs(Math.floor(Date.now()/120000)-bucket)<=1,active=!!rec&&rec.status==='active'&&devices.filter(Boolean).length>=2&&partnerIndex>=0&&timeOk;if(active){const partnerName=(rec.partnerNames||[])[partnerIndex]||'PAIRA Üyesi';box.innerHTML=`<div class="verify-good"><div class="verify-icon">✓</div><h2 style="margin:0 0 6px">Aktif PAIRA Üyesi</h2><div style="font-size:20px;font-weight:800">${benefitEsc(partnerName)}</div><div style="margin-top:4px">${benefitEsc(rec.name||'')}</div>${offer?`<div style="margin-top:14px;color:#f3d391;font-weight:800">${benefitEsc(offer)}</div>`:''}<div style="margin-top:12px;font-size:12px;opacity:.8">Kod canlı ve geçerli.</div></div>`;}else{box.innerHTML=`<div class="verify-bad"><div class="verify-icon">✕</div><h2 style="margin:0 0 6px">Kod geçerli değil</h2><div>${timeOk?'Üyelik veya cihaz doğrulanamadı.':'Bu QR kodun süresi dolmuş.'}</div></div>`;}}catch(err){console.warn('PAIRA QR verify',err);box.innerHTML='<div class="verify-bad"><div class="verify-icon">!</div><b>Doğrulama yapılamadı.</b><div style="margin-top:8px">İnternet bağlantısını kontrol edin.</div></div>';}return true;}
+async function startPartnerBusinessRealtime(){
+  const list=document.getElementById('benefitList');
+  const adminBox=document.getElementById('partnerAdminList');
+  if(list&&!benefitSeedHtml)benefitSeedHtml=list.innerHTML;
+  if(adminBox)adminBox.innerHTML='<div class="partner-empty">İşyeri listesi yükleniyor…</div>';
+  try{
+    const api=window.PAIRA_FIREBASE_API || await waitForPairaFirebaseApi();
+
+    const initialRows=await api.listPartnerBusinesses();
+    partnerBusinessRows=Array.isArray(initialRows)?initialRows:[];
+    renderPartnerBusinesses();
+    renderPartnerAdmin();
+
+    if(partnerBusinessUnsub)partnerBusinessUnsub();
+    partnerBusinessUnsub=api.subscribePartnerBusinesses((rows,err)=>{
+      if(err){
+        console.warn('PAIRA partner subscribe callback',err);
+        if(adminBox)adminBox.innerHTML='<div class="partner-empty">İşyeri listesi şu anda alınamadı.<br><br><button class="out" onclick="startPartnerBusinessRealtime()">↻ Tekrar Dene</button></div>';
+        return;
+      }
+      partnerBusinessRows=Array.isArray(rows)?rows:[];
+      renderPartnerBusinesses();
+      renderPartnerAdmin();
+    });
+  }catch(err){
+    console.warn('PAIRA partner initial load',err);
+    if(adminBox)adminBox.innerHTML='<div class="partner-empty">İşyeri listesi şu anda alınamadı.<br><br><button class="out" onclick="startPartnerBusinessRealtime()">↻ Tekrar Dene</button></div>';
+  }
+}
+window.openPartnerBusinessForm=openPartnerBusinessForm;window.savePartnerBusinessFromModal=savePartnerBusinessFromModal;window.togglePartnerBusiness=togglePartnerBusiness;window.removePartnerBusiness=removePartnerBusiness;window.renderPartnerAdmin=renderPartnerAdmin;window.openMemberBenefitQr=openMemberBenefitQr;window.openPartnerMap=openPartnerMap;window.startPartnerBusinessRealtime=startPartnerBusinessRealtime;
+if(window.PAIRA_FIREBASE_API){
+  startPartnerBusinessRealtime();
+  verifyMemberQrFromUrl();
+}else{
+  window.addEventListener('paira-firebase-ready',()=>{startPartnerBusinessRealtime();verifyMemberQrFromUrl();},{once:true});
+}
+// ---- /PAIRA v19.8 ----
+
+window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+<!-- PAIRA Firebase authentication + admin gate -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+  import {
+    getFirestore,
+    doc,
+    getDoc,
+    collection,
+    getDocs,
+    setDoc,
+    deleteDoc,
+    runTransaction,
+    addDoc,
+    query,
+    orderBy,
+    onSnapshot,
+    limit
+  } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB3gFiLfA3naEP4Lx5fNt7o5oUwXQSUM1c",
+    authDomain: "paira-468c3.firebaseapp.com",
+    projectId: "paira-468c3",
+    storageBucket: "paira-468c3.firebasestorage.app",
+    messagingSenderId: "38478063242",
+    appId: "1:38478063242:web:e56b4a2ac451510d98ef73",
+    measurementId: "G-YYB4DL468T"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  let verifiedAdmin = false;
+  let pairaRestIdToken = "";
+  const PAIRA_WEB_SOURCE = "<!doctype html>\n" + document.documentElement.outerHTML;
+
+  const isLocalContent = () =>
+    location.protocol === "content:" || location.protocol === "file:";
+
+  function fsEncodeValue(v){
+    if(v === null || typeof v === "undefined") return {nullValue:null};
+    if(typeof v === "string") return {stringValue:v};
+    if(typeof v === "boolean") return {booleanValue:v};
+    if(typeof v === "number"){
+      return Number.isInteger(v) ? {integerValue:String(v)} : {doubleValue:v};
+    }
+    if(Array.isArray(v)) return {arrayValue:{values:v.map(fsEncodeValue)}};
+    if(typeof v === "object"){
+      const fields = {};
+      Object.entries(v).forEach(([k,val]) => {
+        if(typeof val !== "undefined") fields[k] = fsEncodeValue(val);
+      });
+      return {mapValue:{fields}};
+    }
+    return {stringValue:String(v)};
+  }
+
+  function fsDecodeValue(v){
+    if(!v || typeof v !== "object") return null;
+    if("stringValue" in v) return v.stringValue;
+    if("booleanValue" in v) return v.booleanValue;
+    if("integerValue" in v) return Number(v.integerValue);
+    if("doubleValue" in v) return Number(v.doubleValue);
+    if("timestampValue" in v) return v.timestampValue;
+    if("nullValue" in v) return null;
+    if("arrayValue" in v) return (v.arrayValue.values || []).map(fsDecodeValue);
+    if("mapValue" in v){
+      const o = {};
+      Object.entries(v.mapValue.fields || {}).forEach(([k,val]) => o[k] = fsDecodeValue(val));
+      return o;
+    }
+    return null;
+  }
+
+  function fsEncodeFields(data){
+    const fields = {};
+    Object.entries(data || {}).forEach(([k,v]) => {
+      if(typeof v !== "undefined") fields[k] = fsEncodeValue(v);
+    });
+    return fields;
+  }
+
+  function fsDecodeFields(fields){
+    const out = {};
+    Object.entries(fields || {}).forEach(([k,v]) => out[k] = fsDecodeValue(v));
+    return out;
+  }
+
+  async function restFirestore(path, options={}){
+    if(!pairaRestIdToken) throw new Error("Yönetici oturumu bulunamadı.");
+    const url = "https://firestore.googleapis.com/v1/projects/" +
+      encodeURIComponent(firebaseConfig.projectId) +
+      "/databases/(default)/documents/" + path;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    try{
+      const res = await fetch(url, {
+        ...options,
+        headers:{
+          "Content-Type":"application/json",
+          "Authorization":"Bearer " + pairaRestIdToken,
+          ...(options.headers || {})
+        },
+        signal:controller.signal
+      });
+      const text = await res.text();
+      let data = {};
+      try{ data = text ? JSON.parse(text) : {}; }catch(_){}
+      if(!res.ok) throw new Error(data?.error?.message || "Firebase veri işlemi başarısız.");
+      return data;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function listInvitations(){
+    if(isLocalContent()){
+      const data = await restFirestore("invitations?pageSize=100");
+      return (data.documents || []).map(d => {
+        const rec = fsDecodeFields(d.fields || {});
+        rec._firebaseId = decodeURIComponent((d.name || "").split("/").pop() || "");
+        return rec;
+      });
+    }
+    const snap = await getDocs(collection(db, "invitations"));
+    return snap.docs.map(s => ({...s.data(), _firebaseId:s.id}));
+  }
+
+  async function getInvitation(id){
+    if(isLocalContent()){
+      const rows = await listInvitations();
+      return rows.find(r => String(r.inviteCode || r._firebaseId || '').toUpperCase() === String(id || '').toUpperCase()) || null;
+    }
+    const snap = await getDoc(doc(db, "invitations", id));
+    if(!snap.exists()) return null;
+    return {...snap.data(), _firebaseId:snap.id};
+  }
+
+  async function saveInvitation(id, data){
+    const clean = JSON.parse(JSON.stringify(data));
+    delete clean._firebaseId;
+    if(isLocalContent()){
+      await restFirestore("invitations/" + encodeURIComponent(id), {
+        method:"PATCH",
+        body:JSON.stringify({fields:fsEncodeFields(clean)})
+      });
+      return;
+    }
+    await setDoc(doc(db, "invitations", id), clean);
+  }
+
+  async function approveInvitationPartner(id, partnerIndex, deviceId){
+    if(isLocalContent()) throw new Error("INVITE_APPROVAL_REQUIRES_WEB");
+    const ref = doc(db, "invitations", id);
+    return await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      if(!snap.exists()) throw new Error("INVITE_NOT_FOUND");
+
+      const data = snap.data() || {};
+      if(data.status === "removed") throw new Error("INVITE_REMOVED");
+
+      const devices = Array.isArray(data.partnerDevices) ? [...data.partnerDevices] : ["", ""];
+      while(devices.length < 2) devices.push("");
+      const otherIndex = partnerIndex === 0 ? 1 : 0;
+
+      if(devices[otherIndex] === deviceId && devices[partnerIndex] !== deviceId){
+        throw new Error("DEVICE_OTHER_PARTNER");
+      }
+      if(devices[partnerIndex] && devices[partnerIndex] !== deviceId){
+        throw new Error("PARTNER_ALREADY_OTHER_DEVICE");
+      }
+
+      // Bu telefon zaten doğru partner olarak kayıtlıysa tekrar write yapma.
+      if(devices[partnerIndex] === deviceId){
+        return {...data, partnerDevices:devices, _firebaseId:snap.id};
+      }
+
+      devices[partnerIndex] = deviceId;
+      const usedDevices = devices.filter(Boolean);
+      const status = usedDevices.length >= 2 ? "active" : "pending";
+
+      tx.update(ref, {partnerDevices:devices, usedDevices, status});
+      return {...data, partnerDevices:devices, usedDevices, status, _firebaseId:snap.id};
+    });
+  }
+
+  function safeChatRoomId(kind, roomId){
+    const a=String(kind || 'room').toLowerCase().replace(/[^a-z0-9_-]/g,'_').slice(0,30);
+    const b=String(roomId || 'general').toLowerCase().replace(/[^a-z0-9_-]/g,'_').slice(0,80);
+    return `${a}__${b}`;
+  }
+
+  function chatMessagesCollection(kind, roomId){
+    return collection(db, 'chatRooms', safeChatRoomId(kind,roomId), 'messages');
+  }
+
+  function subscribeChatMessages(kind, roomId, onMessages, onError){
+    const q=query(chatMessagesCollection(kind,roomId),orderBy('clientAt','asc'),limit(250));
+    return onSnapshot(q,(snap)=>{
+      const rows=snap.docs.map(d=>({...d.data(),id:d.id}));
+      onMessages(rows);
+    },(err)=>{
+      if(onError) onError(err);
+    });
+  }
+
+  async function sendChatMessage(kind, roomId, payload){
+    const clean={
+      partnerName:String(payload?.partnerName || 'Partner').slice(0,80),
+      coupleName:String(payload?.coupleName || 'Çift').slice(0,120),
+      text:String(payload?.text || '').trim().slice(0,2000),
+      deviceId:String(payload?.deviceId || '').slice(0,120),
+      clientAt:Date.now()
+    };
+    if(!clean.text) throw new Error('EMPTY_MESSAGE');
+    await addDoc(chatMessagesCollection(kind,roomId),clean);
+  }
+
+
+  function notificationsCollection(){
+    return collection(db, 'notifications');
+  }
+
+  function subscribeSystemNotifications(onRows, onError){
+    const q = query(notificationsCollection(), orderBy('clientAt','desc'), limit(100));
+    return onSnapshot(q,(snap)=>{
+      onRows(snap.docs.map(d=>({...d.data(), id:d.id, _firebaseId:d.id})));
+    },(err)=>{ if(onError) onError(err); });
+  }
+
+  async function createSystemNotification(payload){
+    const clean = {
+      type:String(payload?.type || 'announcement').slice(0,40),
+      title:String(payload?.title || 'PAIRA Bildirimi').trim().slice(0,120),
+      body:String(payload?.body || '').trim().slice(0,800),
+      eventId:String(payload?.eventId || '').slice(0,120),
+      clientAt:Date.now()
+    };
+    if(!clean.title) throw new Error('EMPTY_NOTIFICATION_TITLE');
+    await addDoc(notificationsCollection(), clean);
+  }
+
+  function safeEventId(value){
+    return String(value || '').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,120);
+  }
+
+  function eventRef(id){
+    return doc(db, 'events', safeEventId(id));
+  }
+
+  function cleanEventPayload(id, data){
+    const eventId = safeEventId(id || data?.id);
+    const startTime = String(data?.startTime || '').slice(0,20);
+    const endTime = String(data?.endTime || '').slice(0,20);
+    return {
+      kind:'event',
+      id:eventId,
+      title:String(data?.title || 'Etkinlik').trim().slice(0,160),
+      dateISO:String(data?.dateISO || '').slice(0,20),
+      date:String(data?.date || '').slice(0,80),
+      startTime,
+      endTime,
+      time:String(data?.time || (startTime ? (endTime ? `${startTime} - ${endTime}` : startTime) : '')).slice(0,80),
+      location:String(data?.location || '').slice(0,200),
+      capacity:String(data?.capacity || '').slice(0,100),
+      desc:String(data?.desc || '').slice(0,3000),
+      images:Array.isArray(data?.images) ? data.images.map(x=>String(x).slice(0,300000)).slice(0,3) : [],
+      updatedAt:Number(data?.updatedAt || Date.now())
+    };
+  }
+
+  function subscribeEvents(onRows, onError){
+    return onSnapshot(collection(db, 'events'),(snap)=>{
+      let initialized = false;
+      const rows = [];
+      snap.docs.forEach(d=>{
+        const data = d.data() || {};
+        if(d.id === '_meta' || data.kind === 'meta'){
+          initialized = data.initialized === true || initialized;
+          return;
+        }
+        rows.push({...data, _firebaseId:d.id});
+      });
+      rows.sort((a,b)=>{
+        const da=String(a.dateISO || ''), dbb=String(b.dateISO || '');
+        if(da !== dbb) return da.localeCompare(dbb);
+        return String(a.startTime || '').localeCompare(String(b.startTime || ''));
+      });
+      onRows(rows, initialized);
+    },(err)=>{ if(onError) onError(err); });
+  }
+
+  async function seedEventsIfNeeded(rows){
+    const metaRef = doc(db, 'events', '_meta');
+    const metaSnap = await getDoc(metaRef);
+    if(metaSnap.exists() && metaSnap.data()?.initialized === true) return true;
+    if(!verifiedAdmin || !auth.currentUser) throw new Error('EVENT_SEED_ADMIN_REQUIRED');
+
+    const source = Array.isArray(rows) ? rows.filter(Boolean) : [];
+    for(const row of source){
+      const id = safeEventId(row.id || row._firebaseId);
+      if(!id || id === '_meta') continue;
+      await setDoc(eventRef(id), cleanEventPayload(id,row), {merge:false});
+    }
+    await setDoc(metaRef,{kind:'meta',initialized:true,updatedAt:Date.now()},{merge:false});
+    return true;
+  }
+
+  async function saveEvent(id, data){
+    if(!verifiedAdmin || !auth.currentUser) throw new Error('EVENT_SAVE_ADMIN_REQUIRED');
+    const clean = cleanEventPayload(id,data);
+    await setDoc(eventRef(clean.id), clean, {merge:false});
+    await setDoc(doc(db,'events','_meta'),{kind:'meta',initialized:true,updatedAt:Date.now()},{merge:true});
+    return clean;
+  }
+
+  async function deleteEvent(id){
+    if(!verifiedAdmin || !auth.currentUser) throw new Error('EVENT_DELETE_ADMIN_REQUIRED');
+    await deleteDoc(eventRef(id));
+    await setDoc(doc(db,'events','_meta'),{kind:'meta',initialized:true,updatedAt:Date.now()},{merge:true});
+  }
+
+  async function uploadEventPhotos(id, photos){
+    return (await uploadCoupleProfilePhotos('__event__'+safeEventId(id), Array.isArray(photos) ? photos.slice(0,3) : [])).slice(0,3);
+  }
+
+  function coupleProfileRef(id){
+    return doc(db, 'coupleProfiles', String(id || '').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,120));
+  }
+
+  async function getCoupleProfile(id){
+    const snap = await getDoc(coupleProfileRef(id));
+    return snap.exists() ? {...snap.data(), _firebaseId:snap.id} : null;
+  }
+
+  const CLOUDINARY_CLOUD_NAME = 'xelka8hr';
+  const CLOUDINARY_UPLOAD_PRESET = 'paira_profile';
+
+  async function uploadCoupleProfilePhotos(id, photos){
+    const input = Array.isArray(photos) ? photos.slice(0,5) : [];
+    const urls = [];
+    for(let i=0;i<input.length;i++){
+      const src = String(input[i] || '');
+      if(/^https?:\/\//i.test(src)){
+        urls.push(src);
+        continue;
+      }
+      if(!/^data:image\//i.test(src)) continue;
+
+      const form = new FormData();
+      form.append('file', src);
+      form.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+      const controller = new AbortController();
+      const timer = setTimeout(()=>controller.abort(), 30000);
+      try{
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+          method:'POST',
+          body:form,
+          signal:controller.signal
+        });
+        const data = await res.json().catch(()=>({}));
+        if(!res.ok || !data.secure_url){
+          throw new Error(data?.error?.message || 'CLOUDINARY_UPLOAD_FAILED');
+        }
+        urls.push(String(data.secure_url));
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+    return urls;
+  }
+
+  async function saveCoupleProfile(id, data){
+    const clean = {
+      name:String(data?.name || '').slice(0,120),
+      city:String(data?.city || '').slice(0,80),
+      age1:String(data?.age1 || '').slice(0,20),
+      age2:String(data?.age2 || '').slice(0,20),
+      children:String(data?.children || '').slice(0,40),
+      about:String(data?.about || '').slice(0,1200),
+      interests:Array.isArray(data?.interests) ? data.interests.map(x=>String(x).slice(0,60)).slice(0,30) : [],
+      photos:Array.isArray(data?.photos) ? data.photos.map(x=>String(x).slice(0,1200)).filter(x=>/^https?:\/\//i.test(x)).slice(0,5) : [],
+      coverIndex:Number.isInteger(data?.coverIndex) ? data.coverIndex : 0,
+      updatedAt:Number(data?.updatedAt || Date.now()),
+      updatedBy:String(data?.updatedBy || '').slice(0,80)
+    };
+    await setDoc(coupleProfileRef(id), clean, {merge:true});
+  }
+
+  function subscribeCoupleProfile(id, onProfile, onError){
+    return onSnapshot(coupleProfileRef(id),(snap)=>{
+      onProfile(snap.exists() ? {...snap.data(), _firebaseId:snap.id} : null);
+    },(err)=>{
+      if(onError) onError(err);
+    });
+  }
+
+  function subscribeCoupleProfiles(onProfiles, onError){
+    return onSnapshot(collection(db, 'coupleProfiles'),(snap)=>{
+      const rows = snap.docs
+        .map(d=>({...d.data(), _firebaseId:d.id}))
+        .sort((a,b)=>Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
+      onProfiles(rows);
+    },(err)=>{
+      if(onError) onError(err);
+    });
+  }
+
+  function safeEventAttendanceId(value, max=120){
+    return String(value || '').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,max);
+  }
+
+  function eventAttendanceRef(eventId, accountId){
+    return doc(db, 'eventAttendance', safeEventAttendanceId(eventId,80), 'couples', safeEventAttendanceId(accountId,120));
+  }
+
+  async function getEventAttendance(eventId, accountId){
+    const snap = await getDoc(eventAttendanceRef(eventId, accountId));
+    return snap.exists() ? {...snap.data(), _firebaseId:snap.id} : null;
+  }
+
+  function subscribeEventAttendance(eventId, accountId, onAttendance, onError){
+    return onSnapshot(eventAttendanceRef(eventId, accountId),(snap)=>{
+      onAttendance(snap.exists() ? {...snap.data(), _firebaseId:snap.id} : null);
+    },(err)=>{
+      if(onError) onError(err);
+    });
+  }
+
+  async function setEventAttendance(eventId, accountId, payload){
+    const clean = {
+      eventId:String(eventId || '').slice(0,80),
+      inviteCode:String(accountId || '').slice(0,120).toUpperCase(),
+      coupleName:String(payload?.coupleName || '').slice(0,120),
+      joined:payload?.joined === true,
+      updatedBy:String(payload?.partnerName || 'Partner').slice(0,80),
+      updatedDeviceId:String(payload?.deviceId || '').slice(0,120),
+      updatedAt:Date.now()
+    };
+    await setDoc(eventAttendanceRef(eventId, accountId), clean, {merge:false});
+  }
+
+  async function removeInvitation(id){
+    if(isLocalContent()){
+      await restFirestore("invitations/" + encodeURIComponent(id), {method:"DELETE"});
+      return;
+    }
+    await deleteDoc(doc(db, "invitations", id));
+  }
+
+
+  async function listPartnerBusinesses(){
+    const snap=await getDocs(collection(db,"partnerBusinesses"));
+    return snap.docs
+      .map(d=>({_firebaseId:d.id,...d.data()}))
+      .sort((a,b)=>String(b.updatedAt||"").localeCompare(String(a.updatedAt||"")));
+  }
+  function subscribePartnerBusinesses(callback){
+    const ref=collection(db,"partnerBusinesses");
+    return onSnapshot(
+      ref,
+      snap=>{
+        const rows=snap.docs
+          .map(d=>({_firebaseId:d.id,...d.data()}))
+          .sort((a,b)=>String(b.updatedAt||"").localeCompare(String(a.updatedAt||"")));
+        callback(rows,null);
+      },
+      err=>{
+        console.warn("PAIRA partnerBusinesses snapshot",err);
+        callback([],err);
+      }
+    );
+  }
+  async function savePartnerBusiness(row){
+    if(!auth.currentUser) throw new Error("Yönetici girişi gerekli");
+    const id=String(row?.id||row?._firebaseId||"").trim();
+    if(!id) throw new Error("İşyeri kimliği eksik");
+    const clean={...row,id,updatedAt:new Date().toISOString()};
+    delete clean._firebaseId;
+    const ref=doc(db,"partnerBusinesses",id);
+    await setDoc(ref,clean,{merge:true});
+    const verify=await getDoc(ref);
+    if(!verify.exists()) throw new Error("İşyeri kayıt doğrulaması başarısız");
+    return {_firebaseId:verify.id,...verify.data()};
+  }
+  async function deletePartnerBusiness(id){
+    if(!auth.currentUser) throw new Error("Yönetici girişi gerekli");
+    const key=String(id||"").trim(); if(!key)return; await deleteDoc(doc(db,"partnerBusinesses",key));
+  }
+  window.PAIRA_FIREBASE_API = {
+    listInvitations,
+    getInvitation,
+    saveInvitation,
+    approveInvitationPartner,
+    removeInvitation,
+    listPartnerBusinesses,
+    subscribePartnerBusinesses,
+    savePartnerBusiness,
+    deletePartnerBusiness,
+    subscribeChatMessages,
+    sendChatMessage,
+    subscribeSystemNotifications,
+    createSystemNotification,
+    subscribeEvents,
+    seedEventsIfNeeded,
+    saveEvent,
+    deleteEvent,
+    uploadEventPhotos,
+    getCoupleProfile,
+    uploadCoupleProfilePhotos,
+    saveCoupleProfile,
+    subscribeCoupleProfile,
+    subscribeCoupleProfiles,
+    getEventAttendance,
+    setEventAttendance,
+    subscribeEventAttendance
+  };
+
+  window.pairaLoadInvitations = async function(){
+    const rows = await listInvitations();
+    state.adminMembers = rows
+      .filter(Boolean)
+      .sort((a,b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+    if(window.renderAdminMembers) window.renderAdminMembers();
+    return state.adminMembers;
+  };
+
+  async function isCurrentUserAdmin() {
+    const user = auth.currentUser;
+    if (!user) return false;
+    try {
+      const snap = await getDoc(doc(db, "admins", user.uid));
+      if (!snap.exists()) return false;
+      const data = snap.data() || {};
+      return data.active === true && data.role === "admin";
+    } catch (err) {
+      console.warn("PAIRA admin check", err);
+      return false;
+    }
+  }
+
+  function openAdminLogin(targetScreen) {
+    window.modal(`
+      <h2 style="color:#e7bd72;margin-top:0">Yönetici Girişi</h2>
+      <p class="muted" style="line-height:1.5">PAIRA yönetim alanı Firebase hesabı ile korunuyor.</p>
+      <label class="form-label">E-posta</label>
+      <input id="pairaAdminEmail" class="form-field" type="email" autocomplete="username" placeholder="E-posta">
+      <label class="form-label">Şifre</label>
+      <input id="pairaAdminPassword" class="form-field" type="password" autocomplete="current-password" placeholder="Şifre">
+      <div id="pairaAdminLoginError" style="display:none;color:#ffaaa4;font-size:12px;line-height:1.4;margin-top:10px"></div>
+      <button id="pairaAdminLoginBtn" class="gold" style="margin-top:14px">Giriş Yap</button>
+      <button class="out" style="margin-top:8px" onclick="closeModal()">İptal</button>
+    `);
+
+    const btn = document.getElementById("pairaAdminLoginBtn");
+    const emailEl = document.getElementById("pairaAdminEmail");
+    const passEl = document.getElementById("pairaAdminPassword");
+    const errEl = document.getElementById("pairaAdminLoginError");
+
+    emailEl.value = auth.currentUser?.email || "";
+
+    btn.addEventListener("click", async () => {
+      const email = emailEl.value.trim();
+      const password = passEl.value;
+      errEl.style.display = "none";
+
+      if (!email || !password) {
+        errEl.textContent = "E-posta ve şifreyi gir.";
+        errEl.style.display = "block";
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Kontrol ediliyor...";
+
+      try {
+        const isLocalContent = location.protocol === "content:" || location.protocol === "file:";
+        if (isLocalContent) {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 12000);
+          try {
+            const r = await fetch(
+              "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + encodeURIComponent(firebaseConfig.apiKey),
+              {
+                method: "POST",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({email, password, returnSecureToken:true}),
+                signal: controller.signal
+              }
+            );
+            const data = await r.json();
+            if (!r.ok) throw new Error(data?.error?.message || "Giriş yapılamadı.");
+            if (data.localId !== "lVOVhXoi5re2NrEzYW1mjCeKDw93") {
+              throw new Error("Bu hesap yönetici olarak yetkilendirilmemiş.");
+            }
+            pairaRestIdToken = data.idToken || "";
+            verifiedAdmin = true;
+            window.closeModal();
+            openAdminTarget(targetScreen);
+            if (window.toast) window.toast("Yönetici girişi başarılı");
+          } finally {
+            clearTimeout(timer);
+          }
+        } else {
+          const timeout = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Giriş zaman aşımına uğradı.")), 12000)
+          );
+          await Promise.race([signInWithEmailAndPassword(auth, email, password), timeout]);
+          verifiedAdmin = await Promise.race([
+            isCurrentUserAdmin(),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error("Yönetici kontrolü zaman aşımına uğradı.")), 12000)
+            )
+          ]);
+
+          if (!verifiedAdmin) {
+            await signOut(auth);
+            throw new Error("Bu hesap yönetici olarak yetkilendirilmemiş.");
+          }
+
+          window.closeModal();
+          openAdminTarget(targetScreen);
+          if (window.toast) window.toast("Yönetici girişi başarılı");
+        }
+      } catch (err) {
+        const msg = err?.message || "";
+        errEl.textContent =
+          /INVALID_LOGIN_CREDENTIALS|INVALID_PASSWORD|EMAIL_NOT_FOUND|invalid-credential/i.test(msg)
+            ? "E-posta veya şifre hatalı."
+            : /aborted|zaman aşımı|timeout/i.test(msg)
+              ? "Bağlantı zaman aşımına uğradı. İnterneti kontrol edip tekrar dene."
+              : (msg || "Giriş yapılamadı.");
+        errEl.style.display = "block";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Giriş Yap";
+      }
+    });
+
+    setTimeout(() => {
+      if (!emailEl.value) emailEl.focus();
+      else passEl.focus();
+    }, 50);
+  }
+
+  async function publishCurrentWeb(){
+    const payload = {
+      html: PAIRA_WEB_SOURCE,
+      version: "v14-firebase-web",
+      updatedAt: new Date().toISOString()
+    };
+
+    const bytes = new Blob([payload.html]).size;
+    if(bytes > 900000){
+      throw new Error("Web dosyası Firebase belge sınırına fazla yaklaştı.");
+    }
+
+    if(isLocalContent()){
+      await restFirestore("webdeploy/current", {
+        method:"PATCH",
+        body:JSON.stringify({fields:fsEncodeFields(payload)})
+      });
+    }else{
+      await setDoc(doc(db, "webdeploy", "current"), payload);
+    }
+
+    modal(`
+      <h2 style="color:#e7bd72;margin-top:0">Web Kaynağı Hazır ✓</h2>
+      <p class="muted" style="line-height:1.55">
+        PAIRA V14 Firebase sürümü web yayını için Firebase’e yüklendi.
+      </p>
+      <button class="gold" onclick="closeModal()">Tamam</button>
+    `);
+  }
+
+  async function openAdminTarget(targetScreen) {
+    if (targetScreen === "webPublish") {
+      try{
+        await publishCurrentWeb();
+        if(window.toast) window.toast("Web kaynağı Firebase’e yüklendi ✓");
+      }catch(err){
+        console.warn("PAIRA web publish", err);
+        modal(`
+          <h2 style="color:#e7bd72;margin-top:0">Yayınlama Hatası</h2>
+          <p class="muted" style="line-height:1.55">${String(err?.message || "Web kaynağı yüklenemedi.")}</p>
+          <button class="gold" onclick="closeModal()">Tamam</button>
+        `);
+      }
+      return;
+    }
+    if (targetScreen === "adminMembers") {
+      if (window.show) window.show(targetScreen);
+      try{
+        if(window.pairaLoadInvitations) await window.pairaLoadInvitations();
+      }catch(err){
+        console.warn("PAIRA invitation load", err);
+        if(window.toast) window.toast("Davetler Firebase'den alınamadı");
+      }
+      return;
+    }
+    if (targetScreen === "adminEvents" && window.renderAdminEvents) window.renderAdminEvents();
+    if (targetScreen === "adminInbox" && window.renderAdminInbox) window.renderAdminInbox();
+    if (window.show) window.show(targetScreen);
+  }
+
+  window.pairaOpenAdminLogin = async function() {
+    verifiedAdmin = false;
+    pairaRestIdToken = "";
+    try {
+      if (auth.currentUser) await signOut(auth);
+    } catch (_) {}
+    openAdminLogin('adminPanel');
+  };
+
+  window.pairaRequireAdmin = async function(targetScreen) {
+    if (verifiedAdmin && auth.currentUser) {
+      openAdminTarget(targetScreen);
+      return;
+    }
+
+    verifiedAdmin = await isCurrentUserAdmin();
+    if (verifiedAdmin) {
+      openAdminTarget(targetScreen);
+      return;
+    }
+
+    openAdminLogin(targetScreen);
+  };
+
+  window.pairaAdminLogout = async function() {
+    verifiedAdmin = false;
+    pairaRestIdToken = "";
+    await signOut(auth);
+    if (window.toast) window.toast("Yönetici oturumu kapatıldı");
+  };
+
+  onAuthStateChanged(auth, async (user) => {
+    verifiedAdmin = user ? await isCurrentUserAdmin() : false;
+  });
+
+  window.PAIRA_FIREBASE = { app, auth, db, storage, config: firebaseConfig };
+  window.dispatchEvent(new CustomEvent("paira-firebase-ready"));
+</script>
+<script defer src="/ala-member-brand.js?v=2"></script>
+</body>
+</html>

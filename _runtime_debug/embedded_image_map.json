@@ -1,0 +1,234 @@
+[
+  {
+    "index": 0,
+    "format": "webp",
+    "bytes": 7842,
+    "sha256": "dc8e46c8635d3edd381de15f5e7fdcfeb74da21f934ff0c72fbd7ca6271c8453",
+    "nearest_ids": [
+      "app",
+      "splash"
+    ],
+    "nearest_classes": [
+      "screen active",
+      "mock"
+    ],
+    "before_tail": "98;margin-top:4px} .qr-expiry{text-align:center;color:#d8ae63;font-size:12px;margin-top:9px} .verify-good{border:1px solid #2f7a50;background:#0a1b12;color:#bdf3cf;border-radius:18px;padding:18px;text-align:center} .verify-bad{border:1px solid #8f3f3f;background:#1a0b0b;color:#ffc2bc;border-radius:18px;padding:18px;text-align:center} .verify-icon{font-size:48px;margin-bottom:8px} .partner-empty{border:1px dashed #71532f;border-radius:16px;padding:20px;text-align:center;color:#b9aa95} </style> <meta name=\"ala-visual-pass\" content=\"lively-v1\"> </head> <body> <div id=\"app\"> <section id=\"splash\" class=\"screen active\"><div class=\"mock\"><img src=\"",
+    "after_head": "\" alt=\"PAIRA giriş\"><button class=\"hot\" style=\"left:16%;top:80%;width:68%;height:9%\" onclick=\"show('invite')\"></button></div></section> <section id=\"invite\" class=\"screen\"><div class=\"mock\"><img src=\"data:image/webp;base64,UklGRkBeAABXRUJQVlA4IDReAABwZAGdASosARUCPi0UiEMhoSETqGYMGALEsY28FsAdRzmp8B3x85d4gVLmsP9LgDXIcx/xf8j+0ftK8c9vnt/8J/kv+F+ZH3Bfu//"
+  },
+  {
+    "index": 1,
+    "format": "webp",
+    "bytes": 24136,
+    "sha256": "6dd643ee6dffd3d16ea77ef89d1db5ed914220417772512663a0cdcf1d3a0514",
+    "nearest_ids": [
+      "invite"
+    ],
+    "nearest_classes": [
+      "hot",
+      "screen",
+      "mock"
+    ],
+    "before_tail": "JZqj/Cl2wjz4ZWBzMB+4c0hJk1HwvAi1fD0WRRRr7WDtXi9YyJ3xyNeLMC/1cQR38+S/YbeYRbV/pUkysFRqxe9fC3hmy/AbPuZe1OJ2miBYzERfP2lbiFbNYTnmIi/fIQNFYhzJGohMCzTa+e55EuPebOQx/S3CA1fKghiQjue75Ol0lPVUhL/CfNlamWSGGycIS3R1CkNfU9Q/PVNYRQQvhO87YARtUCSo+9h9VxidNwRi/8cDmlsZkuU91kLFUxgkAAYxfO+PlIBXzPcZz32iWOpXXJRmPIkJtgDy+qXIT2ajSKGLZ0T5y75AAYWIqC64xJDERDhDNNOOlP8rUXF5yzrLWNoLLsJpIL9hv80tiAABOTQgB1HgH7OVn8uswOWbGJZEab0b//MiVUPL+JwMqBG9t5hcAAFLkR43cJeGDksGkcGR9JKAAACzYAAAAA\" alt=\"PAIRA giriş\"><button class=\"hot\" style=\"left:16%;top:80%;width:68%;height:9%\" onclick=\"show('invite')\"></button></div></section> <section id=\"invite\" class=\"screen\"><div class=\"mock\"><img src=\"",
+    "after_head": "\" alt=\"Davet kodu\"><button class=\"hot\" style=\"left:2%;top:2%;width:16%;height:9%\" onclick=\"show('splash')\"></button><input id=\"inviteCode\" class=\"code\" value=\"PAIRA2026\" placeholder=\"Davet kodunu girin\"><button class=\"hot\" style=\"left:15%;top:55%;width:70%;height:7%\" onclick=\"enterApp()\"></button></div></section> <section id=\"home\" class=\"screen\"><"
+  },
+  {
+    "index": 2,
+    "format": "webp",
+    "bytes": 42090,
+    "sha256": "3930616f3236cbf421e2af6acdea2d4e9fa8e0e50e6b64c715c2e8fcba6d7b7d",
+    "nearest_ids": [
+      "inviteCode",
+      "home"
+    ],
+    "nearest_classes": [
+      "hot",
+      "code",
+      "hot",
+      "screen",
+      "mock"
+    ],
+    "before_tail": "8lVn48X6ZvLAG5ljcs2xN8X4+Aaso3IYq0+7qplDBe1Lg4WmFdRfj00c8wQ94H9uoSs8XdLl+jPbq77tCHrcc7egwI7715akFJR8Hy8qkj1uVp5AjSGlEHQ7vA2xjh1LciZ/S/U/KtBj5jtno+VRwRtXYpz7t9SocS8EIgCC5eaoIbNBqWMo5AAACGUZaIAHfxqCAMONOAi3D5qtTnIzXRzrv2Zj5ae3hoD45pHC7HJOxpGDFch3A371Bd/tjJodrQPR7yY0PXoAAAA==\" alt=\"Davet kodu\"><button class=\"hot\" style=\"left:2%;top:2%;width:16%;height:9%\" onclick=\"show('splash')\"></button><input id=\"inviteCode\" class=\"code\" value=\"PAIRA2026\" placeholder=\"Davet kodunu girin\"><button class=\"hot\" style=\"left:15%;top:55%;width:70%;height:7%\" onclick=\"enterApp()\"></button></div></section> <section id=\"home\" class=\"screen\"><div class=\"mock\"><img src=\"",
+    "after_head": "\" alt=\"PAIRA ana sayfa\"> <button class=\"hot\" style=\"left:2%;top:2%;width:16%;height:9%\" onclick=\"openMenu()\"></button><button class=\"hot\" style=\"left:83%;top:2%;width:15%;height:9%\" onclick=\"show('notifications')\"></button> <button class=\"benefit-home-pill\" onclick=\"show('benefits')\">✨ PAIRA Ayrıcalıkları</button> <button class=\"hot\" style=\"left:3%"
+  },
+  {
+    "index": 3,
+    "format": "webp",
+    "bytes": 31628,
+    "sha256": "bc691e331c27bd992f3f8734c76d3732155ab1a4bf638509c01fa0a9ddc339fe",
+    "nearest_ids": [
+      "benefitList",
+      "agenda"
+    ],
+    "nearest_classes": [
+      "benefit-chip",
+      "partner-empty",
+      "benefit-note",
+      "screen",
+      "mock"
+    ],
+    "before_tail": "t-chip\" onclick=\"filterBenefits('shop',this)\">🛍 Mağazalar</button> <button class=\"benefit-chip\" onclick=\"filterBenefits('care',this)\">✦ Bakım</button> <button class=\"benefit-chip\" onclick=\"filterBenefits('stay',this)\">⌂ Otel & Tatil</button> </div> <div id=\"benefitList\"> <div class=\"partner-empty\">Henüz yayınlanmış anlaşmalı isyeri yok.<br><br>Yeri anlaşmalı yerler eklendikçe burada görünecek.</div> </div> <div class=\"benefit-note\"> Bu bölümde yalnızca yönetici tarafından eklenen gerçek ve aktif PAIRA anlaşmalı işyerleri gösterilir. </div> </section> <section id=\"agenda\" class=\"screen\"><div class=\"mock\"><img src=\"",
+    "after_head": "\" alt=\"PAIRA ajanda\"> <button class=\"hot\" style=\"left:2%;top:2%;width:16%;height:9%\" onclick=\"openMenu()\"></button><button class=\"hot\" style=\"left:83%;top:2%;width:15%;height:9%\" onclick=\"show('notifications')\"></button> <button class=\"hot\" style=\"left:56%;top:22%;width:8%;height:6%\" onclick=\"openAgendaDay('4')\"></button><button class=\"hot\" style=\""
+  },
+  {
+    "index": 4,
+    "format": "webp",
+    "bytes": 2838,
+    "sha256": "1036a9bd5424304608e4dacaf13c8458b6eb6484970236ff3223ea6ef8f222b6",
+    "nearest_ids": [
+      "gallery",
+      "galleryView",
+      "modal",
+      "modalbox",
+      "toast"
+    ],
+    "nearest_classes": [
+      "sub",
+      "photo-grid",
+      "modal",
+      "modalbox",
+      "toast"
+    ],
+    "before_tail": "iv class=\"head\"> <button class=\"back\" onclick=\"show('profile')\">‹</button> <div><div class=\"logo\">PAIRA</div><div class=\"sub\">FOTOĞRAFLAR</div></div> <span></span> </div> <div id=\"galleryView\" class=\"photo-grid\"></div> </section> </div> <div id=\"modal\" class=\"modal\"><div id=\"modalbox\" class=\"modalbox\"></div></div><div id=\"toast\" class=\"toast\"></div> <script> const DEFAULT_EVENTS = {\"bogaz\": {\"id\": \"bogaz\", \"title\": \"Boğaz’da Akşam Yemeği\", \"date\": \"26 Eylül 2026\", \"time\": \"19:00 - 22:00\", \"location\": \"Beykoz, İstanbul\", \"capacity\": \"24 / 40 kişi\", \"desc\": \"Boğaz manzarasında seçkin çiftlerle keyifli bir akşam.\", \"images\": [\"",
+    "after_head": "\", \"data:image/webp;base64,UklGRkwMAABXRUJQVlA4IEAMAAAwPACdASrcAHQAPrFKoE0nI6KlqTILYOAWCWI7PYwUxpEeSzLw3mI8dub0/bg/nO7G3thCkdE7eFIbbbh3rKNHdgJQ9iwvUsszGiiKgXcN5JcmeEzF8e7o5YL7rfBSWz2dCgyxdl8HMfz2Uq+0EjAqGU1Es2bi/wl2nC4kKLv3em3tLgnOiP/AF/T8LNfY+qvxsqZt+2p2zxfhrplVvqG0Mk6Rx4JOZGjVhDH2QCDDjRoGiYnaNG51P3GnLqhb8LAOKu7EDJVM9Vb/JkHJLi3cXeERFXXIcdAct+FN6H6"
+  },
+  {
+    "index": 5,
+    "format": "webp",
+    "bytes": 3156,
+    "sha256": "502404ef846d8ee4405e8eec9fb9dfaf36a93022166b7968b0ec70e8410452d1",
+    "nearest_ids": [],
+    "nearest_classes": [],
+    "before_tail": "SQ6w5oCV/JYph4jGdy/wQtY+JWdQTzqVTzRe9ocfn57y8GScvaVsKXK7S36Jdmi6beT45fLPXmBSOXpdF+VS6yCcOUb1AuKc03izv0Ya6dot6M+BXtUCVQpoo5m/mz2aeg+XveCAXhr/x7YjFbfBtUmwHjbKKiYvqSUQwt4GoGHuEBdzkp7Ye/pBTWdzjcHDD4vMxGRhB5e2Q9hrsx7CQX2R0htWK/etUVxY3vdUFmcKdW/pb+q+ql274a6Vtkc4bBe2dx6cJ7QgNMZI4rQNmLn27CcHRdHtJYMQiZaq/0xWfGWqFSlKHehCGJ5jOAyIlQQnzJKz3L8uDm7bo+J7XjyWDW8U5TrVo/Uc6xy11SLIs92p3oAfrAFn3HPdOEcykxbVGVgrir2yZkeYfTHYnSGwc9AK/zOQt3CFDWYD7THvGVbxqYHg1SJY1XJcm1bbGE/R5weo3qRe++ccZpZq/k4fPUKGULPvySJVmD0m9yLDbD3yEkT0CFdlE8ezGJT+d1Lfh1PjOGXE3xg/ymRXEDVFkoYbi3rY86LV6jc02Bh/MTyNZ2bWE6Rn+tVmXfFmCHLteUA1YJfyHaIVf176VIlYKume2BHJ4PcECRuajEl37+MH8pCxZVv95z/meapEh/6QAA\", \"",
+    "after_head": "\", \"data:image/webp;base64,UklGRg4RAABXRUJQVlA4IAIRAABQRwCdASrcAHAAPrFGnEonI6KiLLltaOAWCWYAwRY72h9ffI1E3zH44eDt6n4vSf/bN3zzqene71faSnKP974W+Xz5nMVuS+1eQfm88u9RfEX/V99juX+59Bf3jwOdYzIA8uv+Z5EPqHsDeTB/s+ZnUSC4rTBOmveTPVwMQyPGJvDcfZGeWzuprolPTxAmBtEu9/NxrtuN6KXsxv33oRzO2Wji8Ko70j7ggVC8Zjy3yoJifl24I7POL3wSaCr+7B3u+IGMHy5KzGv65zJDPKtTEWGJR9HBdXqfYDP6hsU"
+  },
+  {
+    "index": 6,
+    "format": "webp",
+    "bytes": 4374,
+    "sha256": "4ff4aff52940450f76b45099ce4893f410150015f383c4101d4bf4e9c823f266",
+    "nearest_ids": [],
+    "nearest_classes": [],
+    "before_tail": "9ECaIvRJmf5R+HO4D4Y0f9d286qY5HjNRGw1LqM+6y92OGwCWf2tlMK7eT2FelxkVQkNguwn14PH4AFcaDDU3Du3EUFeCux3JOLPanHJQZjqaQ0jHlx319q0W2Je4vbfc6iQz1Y1ixaPW6yx/EYJFnwTVuvFBp2uACyHv5IjegkkG2CKY4cL2M9CEx9INCH66RrP25S6ttnyG3NovgEbUfxA4/AbOnUXpJyzZ1ESNVpHb5o3lAZfCVogIMHGNmMG64G+Jc25NEc5Wm8oL5MJR2EcdLWoQPWTnK4JLKisSzB3NFjwmHYvrLDurDBbsnI1ahw0q/vspcMLw5gTYcP1kDHdnZ+lEy8m4JilrTPP9OPoxTgdAr3aU1tyBqGlgeyvtViuBZlB3FG2UufYt2rf9lLrV7lLm6Q1adLB/VO/BhGYrk59IxmtZFZKS0hEG/EBPDsxiq7CYj1r5V8llO5SW2f3nQVKCN4A65QIbKmKH2cENoP3PqVGeZk43aWfgx59SKegOr8ngS5FRdppHDeF327ZVb20gTuauYaIu7mBzkGl5wYp0y5VNTPcXtSaeHmQ1XUvGfWzDuwC3UWjNXDHXu31s7Qg0x0nkYd+9tWgY6DIYjX3OfRCQUK88cqiiP4AudtwAA\", \"",
+    "after_head": "\"]}, \"muzik\": {\"id\": \"muzik\", \"title\": \"Canlı Müzik Buluşması\", \"date\": \"12 Eylül 2026\", \"time\": \"21:00 - 00:00\", \"location\": \"Şişli, İstanbul\", \"capacity\": \"18 / 60 kişi\", \"desc\": \"Canlı müzik, kokteyller ve samimi sohbetler.\", \"images\": [\"data:image/webp;base64,UklGRg4RAABXRUJQVlA4IAIRAABQRwCdASrcAHAAPrFGnEonI6KiLLltaOAWCWYAwRY72h9ffI1E3zH44eDt6n"
+  },
+  {
+    "index": 7,
+    "format": "webp",
+    "bytes": 4374,
+    "sha256": "4ff4aff52940450f76b45099ce4893f410150015f383c4101d4bf4e9c823f266",
+    "nearest_ids": [],
+    "nearest_classes": [],
+    "before_tail": "4Sm/wCSwjfnz06TsDTBzLY3VVUHlFnw1Pkf/K/E1WD0xEx81fo7/+hKQ/WpxqFekkojduoRNfNLUlrCBcJ5eCRppsJyJJoN8Cg39yGqlmyI3QcWIBGbCdWPFCRQA1exsULQqyIqNHy8VqWlQo68VkPKaHZWnTOv/Ucgx3gkSBRUXWAa2nEfMRNcmBGpZLCrD5QkwXB3dvcP0CHkBERw6ozqUAQWwq4wLKalZ3vrflFMIPvCe8ovX0T8+8RH0IxMLkZKpx9GZjMBQlPxHheBGjXthNkjwCcCkdG9qGEXXXTEL/OnReVIlzZlO2AhNFady/L6hT7ErRL3QIzH4WzWyaBjXEi7STGqRdKjT+8KrxDbiDqe5Jm6rvtf8REy39S9bMB0VFGECeg71e7pP3wI3FsAAA\"]}, \"muzik\": {\"id\": \"muzik\", \"title\": \"Canlı Müzik Buluşması\", \"date\": \"12 Eylül 2026\", \"time\": \"21:00 - 00:00\", \"location\": \"Şişli, İstanbul\", \"capacity\": \"18 / 60 kişi\", \"desc\": \"Canlı müzik, kokteyller ve samimi sohbetler.\", \"images\": [\"",
+    "after_head": "\", \"data:image/webp;base64,UklGRg4LAABXRUJQVlA4IAILAACwMgCdASrcAHAAPrFOoEunJCMlJjQ92OAWCWM7VAn2QFECjqd7UY+jfK9OO348wHnGNxp06HwmA12z31HEzwCPXn+u4GvYPMC9g/p//M8NzVoyAOFdoB/pv0VNHH1z7B382/t5lkqs3stmwGCtxke6auqPeSd8+at9eLC/mVGC7AAqsGkoVLye16Nf76QymRYRgKXQUsc30kof6rfgvwmyxjdAH6qIplL7c8/xSYg4zXP5qghEqa2BjsSpFq70G2PQMt9vE8OlWyZFlKWhuLMLmTqymzuXGcghu/l6IzK"
+  },
+  {
+    "index": 8,
+    "format": "webp",
+    "bytes": 2838,
+    "sha256": "1036a9bd5424304608e4dacaf13c8458b6eb6484970236ff3223ea6ef8f222b6",
+    "nearest_ids": [],
+    "nearest_classes": [],
+    "before_tail": "QfkcYrhNQnC+YdCjml/I27wT5rIEtgLB8uSj964rneeHALaaekaAllxGEKHblKFhCGHhuRgHKZT6Aovepfaw6Lf6/j87vOzvZkXg79eRyJ/0Y5AdP1KgDndu1+LKcgnhwmbySFilVtGkClYGQ0oeCI6nfzqZTkgiTah36xFB81GfZGN9KfO3IqU8edZE7SqfbALoylBzQp/VJu75WfwkhVKwZB1ocGGGpzpqNGAqlDIS+4Sm/wCSwjfnz06TsDTBzLY3VVUHlFnw1Pkf/K/E1WD0xEx81fo7/+hKQ/WpxqFekkojduoRNfNLUlrCBcJ5eCRppsJyJJoN8Cg39yGqlmyI3QcWIBGbCdWPFCRQA1exsULQqyIqNHy8VqWlQo68VkPKaHZWnTOv/Ucgx3gkSBRUXWAa2nEfMRNcmBGpZLCrD5QkwXB3dvcP0CHkBERw6ozqUAQWwq4wLKalZ3vrflFMIPvCe8ovX0T8+8RH0IxMLkZKpx9GZjMBQlPxHheBGjXthNkjwCcCkdG9qGEXXXTEL/OnReVIlzZlO2AhNFady/L6hT7ErRL3QIzH4WzWyaBjXEi7STGqRdKjT+8KrxDbiDqe5Jm6rvtf8REy39S9bMB0VFGECeg71e7pP3wI3FsAAA\", \"",
+    "after_head": "\", \"data:image/webp;base64,UklGRkwMAABXRUJQVlA4IEAMAAAwPACdASrcAHQAPrFKoE0nI6KlqTILYOAWCWI7PYwUxpEeSzLw3mI8dub0/bg/nO7G3thCkdE7eFIbbbh3rKNHdgJQ9iwvUsszGiiKgXcN5JcmeEzF8e7o5YL7rfBSWz2dCgyxdl8HMfz2Uq+0EjAqGU1Es2bi/wl2nC4kKLv3em3tLgnOiP/AF/T8LNfY+qvxsqZt+2p2zxfhrplVvqG0Mk6Rx4JOZGjVhDH2QCDDjRoGiYnaNG51P3GnLqhb8LAOKu7EDJVM9Vb/JkHJLi3cXeERFXXIcdAct+FN6H6"
+  },
+  {
+    "index": 9,
+    "format": "webp",
+    "bytes": 3156,
+    "sha256": "502404ef846d8ee4405e8eec9fb9dfaf36a93022166b7968b0ec70e8410452d1",
+    "nearest_ids": [],
+    "nearest_classes": [],
+    "before_tail": "SQ6w5oCV/JYph4jGdy/wQtY+JWdQTzqVTzRe9ocfn57y8GScvaVsKXK7S36Jdmi6beT45fLPXmBSOXpdF+VS6yCcOUb1AuKc03izv0Ya6dot6M+BXtUCVQpoo5m/mz2aeg+XveCAXhr/x7YjFbfBtUmwHjbKKiYvqSUQwt4GoGHuEBdzkp7Ye/pBTWdzjcHDD4vMxGRhB5e2Q9hrsx7CQX2R0htWK/etUVxY3vdUFmcKdW/pb+q+ql274a6Vtkc4bBe2dx6cJ7QgNMZI4rQNmLn27CcHRdHtJYMQiZaq/0xWfGWqFSlKHehCGJ5jOAyIlQQnzJKz3L8uDm7bo+J7XjyWDW8U5TrVo/Uc6xy11SLIs92p3oAfrAFn3HPdOEcykxbVGVgrir2yZkeYfTHYnSGwc9AK/zOQt3CFDWYD7THvGVbxqYHg1SJY1XJcm1bbGE/R5weo3qRe++ccZpZq/k4fPUKGULPvySJVmD0m9yLDbD3yEkT0CFdlE8ezGJT+d1Lfh1PjOGXE3xg/ymRXEDVFkoYbi3rY86LV6jc02Bh/MTyNZ2bWE6Rn+tVmXfFmCHLteUA1YJfyHaIVf176VIlYKume2BHJ4PcECRuajEl37+MH8pCxZVv95z/meapEh/6QAA\", \"",
+    "after_head": "\"]}, \"sunset\": {\"id\": \"sunset\", \"title\": \"Sunset Rooftop Gathering\", \"date\": \"12 Eylül 2026\", \"time\": \"17:00 - 20:00\", \"location\": \"Levent, İstanbul\", \"capacity\": \"32 / 50 kişi\", \"desc\": \"Gün batımında lounge eşliğinde sosyal buluşma.\", \"images\": [\"data:image/webp;base64,UklGRkwMAABXRUJQVlA4IEAMAAAwPACdASrcAHQAPrFKoE0nI6KlqTILYOAWCWI7PYwUxpEeSzLw3m"
+  },
+  {
+    "index": 10,
+    "format": "webp",
+    "bytes": 3156,
+    "sha256": "502404ef846d8ee4405e8eec9fb9dfaf36a93022166b7968b0ec70e8410452d1",
+    "nearest_ids": [],
+    "nearest_classes": [],
+    "before_tail": "VogIMHGNmMG64G+Jc25NEc5Wm8oL5MJR2EcdLWoQPWTnK4JLKisSzB3NFjwmHYvrLDurDBbsnI1ahw0q/vspcMLw5gTYcP1kDHdnZ+lEy8m4JilrTPP9OPoxTgdAr3aU1tyBqGlgeyvtViuBZlB3FG2UufYt2rf9lLrV7lLm6Q1adLB/VO/BhGYrk59IxmtZFZKS0hEG/EBPDsxiq7CYj1r5V8llO5SW2f3nQVKCN4A65QIbKmKH2cENoP3PqVGeZk43aWfgx59SKegOr8ngS5FRdppHDeF327ZVb20gTuauYaIu7mBzkGl5wYp0y5VNTPcXtSaeHmQ1XUvGfWzDuwC3UWjNXDHXu31s7Qg0x0nkYd+9tWgY6DIYjX3OfRCQUK88cqiiP4AudtwAA\"]}, \"sunset\": {\"id\": \"sunset\", \"title\": \"Sunset Rooftop Gathering\", \"date\": \"12 Eylül 2026\", \"time\": \"17:00 - 20:00\", \"location\": \"Levent, İstanbul\", \"capacity\": \"32 / 50 kişi\", \"desc\": \"Gün batımında lounge eşliğinde sosyal buluşma.\", \"images\": [\"",
+    "after_head": "\", \"data:image/webp;base64,UklGRg4LAABXRUJQVlA4IAILAACwMgCdASrcAHAAPrFOoEunJCMlJjQ92OAWCWM7VAn2QFECjqd7UY+jfK9OO348wHnGNxp06HwmA12z31HEzwCPXn+u4GvYPMC9g/p//M8NzVoyAOFdoB/pv0VNHH1z7B382/t5lkqs3stmwGCtxke6auqPeSd8+at9eLC/mVGC7AAqsGkoVLye16Nf76QymRYRgKXQUsc30kof6rfgvwmyxjdAH6qIplL7c8/xSYg4zXP5qghEqa2BjsSpFq70G2PQMt9vE8OlWyZFlKWhuLMLmTqymzuXGcghu/l6IzK"
+  },
+  {
+    "index": 11,
+    "format": "webp",
+    "bytes": 2838,
+    "sha256": "1036a9bd5424304608e4dacaf13c8458b6eb6484970236ff3223ea6ef8f222b6",
+    "nearest_ids": [],
+    "nearest_classes": [],
+    "before_tail": "9ECaIvRJmf5R+HO4D4Y0f9d286qY5HjNRGw1LqM+6y92OGwCWf2tlMK7eT2FelxkVQkNguwn14PH4AFcaDDU3Du3EUFeCux3JOLPanHJQZjqaQ0jHlx319q0W2Je4vbfc6iQz1Y1ixaPW6yx/EYJFnwTVuvFBp2uACyHv5IjegkkG2CKY4cL2M9CEx9INCH66RrP25S6ttnyG3NovgEbUfxA4/AbOnUXpJyzZ1ESNVpHb5o3lAZfCVogIMHGNmMG64G+Jc25NEc5Wm8oL5MJR2EcdLWoQPWTnK4JLKisSzB3NFjwmHYvrLDurDBbsnI1ahw0q/vspcMLw5gTYcP1kDHdnZ+lEy8m4JilrTPP9OPoxTgdAr3aU1tyBqGlgeyvtViuBZlB3FG2UufYt2rf9lLrV7lLm6Q1adLB/VO/BhGYrk59IxmtZFZKS0hEG/EBPDsxiq7CYj1r5V8llO5SW2f3nQVKCN4A65QIbKmKH2cENoP3PqVGeZk43aWfgx59SKegOr8ngS5FRdppHDeF327ZVb20gTuauYaIu7mBzkGl5wYp0y5VNTPcXtSaeHmQ1XUvGfWzDuwC3UWjNXDHXu31s7Qg0x0nkYd+9tWgY6DIYjX3OfRCQUK88cqiiP4AudtwAA\", \"",
+    "after_head": "\", \"data:image/webp;base64,UklGRg4RAABXRUJQVlA4IAIRAABQRwCdASrcAHAAPrFGnEonI6KiLLltaOAWCWYAwRY72h9ffI1E3zH44eDt6n4vSf/bN3zzqene71faSnKP974W+Xz5nMVuS+1eQfm88u9RfEX/V99juX+59Bf3jwOdYzIA8uv+Z5EPqHsDeTB/s+ZnUSC4rTBOmveTPVwMQyPGJvDcfZGeWzuprolPTxAmBtEu9/NxrtuN6KXsxv33oRzO2Wji8Ko70j7ggVC8Zjy3yoJifl24I7POL3wSaCr+7B3u+IGMHy5KzGv65zJDPKtTEWGJR9HBdXqfYDP6hsU"
+  },
+  {
+    "index": 12,
+    "format": "webp",
+    "bytes": 4374,
+    "sha256": "4ff4aff52940450f76b45099ce4893f410150015f383c4101d4bf4e9c823f266",
+    "nearest_ids": [],
+    "nearest_classes": [],
+    "before_tail": "SQ6w5oCV/JYph4jGdy/wQtY+JWdQTzqVTzRe9ocfn57y8GScvaVsKXK7S36Jdmi6beT45fLPXmBSOXpdF+VS6yCcOUb1AuKc03izv0Ya6dot6M+BXtUCVQpoo5m/mz2aeg+XveCAXhr/x7YjFbfBtUmwHjbKKiYvqSUQwt4GoGHuEBdzkp7Ye/pBTWdzjcHDD4vMxGRhB5e2Q9hrsx7CQX2R0htWK/etUVxY3vdUFmcKdW/pb+q+ql274a6Vtkc4bBe2dx6cJ7QgNMZI4rQNmLn27CcHRdHtJYMQiZaq/0xWfGWqFSlKHehCGJ5jOAyIlQQnzJKz3L8uDm7bo+J7XjyWDW8U5TrVo/Uc6xy11SLIs92p3oAfrAFn3HPdOEcykxbVGVgrir2yZkeYfTHYnSGwc9AK/zOQt3CFDWYD7THvGVbxqYHg1SJY1XJcm1bbGE/R5weo3qRe++ccZpZq/k4fPUKGULPvySJVmD0m9yLDbD3yEkT0CFdlE8ezGJT+d1Lfh1PjOGXE3xg/ymRXEDVFkoYbi3rY86LV6jc02Bh/MTyNZ2bWE6Rn+tVmXfFmCHLteUA1YJfyHaIVf176VIlYKume2BHJ4PcECRuajEl37+MH8pCxZVv95z/meapEh/6QAA\", \"",
+    "after_head": "\"]}, \"brunch\": {\"id\": \"brunch\", \"title\": \"Pazar Gurme Brunch\", \"date\": \"5 Eylül 2026\", \"time\": \"11:00 - 14:00\", \"location\": \"Nişantaşı, İstanbul\", \"capacity\": \"16 / 24 kişi\", \"desc\": \"Hafta sonuna lezzet dolu bir başlangıç.\", \"images\": [\"data:image/webp;base64,UklGRg4LAABXRUJQVlA4IAILAACwMgCdASrcAHAAPrFOoEunJCMlJjQ92OAWCWM7VAn2QFECjqd7UY+jfK9OO348w"
+  },
+  {
+    "index": 13,
+    "format": "webp",
+    "bytes": 2838,
+    "sha256": "1036a9bd5424304608e4dacaf13c8458b6eb6484970236ff3223ea6ef8f222b6",
+    "nearest_ids": [],
+    "nearest_classes": [],
+    "before_tail": "IS+4Sm/wCSwjfnz06TsDTBzLY3VVUHlFnw1Pkf/K/E1WD0xEx81fo7/+hKQ/WpxqFekkojduoRNfNLUlrCBcJ5eCRppsJyJJoN8Cg39yGqlmyI3QcWIBGbCdWPFCRQA1exsULQqyIqNHy8VqWlQo68VkPKaHZWnTOv/Ucgx3gkSBRUXWAa2nEfMRNcmBGpZLCrD5QkwXB3dvcP0CHkBERw6ozqUAQWwq4wLKalZ3vrflFMIPvCe8ovX0T8+8RH0IxMLkZKpx9GZjMBQlPxHheBGjXthNkjwCcCkdG9qGEXXXTEL/OnReVIlzZlO2AhNFady/L6hT7ErRL3QIzH4WzWyaBjXEi7STGqRdKjT+8KrxDbiDqe5Jm6rvtf8REy39S9bMB0VFGECeg71e7pP3wI3FsAAA\"]}, \"brunch\": {\"id\": \"brunch\", \"title\": \"Pazar Gurme Brunch\", \"date\": \"5 Eylül 2026\", \"time\": \"11:00 - 14:00\", \"location\": \"Nişantaşı, İstanbul\", \"capacity\": \"16 / 24 kişi\", \"desc\": \"Hafta sonuna lezzet dolu bir başlangıç.\", \"images\": [\"",
+    "after_head": "\", \"data:image/webp;base64,UklGRg4RAABXRUJQVlA4IAIRAABQRwCdASrcAHAAPrFGnEonI6KiLLltaOAWCWYAwRY72h9ffI1E3zH44eDt6n4vSf/bN3zzqene71faSnKP974W+Xz5nMVuS+1eQfm88u9RfEX/V99juX+59Bf3jwOdYzIA8uv+Z5EPqHsDeTB/s+ZnUSC4rTBOmveTPVwMQyPGJvDcfZGeWzuprolPTxAmBtEu9/NxrtuN6KXsxv33oRzO2Wji8Ko70j7ggVC8Zjy3yoJifl24I7POL3wSaCr+7B3u+IGMHy5KzGv65zJDPKtTEWGJR9HBdXqfYDP6hsU"
+  },
+  {
+    "index": 14,
+    "format": "webp",
+    "bytes": 4374,
+    "sha256": "4ff4aff52940450f76b45099ce4893f410150015f383c4101d4bf4e9c823f266",
+    "nearest_ids": [],
+    "nearest_classes": [],
+    "before_tail": "SQ6w5oCV/JYph4jGdy/wQtY+JWdQTzqVTzRe9ocfn57y8GScvaVsKXK7S36Jdmi6beT45fLPXmBSOXpdF+VS6yCcOUb1AuKc03izv0Ya6dot6M+BXtUCVQpoo5m/mz2aeg+XveCAXhr/x7YjFbfBtUmwHjbKKiYvqSUQwt4GoGHuEBdzkp7Ye/pBTWdzjcHDD4vMxGRhB5e2Q9hrsx7CQX2R0htWK/etUVxY3vdUFmcKdW/pb+q+ql274a6Vtkc4bBe2dx6cJ7QgNMZI4rQNmLn27CcHRdHtJYMQiZaq/0xWfGWqFSlKHehCGJ5jOAyIlQQnzJKz3L8uDm7bo+J7XjyWDW8U5TrVo/Uc6xy11SLIs92p3oAfrAFn3HPdOEcykxbVGVgrir2yZkeYfTHYnSGwc9AK/zOQt3CFDWYD7THvGVbxqYHg1SJY1XJcm1bbGE/R5weo3qRe++ccZpZq/k4fPUKGULPvySJVmD0m9yLDbD3yEkT0CFdlE8ezGJT+d1Lfh1PjOGXE3xg/ymRXEDVFkoYbi3rY86LV6jc02Bh/MTyNZ2bWE6Rn+tVmXfFmCHLteUA1YJfyHaIVf176VIlYKume2BHJ4PcECRuajEl37+MH8pCxZVv95z/meapEh/6QAA\", \"",
+    "after_head": "\", \"data:image/webp;base64,UklGRkwMAABXRUJQVlA4IEAMAAAwPACdASrcAHQAPrFKoE0nI6KlqTILYOAWCWI7PYwUxpEeSzLw3mI8dub0/bg/nO7G3thCkdE7eFIbbbh3rKNHdgJQ9iwvUsszGiiKgXcN5JcmeEzF8e7o5YL7rfBSWz2dCgyxdl8HMfz2Uq+0EjAqGU1Es2bi/wl2nC4kKLv3em3tLgnOiP/AF/T8LNfY+qvxsqZt+2p2zxfhrplVvqG0Mk6Rx4JOZGjVhDH2QCDDjRoGiYnaNG51P3GnLqhb8LAOKu7EDJVM9Vb/JkHJLi3cXeERFXXIcdAct+FN6H6"
+  },
+  {
+    "index": 15,
+    "format": "webp",
+    "bytes": 3156,
+    "sha256": "502404ef846d8ee4405e8eec9fb9dfaf36a93022166b7968b0ec70e8410452d1",
+    "nearest_ids": [],
+    "nearest_classes": [],
+    "before_tail": "QfkcYrhNQnC+YdCjml/I27wT5rIEtgLB8uSj964rneeHALaaekaAllxGEKHblKFhCGHhuRgHKZT6Aovepfaw6Lf6/j87vOzvZkXg79eRyJ/0Y5AdP1KgDndu1+LKcgnhwmbySFilVtGkClYGQ0oeCI6nfzqZTkgiTah36xFB81GfZGN9KfO3IqU8edZE7SqfbALoylBzQp/VJu75WfwkhVKwZB1ocGGGpzpqNGAqlDIS+4Sm/wCSwjfnz06TsDTBzLY3VVUHlFnw1Pkf/K/E1WD0xEx81fo7/+hKQ/WpxqFekkojduoRNfNLUlrCBcJ5eCRppsJyJJoN8Cg39yGqlmyI3QcWIBGbCdWPFCRQA1exsULQqyIqNHy8VqWlQo68VkPKaHZWnTOv/Ucgx3gkSBRUXWAa2nEfMRNcmBGpZLCrD5QkwXB3dvcP0CHkBERw6ozqUAQWwq4wLKalZ3vrflFMIPvCe8ovX0T8+8RH0IxMLkZKpx9GZjMBQlPxHheBGjXthNkjwCcCkdG9qGEXXXTEL/OnReVIlzZlO2AhNFady/L6hT7ErRL3QIzH4WzWyaBjXEi7STGqRdKjT+8KrxDbiDqe5Jm6rvtf8REy39S9bMB0VFGECeg71e7pP3wI3FsAAA\", \"",
+    "after_head": "\"]}, \"wine\": {\"id\": \"wine\", \"title\": \"Şarap & Sohbet\", \"date\": \"19 Eylül 2026\", \"time\": \"20:00 - 23:00\", \"location\": \"Galata, İstanbul\", \"capacity\": \"12 / 20 kişi\", \"desc\": \"Şarap eşleşmeleri ve samimi tanışmalar.\", \"images\": [\"data:image/webp;base64,UklGRkwMAABXRUJQVlA4IEAMAAAwPACdASrcAHQAPrFKoE0nI6KlqTILYOAWCWI7PYwUxpEeSzLw3mI8dub0/bg/nO7G3thCkdE"
+  },
+  {
+    "index": 16,
+    "format": "webp",
+    "bytes": 3156,
+    "sha256": "502404ef846d8ee4405e8eec9fb9dfaf36a93022166b7968b0ec70e8410452d1",
+    "nearest_ids": [],
+    "nearest_classes": [],
+    "before_tail": "pJyzZ1ESNVpHb5o3lAZfCVogIMHGNmMG64G+Jc25NEc5Wm8oL5MJR2EcdLWoQPWTnK4JLKisSzB3NFjwmHYvrLDurDBbsnI1ahw0q/vspcMLw5gTYcP1kDHdnZ+lEy8m4JilrTPP9OPoxTgdAr3aU1tyBqGlgeyvtViuBZlB3FG2UufYt2rf9lLrV7lLm6Q1adLB/VO/BhGYrk59IxmtZFZKS0hEG/EBPDsxiq7CYj1r5V8llO5SW2f3nQVKCN4A65QIbKmKH2cENoP3PqVGeZk43aWfgx59SKegOr8ngS5FRdppHDeF327ZVb20gTuauYaIu7mBzkGl5wYp0y5VNTPcXtSaeHmQ1XUvGfWzDuwC3UWjNXDHXu31s7Qg0x0nkYd+9tWgY6DIYjX3OfRCQUK88cqiiP4AudtwAA\"]}, \"wine\": {\"id\": \"wine\", \"title\": \"Şarap & Sohbet\", \"date\": \"19 Eylül 2026\", \"time\": \"20:00 - 23:00\", \"location\": \"Galata, İstanbul\", \"capacity\": \"12 / 20 kişi\", \"desc\": \"Şarap eşleşmeleri ve samimi tanışmalar.\", \"images\": [\"",
+    "after_head": "\", \"data:image/webp;base64,UklGRg4RAABXRUJQVlA4IAIRAABQRwCdASrcAHAAPrFGnEonI6KiLLltaOAWCWYAwRY72h9ffI1E3zH44eDt6n4vSf/bN3zzqene71faSnKP974W+Xz5nMVuS+1eQfm88u9RfEX/V99juX+59Bf3jwOdYzIA8uv+Z5EPqHsDeTB/s+ZnUSC4rTBOmveTPVwMQyPGJvDcfZGeWzuprolPTxAmBtEu9/NxrtuN6KXsxv33oRzO2Wji8Ko70j7ggVC8Zjy3yoJifl24I7POL3wSaCr+7B3u+IGMHy5KzGv65zJDPKtTEWGJR9HBdXqfYDP6hsU"
+  },
+  {
+    "index": 17,
+    "format": "webp",
+    "bytes": 4374,
+    "sha256": "4ff4aff52940450f76b45099ce4893f410150015f383c4101d4bf4e9c823f266",
+    "nearest_ids": [],
+    "nearest_classes": [],
+    "before_tail": "9ECaIvRJmf5R+HO4D4Y0f9d286qY5HjNRGw1LqM+6y92OGwCWf2tlMK7eT2FelxkVQkNguwn14PH4AFcaDDU3Du3EUFeCux3JOLPanHJQZjqaQ0jHlx319q0W2Je4vbfc6iQz1Y1ixaPW6yx/EYJFnwTVuvFBp2uACyHv5IjegkkG2CKY4cL2M9CEx9INCH66RrP25S6ttnyG3NovgEbUfxA4/AbOnUXpJyzZ1ESNVpHb5o3lAZfCVogIMHGNmMG64G+Jc25NEc5Wm8oL5MJR2EcdLWoQPWTnK4JLKisSzB3NFjwmHYvrLDurDBbsnI1ahw0q/vspcMLw5gTYcP1kDHdnZ+lEy8m4JilrTPP9OPoxTgdAr3aU1tyBqGlgeyvtViuBZlB3FG2UufYt2rf9lLrV7lLm6Q1adLB/VO/BhGYrk59IxmtZFZKS0hEG/EBPDsxiq7CYj1r5V8llO5SW2f3nQVKCN4A65QIbKmKH2cENoP3PqVGeZk43aWfgx59SKegOr8ngS5FRdppHDeF327ZVb20gTuauYaIu7mBzkGl5wYp0y5VNTPcXtSaeHmQ1XUvGfWzDuwC3UWjNXDHXu31s7Qg0x0nkYd+9tWgY6DIYjX3OfRCQUK88cqiiP4AudtwAA\", \"",
+    "after_head": "\", \"data:image/webp;base64,UklGRg4LAABXRUJQVlA4IAILAACwMgCdASrcAHAAPrFOoEunJCMlJjQ92OAWCWM7VAn2QFECjqd7UY+jfK9OO348wHnGNxp06HwmA12z31HEzwCPXn+u4GvYPMC9g/p//M8NzVoyAOFdoB/pv0VNHH1z7B382/t5lkqs3stmwGCtxke6auqPeSd8+at9eLC/mVGC7AAqsGkoVLye16Nf76QymRYRgKXQUsc30kof6rfgvwmyxjdAH6qIplL7c8/xSYg4zXP5qghEqa2BjsSpFq70G2PQMt9vE8OlWyZFlKWhuLMLmTqymzuXGcghu/l6IzK"
+  },
+  {
+    "index": 18,
+    "format": "webp",
+    "bytes": 2838,
+    "sha256": "1036a9bd5424304608e4dacaf13c8458b6eb6484970236ff3223ea6ef8f222b6",
+    "nearest_ids": [],
+    "nearest_classes": [],
+    "before_tail": "QfkcYrhNQnC+YdCjml/I27wT5rIEtgLB8uSj964rneeHALaaekaAllxGEKHblKFhCGHhuRgHKZT6Aovepfaw6Lf6/j87vOzvZkXg79eRyJ/0Y5AdP1KgDndu1+LKcgnhwmbySFilVtGkClYGQ0oeCI6nfzqZTkgiTah36xFB81GfZGN9KfO3IqU8edZE7SqfbALoylBzQp/VJu75WfwkhVKwZB1ocGGGpzpqNGAqlDIS+4Sm/wCSwjfnz06TsDTBzLY3VVUHlFnw1Pkf/K/E1WD0xEx81fo7/+hKQ/WpxqFekkojduoRNfNLUlrCBcJ5eCRppsJyJJoN8Cg39yGqlmyI3QcWIBGbCdWPFCRQA1exsULQqyIqNHy8VqWlQo68VkPKaHZWnTOv/Ucgx3gkSBRUXWAa2nEfMRNcmBGpZLCrD5QkwXB3dvcP0CHkBERw6ozqUAQWwq4wLKalZ3vrflFMIPvCe8ovX0T8+8RH0IxMLkZKpx9GZjMBQlPxHheBGjXthNkjwCcCkdG9qGEXXXTEL/OnReVIlzZlO2AhNFady/L6hT7ErRL3QIzH4WzWyaBjXEi7STGqRdKjT+8KrxDbiDqe5Jm6rvtf8REy39S9bMB0VFGECeg71e7pP3wI3FsAAA\", \"",
+    "after_head": "\"]}}; let events = JSON.parse(localStorage.getItem('paira_events_v10') || 'null') || JSON.parse(JSON.stringify(DEFAULT_EVENTS)); const agendaDays = {\"4\": [\"brunch\"], \"5\": [\"brunch\"], \"8\": [\"muzik\"], \"10\": [\"sunset\"], \"12\": [\"muzik\", \"sunset\", \"bogaz\"], \"13\": [\"muzik\"], \"15\": [\"bogaz\"], \"18\": [\"wine\"], \"19\": [\"wine\"], \"22\": [\"bogaz\"], \"25\": [\"bogaz\""
+  }
+]
