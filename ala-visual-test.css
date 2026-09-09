@@ -1,0 +1,23 @@
+/* Test branch only: masks the old embedded PAIRA wordmark inside screenshot-based screens and shows ÂLÂ without moving the underlying layout. */
+.mock{position:relative}
+.mock::after{
+  content:'ÂLÂ';
+  position:absolute;
+  z-index:18;
+  top:1.25%;
+  left:50%;
+  transform:translateX(-50%);
+  min-width:118px;
+  height:5.2%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 18px;
+  background:#050403;
+  color:#e5bd74;
+  font:700 clamp(22px,7vw,34px) Georgia,serif;
+  letter-spacing:.14em;
+  line-height:1;
+  pointer-events:none;
+  border-radius:3px;
+}
