@@ -17,6 +17,8 @@ jobs:
         with:
           ref: ala-gorsel-deneme
           fetch-depth: 0
+      - name: Install Pillow
+        run: python -m pip install --quiet pillow
       - name: Remove old visual mask and verify embedded ÂLÂ artwork
         run: |
           python - <<'PY'
@@ -33,7 +35,6 @@ jobs:
           if len(imgs) < 4:
               raise SystemExit('embedded images missing')
 
-          # Save the first four rendered screen artworks for final visual verification.
           out=Path('_ala_final_verify')
           out.mkdir(exist_ok=True)
           for i,b64 in enumerate(imgs[:4]):
