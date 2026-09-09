@@ -1,0 +1,131 @@
+name: Replace embedded PAIRA with ÂLÂ
+
+on:
+  push:
+    branches:
+      - ala-gorsel-deneme
+    paths:
+      - '.github/workflows/replace-embedded-paira-with-ala.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  replace:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ala-gorsel-deneme
+          fetch-depth: 0
+      - name: Replace PAIRA inside original embedded artwork
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq tesseract-ocr fonts-dejavu-core >/dev/null
+          python -m pip install --quiet pillow opencv-python-headless
+          python - <<'PY'
+          from pathlib import Path
+          import re, base64, io, subprocess
+          from difflib import SequenceMatcher
+          import numpy as np
+          import cv2
+          from PIL import Image, ImageDraw, ImageFont
+
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          # Remove the rejected CSS overlay. The replacement below edits the actual image bytes.
+          s=s.replace('<link rel="stylesheet" href="/ala-visual-test.css?v=2">\n','')
+          s=s.replace('<link rel="stylesheet" href="/ala-visual-test.css?v=2">','')
+
+          pat=re.compile(r'data:image/(png|jpeg|jpg|webp);base64,([A-Za-z0-9+/=]+)')
+          matches=list(pat.finditer(s))
+          replacements=[]
+          font_path='/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf'
+
+          def norm(x):
+              return re.sub(r'[^A-Z]','',x.upper())
+
+          for idx,m in enumerate(matches[:4]):
+              raw=base64.b64decode(m.group(2))
+              im=Image.open(io.BytesIO(raw)).convert('RGB')
+              # OCR to locate PAIRA, including common OCR misread PATRA.
+              tmp=Path(f'/tmp/paira_{idx}.png'); im.save(tmp)
+              tsv=subprocess.run(['tesseract',str(tmp),'stdout','--psm','6','tsv'],capture_output=True,text=True).stdout
+              candidates=[]
+              for line in tsv.splitlines()[1:]:
+                  cols=line.split('\t')
+                  if len(cols)<12 or not cols[11].strip(): continue
+                  word=cols[11].strip(); nw=norm(word)
+                  score=SequenceMatcher(None,nw,'PAIRA').ratio() if nw else 0
+                  if score>=0.58 and nw.startswith('P'):
+                      try:
+                          candidates.append((score,int(cols[6]),int(cols[7]),int(cols[8]),int(cols[9]),word))
+                      except: pass
+              if not candidates:
+                  continue
+              score,x,y,w,h,word=max(candidates,key=lambda z:(z[0],z[3]*z[4]))
+              # Only replace obvious brand-sized hits, never body copy.
+              if w < 40 or h < 12:
+                  continue
+              arr=np.array(im)
+              # Estimate the original warm gold from bright warm pixels inside the lettering box.
+              crop=arr[max(0,y):min(arr.shape[0],y+h),max(0,x):min(arr.shape[1],x+w)]
+              if crop.size:
+                  mask_gold=(crop[:,:,0]>120)&(crop[:,:,0]>=crop[:,:,1])&(crop[:,:,1]>70)&(crop[:,:,2]<crop[:,:,0]*0.9)
+                  pixels=crop[mask_gold]
+              else: pixels=np.empty((0,3),dtype=np.uint8)
+              color=tuple(int(v) for v in (np.median(pixels,axis=0) if len(pixels)>8 else np.array([224,184,108])))
+
+              # Inpaint only the old PAIRA word area, slightly padded, to restore the original background.
+              pad_x=max(4,int(w*0.06)); pad_y=max(3,int(h*0.14))
+              x1=max(0,x-pad_x); y1=max(0,y-pad_y); x2=min(arr.shape[1],x+w+pad_x); y2=min(arr.shape[0],y+h+pad_y)
+              mask=np.zeros(arr.shape[:2],dtype=np.uint8)
+              mask[y1:y2,x1:x2]=255
+              bgr=cv2.cvtColor(arr,cv2.COLOR_RGB2BGR)
+              restored=cv2.inpaint(bgr,mask,5,cv2.INPAINT_TELEA)
+              out=Image.fromarray(cv2.cvtColor(restored,cv2.COLOR_BGR2RGB))
+
+              # Draw ÂLÂ centered in the exact old brand area. Font size adapts to the original box.
+              draw=ImageDraw.Draw(out)
+              target_w=max(45,int(w*0.62)); target_h=max(16,int(h*0.82))
+              size=max(12,int(h*1.05))
+              while size>10:
+                  font=ImageFont.truetype(font_path,size)
+                  bb=draw.textbbox((0,0),'ÂLÂ',font=font,stroke_width=0)
+                  tw,th=bb[2]-bb[0],bb[3]-bb[1]
+                  if tw<=target_w and th<=target_h: break
+                  size-=1
+              tx=x+w/2-tw/2-bb[0]
+              ty=y+h/2-th/2-bb[1]
+              draw.text((tx,ty),'ÂLÂ',font=font,fill=color)
+
+              buf=io.BytesIO()
+              kind=m.group(1)
+              if kind=='webp': out.save(buf,format='WEBP',quality=92,method=6)
+              elif kind in ('jpeg','jpg'): out.save(buf,format='JPEG',quality=94)
+              else: out.save(buf,format='PNG',optimize=True)
+              new64=base64.b64encode(buf.getvalue()).decode('ascii')
+              replacements.append((m.start(2),m.end(2),new64,idx,(x,y,w,h),word))
+              print('replace',idx,word,'bbox',x,y,w,h,'-> ÂLÂ')
+
+          if not replacements:
+              raise SystemExit('No embedded PAIRA artwork found')
+          # Apply from end to start so offsets remain valid.
+          for a,b,new64,idx,bbox,word in sorted(replacements,reverse=True):
+              s=s[:a]+new64+s[b:]
+          p.write_text(s,encoding='utf-8')
+          Path('_artwork_debug/replacement_report.txt').write_text('\n'.join(f'image {idx}: {word} {bbox} -> ÂLÂ' for _,_,_,idx,bbox,word in replacements),encoding='utf-8')
+          PY
+      - name: Safety checks
+        run: |
+          grep -q 'paira-build' index.html
+          ! grep -q 'ala-visual-test.css?v=2' index.html
+          test -s _artwork_debug/replacement_report.txt
+          cat _artwork_debug/replacement_report.txt
+      - name: Commit real image replacement to test branch only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html _artwork_debug/replacement_report.txt
+          git commit -m "Replace PAIRA inside embedded artwork with ÂLÂ on test branch" || exit 0
+          git push origin ala-gorsel-deneme
