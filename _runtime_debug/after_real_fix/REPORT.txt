@@ -1,0 +1,4 @@
+splash index0 300x648: removed legacy P emblem
+home index2 300x533: replaced baked PAIRA with ÂLÂ
+agenda index3 300x533: lively color pass
+embedded_count=19
