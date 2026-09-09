@@ -1,0 +1,28 @@
+name: PAIRA v19.8 partner businesses
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/paira-v19-8-partner-businesses.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply partner business and QR patch
+        run: python scripts/patch_paira_v19_8.py
+
+      - name: Commit updated app
+        run: |
+          git config user.name "PAIRA Hotfix Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Add partner business management and member QR"
+          git push
