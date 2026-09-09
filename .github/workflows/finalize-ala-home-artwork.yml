@@ -1,0 +1,55 @@
+name: Finalize ÂLÂ home artwork
+
+on:
+  push:
+    branches: [ala-gorsel-deneme]
+    paths:
+      - '.github/workflows/finalize-ala-home-artwork.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ala-gorsel-deneme
+          fetch-depth: 0
+      - name: Remove old visual mask and verify embedded ÂLÂ artwork
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re, base64, io
+          from PIL import Image
+
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('<link rel="stylesheet" href="/ala-visual-test.css?v=2">\n','')
+          p.write_text(s,encoding='utf-8')
+
+          imgs=re.findall(r'data:image/(?:webp|png|jpeg);base64,([A-Za-z0-9+/=]+)', s)
+          if len(imgs) < 4:
+              raise SystemExit('embedded images missing')
+
+          # Save the first four rendered screen artworks for final visual verification.
+          out=Path('_ala_final_verify')
+          out.mkdir(exist_ok=True)
+          for i,b64 in enumerate(imgs[:4]):
+              raw=base64.b64decode(b64)
+              im=Image.open(io.BytesIO(raw)).convert('RGB')
+              im.save(out/f'screen_{i}.jpg',quality=92)
+          print('Removed temporary overlay. Real edited artwork remains in index.html.')
+          PY
+      - name: Commit final test-branch visual
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html _ala_final_verify
+          if git diff --cached --quiet; then
+            echo "No change needed"
+          else
+            git commit -m "Use real ÂLÂ artwork without overlay on test branch"
+            git push origin ala-gorsel-deneme
+          fi
