@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>PAIRA</title>
-<meta name="paira-build" content="v19.2-firestore-meta-fix">
+<meta name="paira-build" content="v19.3-club-membership-sync">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
@@ -2665,18 +2665,103 @@ function openEventChat(id){
 function sendEventMessage(){
   return sendRealtimeRoomMessage('event',currentEvent,'eventInput');
 }
+const clubMembershipUnsubs = new Map();
+
+function clubMembershipEventId(key){
+  return `club_${String(key || '').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,70)}`;
+}
+
+function isCurrentCoupleInClub(key){
+  const me = currentChatIdentity();
+  const members = state.clubMembers[key] || [];
+  return members.includes(me.coupleName) || members.includes(currentUser);
+}
+
+function applyClubMembership(key, remote){
+  const me = currentChatIdentity();
+  state.clubMembers[key] = state.clubMembers[key] || [];
+  state.clubMembers[key] = state.clubMembers[key].filter(n => n !== currentUser && n !== me.coupleName);
+  if(remote && remote.joined === true) state.clubMembers[key].push(me.coupleName);
+  persist();
+  renderClubs();
+  if(currentClub === key){
+    const active = document.querySelector('.screen.active');
+    if(active && active.id === 'clubDetail') renderClubDetail();
+  }
+}
+
+async function ensureClubMembershipSync(key){
+  const accountId = sharedProfileAccountId();
+  if(!key || !accountId || clubMembershipUnsubs.has(key)) return;
+  try{
+    const api = await waitForPairaFirebaseApi();
+    const eventId = clubMembershipEventId(key);
+    const existing = await api.getEventAttendance(eventId, accountId);
+    applyClubMembership(key, existing);
+    const unsub = api.subscribeEventAttendance(eventId, accountId, row=>{
+      applyClubMembership(key, row);
+    }, err=>{
+      console.warn('PAIRA club membership sync', key, err);
+      clubMembershipUnsubs.delete(key);
+    });
+    clubMembershipUnsubs.set(key, unsub);
+  }catch(err){
+    console.warn('PAIRA club membership start', key, err);
+  }
+}
+
+function ensureAllClubMembershipSync(){
+  Object.keys(clubs || {}).forEach(key=>ensureClubMembershipSync(key));
+}
+
+async function setSharedClubMembership(key, joined){
+  const accountId = sharedProfileAccountId();
+  const me = currentChatIdentity();
+  const wasJoined = isCurrentCoupleInClub(key);
+
+  applyClubMembership(key, joined ? {joined:true} : {joined:false});
+
+  if(!accountId){
+    toast(joined ? 'Kulübe katıldın ✓' : 'Kulüpten ayrıldın');
+    return true;
+  }
+
+  try{
+    const api = await waitForPairaFirebaseApi();
+    await api.setEventAttendance(clubMembershipEventId(key), accountId, {
+      joined,
+      inviteCode:accountId,
+      coupleName:me.coupleName,
+      partnerName:me.partnerName,
+      deviceId:getDeviceId()
+    });
+    toast(joined ? 'Çift olarak kulübe katıldınız ✓' : 'Çift olarak kulüpten ayrıldınız');
+    return true;
+  }catch(err){
+    console.warn('PAIRA club membership save', err);
+    applyClubMembership(key, wasJoined ? {joined:true} : {joined:false});
+    toast('Kulüp üyeliği kaydedilemedi');
+    return false;
+  }
+}
+
 function renderClubs(){
   document.getElementById('clubsList').innerHTML = Object.entries(clubs).map(([key,c])=>{
     const count = (state.clubMembers[key] || []).length;
     return `<button class="listbtn" onclick="openClub('${key}')"><div class="club-top"><div><b>${c.title}</b><div class="muted" style="margin-top:4px">${c.desc}</div></div><span class="club-badge">${count} üye</span></div></button>`;
   }).join('');
 }
-function openClub(key){ currentClub = key; renderClubDetail(); show('clubDetail'); }
+function openClub(key){
+  currentClub = key;
+  renderClubDetail();
+  show('clubDetail');
+  ensureClubMembershipSync(key);
+}
 function renderClubDetail(){
   const c = clubs[currentClub];
   const me=currentChatIdentity();
   const members = state.clubMembers[currentClub] || [];
-  const joined = members.includes(me.coupleName) || members.includes(currentUser);
+  const joined = isCurrentCoupleInClub(currentClub);
   const actionButtons = joined
     ? `<button class="gold" style="opacity:.75">Kulübe Katıldın ✓</button><button class="out" style="margin-top:10px;border-color:#b96060;color:#ffb2ac" onclick="leaveClub('${currentClub}')">Kulüpten Ayrıl</button>`
     : `<button class="gold" onclick="joinClub('${currentClub}')">Kulübe Katıl</button>`;
@@ -2691,24 +2776,12 @@ function renderClubDetail(){
     <div class="composer"><input id="clubInput" placeholder="Kulüp odasına mesaj yaz..."><button class="gold" style="width:64px" onclick="sendClubMessage()">➤</button></div>`;
   startRealtimeChat('club',currentClub,'clubMsgs');
 }
-function joinClub(key){
-  const me=currentChatIdentity();
-  state.clubMembers[key] = state.clubMembers[key] || [];
-  if(!state.clubMembers[key].includes(me.coupleName)) state.clubMembers[key].push(me.coupleName);
-  persist(); renderClubs(); renderClubDetail(); toast('Kulübe katıldın');
-}
-function leaveClub(key){
-  const me=currentChatIdentity();
-  state.clubMembers[key] = (state.clubMembers[key] || []).filter(n => n !== currentUser && n !== me.coupleName);
-  persist(); renderClubs(); renderClubDetail(); toast('Kulüpten ayrıldın');
-}
-function sendClubMessage(){
-  const me=currentChatIdentity();
-  if(!(state.clubMembers[currentClub] || []).includes(me.coupleName)){
-    state.clubMembers[currentClub] = state.clubMembers[currentClub] || [];
-    state.clubMembers[currentClub].push(me.coupleName);
-    persist();
-    renderClubs();
+function joinClub(key){ return setSharedClubMembership(key, true); }
+function leaveClub(key){ return setSharedClubMembership(key, false); }
+async function sendClubMessage(){
+  if(!isCurrentCoupleInClub(currentClub)){
+    const ok = await setSharedClubMembership(currentClub, true);
+    if(!ok) return;
   }
   return sendRealtimeRoomMessage('club',currentClub,'clubInput');
 }
@@ -2716,6 +2789,7 @@ renderEventsList();
 renderAdminMembers();
 renderAdminEvents();
 renderClubs();
+ensureAllClubMembershipSync();
 renderAdminInbox();
 updateAdminCounters();
 renderProfileView();
