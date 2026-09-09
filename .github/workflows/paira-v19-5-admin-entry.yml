@@ -1,0 +1,56 @@
+name: PAIRA v19.5 admin entry
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/paira-v19-5-admin-entry.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore visible admin entry
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          original = text
+
+          text = text.replace(
+              '<meta name="paira-build" content="v19.4-chat-hub-fix">',
+              '<meta name="paira-build" content="v19.5-admin-entry-chat-hub">',
+              1,
+          )
+
+          old = '''  <button class="citybtn" onclick="closeModal();show('profile')">Profil</button>
+  <button class="citybtn" onclick="closeModal();pairaRequireAdmin('adminMembers')">Üye Yönetimi</button>'''
+          new = '''  <button class="citybtn" onclick="closeModal();show('profile')">Profil</button>
+  <button class="citybtn" onclick="closeModal();pairaRequireAdmin('adminMembers')">🔐 Yönetici Girişi / Paneli</button>
+  <button class="citybtn" onclick="closeModal();pairaRequireAdmin('adminMembers')">Üye Yönetimi</button>'''
+
+          if old not in text:
+              raise SystemExit('Admin menu anchor not found; refusing partial patch')
+          text = text.replace(old, new, 1)
+
+          if text == original:
+              raise SystemExit('No changes made')
+          path.write_text(text, encoding='utf-8')
+          print('PAIRA v19.5 admin entry restored.')
+
+      - name: Commit admin entry
+        shell: bash
+        run: |
+          git config user.name "PAIRA Hotfix Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Restore visible admin login entry"
+          git push
