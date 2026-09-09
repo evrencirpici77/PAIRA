@@ -1,0 +1,94 @@
+name: PAIRA v20 real partners only
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/paira-v20-real-partners-only.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Remove demo partner businesses
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          original = s
+
+          s = re.sub(
+              r'<meta name="paira-build" content="[^"]+">',
+              '<meta name="paira-build" content="v20-real-partners-only">',
+              s,
+              count=1,
+          )
+
+          start = s.find('  <div id="benefitList">')
+          end = s.find('</section>', start)
+          if start < 0 or end < 0:
+              raise SystemExit('benefit section not found')
+
+          section = s[start:end]
+          note_pos = section.find('  <div class="benefit-note">')
+          if note_pos < 0:
+              raise SystemExit('benefit note not found')
+
+          replacement = '''  <div id="benefitList">
+    <div class="partner-empty">Henüz yayınlanmış anlaşmalı işyeri yok.<br><br>Yeni anlaşmalı yerler eklendikçe burada görünecek.</div>
+  </div>
+
+  <div class="benefit-note">
+    Bu bölümde yalnızca yönetici tarafından eklenen gerçek ve aktif PAIRA anlaşmalı işyerleri gösterilir.
+  </div>
+'''
+
+          s = s[:start] + replacement + s[start + note_pos:]
+
+          # The replacement above intentionally supersedes the old benefit list and note.
+          # Remove any leftover duplicate note until the closing benefits section.
+          first_note_end = s.find('  </div>\n</section>', start)
+          if first_note_end < 0:
+              raise SystemExit('benefits closing not found after replacement')
+
+          # Rebuild the whole benefits body tail cleanly to avoid any demo cards lingering.
+          prefix = s[:start]
+          tail = s[end:]
+          s = prefix + replacement + tail
+
+          # Never restore demo cards when Firestore has no rows.
+          s = s.replace(
+              "if(!rows.length){if(benefitSeedHtml)list.innerHTML=benefitSeedHtml;return;}",
+              "if(!rows.length){list.innerHTML='<div class=\"partner-empty\">Henüz yayınlanmış anlaşmalı işyeri yok.<br><br>Yeni anlaşmalı yerler eklendikçe burada görünecek.</div>';return;}",
+              1,
+          )
+
+          for demo in ['Seçili Cafe','Seçili Restoran','Seçili Mağaza','Seçili Bakım Merkezi','Seçili Otel']:
+              if demo in s:
+                  raise SystemExit(f'demo business still present: {demo}')
+
+          if s == original:
+              raise SystemExit('no changes made')
+
+          p.write_text(s, encoding='utf-8')
+          print('PAIRA demo businesses removed; real partners preserved')
+          PY
+
+      - name: Commit cleanup
+        shell: bash
+        run: |
+          git config user.name "PAIRA Hotfix Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Remove demo partner businesses"
+          git push
