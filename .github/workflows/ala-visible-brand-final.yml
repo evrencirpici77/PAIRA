@@ -1,0 +1,44 @@
+name: ÂLÂ visible brand final
+
+on:
+  push:
+    paths:
+      - '.github/workflows/ala-visible-brand-final.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Patch only visible brand metadata and cache key
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('<title>PAIRA</title>', '<title>ÂLÂ</title>', 1)
+          s=s.replace('<meta name="apple-mobile-web-app-title" content="PAIRA">', '<meta name="apple-mobile-web-app-title" content="ÂLÂ">', 1)
+          s=s.replace('/ala-member-brand.js?v=1', '/ala-member-brand.js?v=2', 1)
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Safety checks
+        run: |
+          grep -q '<meta name="paira-build" content="v20.3-home-icon">' index.html
+          grep -q '/ala-member-brand.js?v=2' index.html
+          grep -q '<title>ÂLÂ</title>' index.html
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Finalize ÂLÂ visible branding without app logic changes"
+          git push origin main
