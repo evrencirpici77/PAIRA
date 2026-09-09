@@ -1,0 +1,48 @@
+name: Inspect embedded artwork text
+
+on:
+  push:
+    branches:
+      - ala-gorsel-deneme
+    paths:
+      - '.github/workflows/inspect-artwork-text.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ala-gorsel-deneme
+          fetch-depth: 0
+      - name: OCR full-screen artwork
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq tesseract-ocr >/dev/null
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess, json
+          out=[]
+          for p in sorted(Path('_artwork_debug').glob('img_0[0-3]_*.webp')):
+              txt=subprocess.run(['tesseract',str(p),'stdout','--psm','6'],capture_output=True,text=True).stdout
+              tsv=subprocess.run(['tesseract',str(p),'stdout','--psm','6','tsv'],capture_output=True,text=True).stdout
+              hits=[]
+              for line in tsv.splitlines()[1:]:
+                  cols=line.split('\t')
+                  if len(cols)>=12 and cols[11].strip():
+                      word=cols[11].strip()
+                      if 'PAIR' in word.upper() or 'ALA' in word.upper():
+                          hits.append({'word':word,'left':cols[6],'top':cols[7],'width':cols[8],'height':cols[9],'conf':cols[10]})
+              out.append({'file':p.name,'text':txt,'hits':hits})
+          Path('_artwork_debug/ocr.json').write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf-8')
+          PY
+      - name: Commit OCR report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add _artwork_debug/ocr.json
+          git commit -m "Inspect PAIRA positions in embedded artwork" || exit 0
+          git push origin ala-gorsel-deneme
