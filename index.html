@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>PAIRA</title>
-<meta name="paira-build" content="v19.8-partner-businesses-qr">
+<meta name="paira-build" content="v19.9-admin-partner-link">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
@@ -519,7 +519,7 @@ textarea.form-field{min-height:105px;resize:vertical}
   </div>
   <button class="listbtn" onclick="pairaRequireAdmin('adminMembers')"><b>👥 Üye Yönetimi</b><br><span class="muted">Davet, onay, çıkarma ve üye kayıtları</span></button>
   <button class="listbtn" onclick="pairaRequireAdmin('adminEvents')"><b>📅 Etkinlik Yönetimi</b><br><span class="muted">Etkinlik ekle, düzenle ve duyuru yayınla</span></button>
-  <button class="listbtn" onclick="pairaRequireAdmin('adminPartners')"><b>🤝 Üye İşyeri Yönetimi</b><br><span class="muted">Anlaşmalı mekan ekle, indirimi düzenle veya pasife al</span></button>
+  <button class="listbtn" onclick="show('adminPartners');renderPartnerAdmin()"><b>🤝 Üye İşyeri Yönetimi</b><br><span class="muted">Anlaşmalı mekan ekle, indirimi düzenle veya pasife al</span></button>
   <button class="listbtn" onclick="show('chats')"><b>💬 Chat Odaları</b><br><span class="muted">Genel, kulüp ve etkinlik sohbetlerini aç</span></button>
   <button class="listbtn" onclick="show('clubs')"><b>🛋 Etkinlik Kulüpleri</b><br><span class="muted">Kulüp odalarına ve kulüp sohbetlerine git</span></button>
   <button class="listbtn" onclick="pairaRequireAdmin('adminInbox')"><b>📥 Yönetici Gelen Kutusu</b><br><span class="muted">Üyelerden gelen talep, öneri ve şikâyetler</span></button>
