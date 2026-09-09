@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>PAIRA</title>
-<meta name="paira-build" content="v19.4-chat-hub-fix">
+<meta name="paira-build" content="v19.5-admin-entry-chat-hub">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
@@ -779,6 +779,7 @@ function openMenu(){
   <button class="citybtn" onclick="closeModal();show('clubs')">Etkinlik Kulüpleri</button>
   <button class="citybtn" onclick="closeModal();show('chats')">Chat</button>
   <button class="citybtn" onclick="closeModal();show('profile')">Profil</button>
+  <button class="citybtn" onclick="closeModal();pairaRequireAdmin('adminMembers')">🔐 Yönetici Girişi / Paneli</button>
   <button class="citybtn" onclick="closeModal();pairaRequireAdmin('adminMembers')">Üye Yönetimi</button>
   <button class="citybtn" onclick="closeModal();pairaRequireAdmin('adminEvents')">Etkinlik Yönetimi</button>
   <button class="citybtn" onclick="closeModal();pairaRequireAdmin('adminInbox')">Yönetici Gelen Kutusu <span id="menuAdminCount" class="counter" style="float:right">0</span></button>
