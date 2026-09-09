@@ -19,24 +19,153 @@ jobs:
       - name: Patch index.html
         shell: python
         run: |
-          import base64
           from pathlib import Path
+
           path = Path('index.html')
           text = path.read_text(encoding='utf-8')
-          original = text
-          text = text.replace('<meta name="paira-build" content="v19.2-firestore-meta-fix">','<meta name="paira-build" content="v19.3-club-membership-sync">',1)
-          old = base64.b64decode('ZnVuY3Rpb24gcmVuZGVyQ2x1YnMoKXsKICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnY2x1YnNMaXN0JykuaW5uZXJIVE1MID0gT2JqZWN0LmVudHJpZXMoY2x1YnMpLm1hcCgoW2tleSxjXSk9PnsKICAgIGNvbnN0IGNvdW50ID0gKHN0YXRlLmNsdWJNZW1iZXJzW2tleV0gfHwgW10pLmxlbmd0aDsKICAgIHJldHVybiBgPGJ1dHRvbiBjbGFzcz0ibGlzdGJ0biIgb25jbGljaz0ib3BlbkNsdWIoJyR7a2V5fScpIj48ZGl2IGNsYXNzPSJjbHViLXRvcCI+PGRpdj48Yj4ke2MudGl0bGV9PC9iPjxkaXYgY2xhc3M9Im11dGVkIiBzdHlsZT0ibWFyZ2luLXRvcDo0cHgiPiR7Yy5kZXNjfTwvZGl2PjwvZGl2PjxzcGFuIGNsYXNzPSJjbHViLWJhZGdlIj4ke2NvdW50fSDDvHllPC9zcGFuPjwvZGl2PjwvYnV0dG9uPmA7CiAgfSkuam9pbignJyk7Cn0KZnVuY3Rpb24gb3BlbkNsdWIoa2V5KXsgY3VycmVudENsdWIgPSBrZXk7IHJlbmRlckNsdWJEZXRhaWwoKTsgc2hvdygnY2x1YkRldGFpbCcpOyB9CmZ1bmN0aW9uIHJlbmRlckNsdWJEZXRhaWwoKXsKICBjb25zdCBjID0gY2x1YnNbY3VycmVudENsdWJdOwogIGNvbnN0IG1lPWN1cnJlbnRDaGF0SWRlbnRpdHkoKTsKICBjb25zdCBtZW1iZXJzID0gc3RhdGUuY2x1Yk1lbWJlcnNbY3VycmVudENsdWJdIHx8IFtdOwogIGNvbnN0IGpvaW5lZCA9IG1lbWJlcnMuaW5jbHVkZXMobWUuY291cGxlTmFtZSkgfHwgbWVtYmVycy5pbmNsdWRlcyhjdXJyZW50VXNlcik7CiAgY29uc3QgYWN0aW9uQnV0dG9ucyA9IGpvaW5lZAogICAgPyBgPGJ1dHRvbiBjbGFzcz0iZ29sZCIgc3R5bGU9Im9wYWNpdHk6Ljc1Ij5LdWzDvGJlIEthdMSxbGTEsW4g4pyTPC9idXR0b24+PGJ1dHRvbiBjbGFzcz0ib3V0IiBzdHlsZT0ibWFyZ2luLXRvcDoxMHB4O2JvcmRlci1jb2xvcjojYjk2MDYwO2NvbG9yOiNmZmIyYWMiIG9uY2xpY2s9ImxlYXZlQ2x1YigneyR7Y3VycmVudENsdWJ9fScpIj5LdWzDvHB0ZW4gQXlyxLFsPC9idXR0b24+YAogICAgOiBgPGJ1dHRvbiBjbGFzcz0iZ29sZCIgb25jbGljaz0iam9pbkNsdWIoJyR7Y3VycmVudENsdWJ9JykiPkt1bMO8YmUgS2F0xLFsPC9idXR0b24+YDsKICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnY2x1YkRldGFpbFdyYXAnKS5pbm5lckhUTUwgPSBgCiAgICA8ZGl2IGNsYXNzPSJjYXJkIj48aDI+JHtjLnRpdGxlfTwvaDI+PHAgY2xhc3M9Im11dGVkIj4ke2MuZGVzY308L3A+PGRpdiBjbGFzcz0icm93IiBzdHlsZT0ianVzdGlmeS1jb250ZW50OnNwYWNlLWJldHdlZW47ZmxleC13cmFwOndyYXAiPjxzcGFuIGNsYXNzPSJiYWRnZSI+JHttZW1iZXJzLmxlbmd0aH0gw7x5ZTwvc3Bhbj48c3BhbiBjbGFzcz0iYmFkZ2UiPkthbMSxY8SxIMO8eWVsaWs8L3NwYW4+PC9kaXY+PC9kaXY+CiAgICAke2FjdGlvbkJ1dHRvbnN9CiAgICA8ZGl2IGNsYXNzPSJzZWN0aW9uLXRpdGxlIj7DnHllIExpc3Rlc2k8L2Rpdj4KICAgIDxkaXYgY2xhc3M9Im1lbWJlcnMtcGlsbHMiPiR7bWVtYmVycy5tYXAobj0+YDxzcGFuIGNsYXNzPSJtZW1iZXItcGlsbCI+JHtlc2NhcGVIdG1sKG4pfTwvc3Bhbj5gKS5qb2luKCcnKSB8fCAnPHNwYW4gY2xhc3M9Im11dGVkIj5IZW7DvHogw7x5ZSB5b2s8L3NwYW4+J308L2Rpdj4KICAgIDxkaXYgY2xhc3M9InNlY3Rpb24tdGl0bGUiPkt1bMO8cCBDaGF0IE9kYXPEsTwvZGl2PgogICAgPGRpdiBjbGFzcz0ibXV0ZWQiIHN0eWxlPSJmb250LXNpemU6MTJweDttYXJnaW4tYm90dG9tOjhweCI+QnUgdGVsZWZvbmRhIHlhemFuOiAke2VzY2FwZUh0bWwobWUucGFydG5lck5hbWUpfSDigKIgJHtlc2NhcGVIdG1sKG1lLmNvdXBsZU5hbWUpfTwvZGl2PgogICAgPGRpdiBpZD0iY2x1Yk1zZ3MiPjxkaXYgY2xhc3M9Im11dGVkIiBzdHlsZT0icGFkZGluZzoxMnB4IDJweCI+U29oYmV0IHnDvGtsZW5peW9yLi4uPC9kaXY+PC9kaXY+CiAgICA8ZGl2IGNsYXNzPSJjb21wb3NlciI+PGlucHV0IGlkPSJjbHViSW5wdXQiIHBsYWNlaG9sZGVyPSJLdWzDvHAgb2Rhc8SxbmEgbWVzYWogeWF6Li4uIj48YnV0dG9uIGNsYXNzPSJnb2xkIiBzdHlsZT0id2lkdGg6NjRweCIgb25jbGljaz0ic2VuZENsdWJNZXNzYWdlKCkiPuKMpjwvYnV0dG9uPjwvZGl2PmA7CiAgc3RhcnRSZWFsdGltZUNoYXQoJ2NsdWInLGN1cnJlbnRDbHViLCdjbHViTXNncycpOwp9CmZ1bmN0aW9uIGpvaW5DbHViKGtleSl7CiAgY29uc3QgbWU9Y3VycmVudENoYXRJZGVudGl0eSgpOwogIHN0YXRlLmNsdWJNZW1iZXJzW2tleV0gPSBzdGF0ZS5jbHViTWVtYmVyc1trZXldIHx8IFtdOwogIGlmKCFzdGF0ZS5jbHViTWVtYmVyc1trZXldLmluY2x1ZGVzKG1lLmNvdXBsZU5hbWUpKSBzdGF0ZS5jbHViTWVtYmVyc1trZXldLnB1c2gobWUuY291cGxlTmFtZSk7CiAgcGVyc2lzdCgpOyByZW5kZXJDbHVicygpOyByZW5kZXJDbHViRGV0YWlsKCk7IHRvYXN0KCdLdWzDvGJlIGthdMSxbGTEsW4nKTsKfQpmdW5jdGlvbiBsZWF2ZUNsdWIoa2V5KXsKICBjb25zdCBtZT1jdXJyZW50Q2hhdElkZW50aXR5KCk7CiAgc3RhdGUuY2x1Yk1lbWJlcnNba2V5XSA9IChzdGF0ZS5jbHViTWVtYmVyc1trZXldIHx8IFtdKS5maWx0ZXIobiA9PiBuICE9PSBjdXJyZW50VXNlciAmJiBuICE9PSBtZS5jb3VwbGVOYW1lKTsKICBwZXJzaXN0KCk7IHJlbmRlckNsdWJzKCk7IHJlbmRlckNsdWJEZXRhaWwoKTsgdG9hc3QoJ0t1bMO8cHRlbiBheXLEsWxkxLFuJyk7Cn0KZnVuY3Rpb24gc2VuZENsdWJNZXNzYWdlKCl7CiAgY29uc3QgbWU9Y3VycmVudENoYXRJZGVudGl0eSgpOwogIGlmKCEoc3RhdGUuY2x1Yk1lbWJlcnNbY3VycmVudENsdWJdIHx8IFtdKS5pbmNsdWRlcyhtZS5jb3VwbGVOYW1lKSl7CiAgICBzdGF0ZS5jbHViTWVtYmVyc1tjdXJyZW50Q2x1Yl0gPSBzdGF0ZS5jbHViTWVtYmVyc1tjdXJyZW50Q2x1Yl0gfHwgW107CiAgICBzdGF0ZS5jbHViTWVtYmVyc1tjdXJyZW50Q2x1Yl0ucHVzaChtZS5jb3VwbGVOYW1lKTsKICAgIHBlcnNpc3QoKTsKICAgIHJlbmRlckNsdWJzKCk7CiAgfQogIHJldHVybiBzZW5kUmVhbHRpbWVSb29tTWVzc2FnZSgnY2x1YicsY3VycmVudENsdWIsJ2NsdWJJbnB1dCcpOwp9').decode('utf-8')
-          new = base64.b64decode('Y29uc3QgY2x1Yk1lbWJlcnNoaXBVbnN1YnMgPSBuZXcgTWFwKCk7CgpmdW5jdGlvbiBjbHViTWVtYmVyc2hpcEV2ZW50SWQoa2V5KXsKICByZXR1cm4gYGNsdWJfJHtTdHJpbmcoa2V5IHx8ICcnKS5yZXBsYWNlKC9bXmEtekEtWjAtOV8tXS9nLCdfJykuc2xpY2UoMCw3MCl9YDsKfQoKZnVuY3Rpb24gaXNDdXJyZW50Q291cGxlSW5DbHViKGtleSl7CiAgY29uc3QgbWUgPSBjdXJyZW50Q2hhdElkZW50aXR5KCk7CiAgY29uc3QgbWVtYmVycyA9IHN0YXRlLmNsdWJNZW1iZXJzW2tleV0gfHwgW107CiAgcmV0dXJuIG1lbWJlcnMuaW5jbHVkZXMobWUuY291cGxlTmFtZSkgfHwgbWVtYmVycy5pbmNsdWRlcyhjdXJyZW50VXNlcik7Cn0KCmZ1bmN0aW9uIGFwcGx5Q2x1Yk1lbWJlcnNoaXAoa2V5LCByZW1vdGUpewogIGNvbnN0IG1lID0gY3VycmVudENoYXRJZGVudGl0eSgpOwogIHN0YXRlLmNsdWJNZW1iZXJzW2tleV0gPSBzdGF0ZS5jbHViTWVtYmVyc1trZXldIHx8IFtdOwogIHN0YXRlLmNsdWJNZW1iZXJzW2tleV0gPSBzdGF0ZS5jbHViTWVtYmVyc1trZXldLmZpbHRlcihuID0+IG4gIT09IGN1cnJlbnRVc2VyICYmIG4gIT09IG1lLmNvdXBsZU5hbWUpOwogIGlmKHJlbW90ZSAmJiByZW1vdGUuam9pbmVkID09PSB0cnVlKSBzdGF0ZS5jbHViTWVtYmVyc1trZXldLnB1c2gobWUuY291cGxlTmFtZSk7CiAgcGVyc2lzdCgpOwogIHJlbmRlckNsdWJzKCk7CiAgaWYoY3VycmVudENsdWIgPT09IGtleSl7CiAgICBjb25zdCBhY3RpdmUgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKCcuc2NyZWVuLmFjdGl2ZScpOwogICAgaWYoYWN0aXZlICYmIGFjdGl2ZS5pZCA9PT0gJ2NsdWJEZXRhaWwnKSByZW5kZXJDbHViRGV0YWlsKCk7CiAgfQp9Cgphc3luYyBmdW5jdGlvbiBlbnN1cmVDbHViTWVtYmVyc2hpcFN5bmMoa2V5KXsKICBjb25zdCBhY2NvdW50SWQgPSBzaGFyZWRQcm9maWxlQWNjb3VudElkKCk7CiAgaWYoIWtleSB8fCAhYWNjb3VudElkIHx8IGNsdWJNZW1iZXJzaGlwVW5zdWJzLmhhcyhrZXkpKSByZXR1cm47CiAgdHJ5ewogICAgY29uc3QgYXBpID0gYXdhaXQgd2FpdEZvclBhaXJhRmlyZWJhc2VBcGkoKTsKICAgIGNvbnN0IGV2ZW50SWQgPSBjbHViTWVtYmVyc2hpcEV2ZW50SWQoa2V5KTsKICAgIGNvbnN0IGV4aXN0aW5nID0gYXdhaXQgYXBpLmdldEV2ZW50QXR0ZW5kYW5jZShldmVudElkLCBhY2NvdW50SWQpOwogICAgYXBwbHlDbHViTWVtYmVyc2hpcChrZXksIGV4aXN0aW5nKTsKICAgIGNvbnN0IHVuc3ViID0gYXBpLnN1YnNjcmliZUV2ZW50QXR0ZW5kYW5jZShldmVudElkLCBhY2NvdW50SWQsIHJvdz0+ewogICAgICBhcHBseUNsdWJNZW1iZXJzaGlwKGtleSwgcm93KTsKICAgIH0sIGVycj0+ewogICAgICBjb25zb2xlLndhcm4oJ1BBSVJBIGNsdWIgbWVtYmVyc2hpcCBzeW5jJywga2V5LCBlcnIpOwogICAgICBjbHViTWVtYmVyc2hpcFVuc3Vicy5kZWxldGUoa2V5KTsKICAgIH0pOwogICAgY2x1Yk1lbWJlcnNoaXBVbnN1YnMuc2V0KGtleSwgdW5zdWIpOwogIH1jYXRjaChlcnIpewogICAgY29uc29sZS53YXJuKCdQQUlSQSBjbHViIG1lbWJlcnNoaXAgc3RhcnQnLCBrZXksIGVycik7CiAgfQp9CgpmdW5jdGlvbiBlbnN1cmVBbGxDbHViTWVtYmVyc2hpcFN5bmMoKXsKICBPYmplY3Qua2V5cyhjbHVicyB8fCB7fSkuZm9yRWFjaChrZXk9PmVuc3VyZUNsdWJNZW1iZXJzaGlwU3luYyhrZXkpKTsKfQoKYXN5bmMgZnVuY3Rpb24gc2V0U2hhcmVkQ2x1Yk1lbWJlcnNoaXAoa2V5LCBqb2luZWQpewogIGNvbnN0IGFjY291bnRJZCA9IHNoYXJlZFByb2ZpbGVBY2NvdW50SWQoKTsKICBjb25zdCBtZSA9IGN1cnJlbnRDaGF0SWRlbnRpdHkoKTsKICBjb25zdCB3YXNKb2luZWQgPSBpc0N1cnJlbnRDb3VwbGVJbkNsdWIoa2V5KTsKCiAgYXBwbHlDbHViTWVtYmVyc2hpcChrZXksIGpvaW5lZCA/IHtqb2luZWQ6dHJ1ZX0gOiB7am9pbmVkOmZhbHNlfSk7CgogIGlmKCFhY2NvdW50SWQpewogICAgdG9hc3Qoam9pbmVkID8gJ0t1bMO8YmUga2F0xLFsZMSxbiDinJMnIDogJ0t1bMO8cHRlbiBheXLEsWxkxLFuJyk7CiAgICByZXR1cm4gdHJ1ZTsKICB9CgogIHRyeXsKICAgIGNvbnN0IGFwaSA9IGF3YWl0IHdhaXRGb3JQYWlyYUZpcmViYXNlQXBpKCk7CiAgICBhd2FpdCBhcGkuc2V0RXZlbnRBdHRlbmRhbmNlKGNsdWJNZW1iZXJzaGlwRXZlbnRJZChrZXkpLCBhY2NvdW50SWQsIHsKICAgICAgam9pbmVkLAogICAgICBpbnZpdGVDb2RlOmFjY291bnRJZCwKICAgICAgY291cGxlTmFtZTptZS5jb3VwbGVOYW1lLAogICAgICBwYXJ0bmVyTmFtZTptZS5wYXJ0bmVyTmFtZSwKICAgICAgZGV2aWNlSWQ6Z2V0RGV2aWNlSWQoKQogICAgfSk7CiAgICB0b2FzdChqb2luZWQgPyAnw4dpZnQgb2xhcmFrIGt1bMO8YmUga2F0xLFsZMSxuxLF6IOKckycgOiAnw4dpZnQgb2xhcmFrIGt1bMO8cHRlbiBheXLEsWxkxLFuxLF6Jyk7CiAgICByZXR1cm4gdHJ1ZTsKICB9Y2F0Y2goZXJyKXsKICAgIGNvbnNvbGUud2FybignUEFJUkEgY2x1YiBtZW1iZXJzaGlwIHNhdmUnLCBlcnIpOwogICAgYXBwbHlDbHViTWVtYmVyc2hpcChrZXksIHdhc0pvaW5lZCA/IHtqb2luZWQ6dHJ1ZX0gOiB7am9pbmVkOmZhbHNlfSk7CiAgICB0b2FzdCgnS3Vsw7xwIMO8eWVsaWtsaSBrYXlkZWRpbGVtZWRpJyk7CiAgICByZXR1cm4gZmFsc2U7CiAgfQp9CgpmdW5jdGlvbiByZW5kZXJDbHVicygpewogIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdjbHVic0xpc3QnKS5pbm5lckhUTUwgPSBPYmplY3QuZW50cmllcyhjbHVicykubWFwKChba2V5LGNdKT0+ewogICAgY29uc3QgY291bnQgPSAoc3RhdGUuY2x1Yk1lbWJlcnNba2V5XSB8fCBbXSkubGVuZ3RoOwogICAgcmV0dXJuIGA8YnV0dG9uIGNsYXNzPSJsaXN0YnRuIiBvbmNsaWNrPSJvcGVuQ2x1YigneyR7a2V5fScpIj48ZGl2IGNsYXNzPSJjbHViLXRvcCI+PGRpdj48Yj4ke2MudGl0bGV9PC9iPjxkaXYgY2xhc3M9Im11dGVkIiBzdHlsZT0ibWFyZ2luLXRvcDo0cHgiPiR7Yy5kZXNjfTwvZGl2PjwvZGl2PjxzcGFuIGNsYXNzPSJjbHViLWJhZGdlIj4ke2NvdW50fSDDvHllPC9zcGFuPjwvZGl2PjwvYnV0dG9uPmA7CiAgfSkuam9pbignJyk7Cn0KZnVuY3Rpb24gb3BlbkNsdWIoa2V5KXsKICBjdXJyZW50Q2x1YiA9IGtleTsKICByZW5kZXJDbHViRGV0YWlsKCk7CiAgc2hvdygnY2x1YkRldGFpbCcpOwogIGVuc3VyZUNsdWJNZW1iZXJzaGlwU3luYyhrZXkpOwp9CmZ1bmN0aW9uIHJlbmRlckNsdWJEZXRhaWwoKXsKICBjb25zdCBjID0gY2x1YnNbY3VycmVudENsdWJdOwogIGNvbnN0IG1lPWN1cnJlbnRDaGF0SWRlbnRpdHkoKTsKICBjb25zdCBtZW1iZXJzID0gc3RhdGUuY2x1Yk1lbWJlcnNbY3VycmVudENsdWJdIHx8IFtdOwogIGNvbnN0IGpvaW5lZCA9IGlzQ3VycmVudENvdXBsZUluQ2x1YihjdXJyZW50Q2x1Yik7CiAgY29uc3QgYWN0aW9uQnV0dG9ucyA9IGpvaW5lZAogICAgPyBgPGJ1dHRvbiBjbGFzcz0iZ29sZCIgc3R5bGU9Im9wYWNpdHk6Ljc1Ij5LdWzDvGJlIEthdMSxbGTEsW4g4pyTPC9idXR0b24+PGJ1dHRvbiBjbGFzcz0ib3V0IiBzdHlsZT0ibWFyZ2luLXRvcDoxMHB4O2JvcmRlci1jb2xvcjojYjk2MDYwO2NvbG9yOiNmZmIyYWMiIG9uY2xpY2s9ImxlYXZlQ2x1YigneyR7Y3VycmVudENsdWJ9fScpIj5LdWzDvHB0ZW4gQXlyxLFsPC9idXR0b24+YAogICAgOiBgPGJ1dHRvbiBjbGFzcz0iZ29sZCIgb25jbGljaz0iam9pbkNsdWIoJyR7Y3VycmVudENsdWJ9JykiPkt1bMO8YmUgS2F0xLFsPC9idXR0b24+YDsKICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnY2x1YkRldGFpbFdyYXAnKS5pbm5lckhUTUwgPSBgCiAgICA8ZGl2IGNsYXNzPSJjYXJkIj48aDI+JHtjLnRpdGxlfTwvaDI+PHAgY2xhc3M9Im11dGVkIj4ke2MuZGVzY308L3A+PGRpdiBjbGFzcz0icm93IiBzdHlsZT0ianVzdGlmeS1jb250ZW50OnNwYWNlLWJldHdlZW47ZmxleC13cmFwOndyYXAiPjxzcGFuIGNsYXNzPSJiYWRnZSI+JHttZW1iZXJzLmxlbmd0aH0gw7x5ZTwvc3Bhbj48c3BhbiBjbGFzcz0iYmFkZ2UiPkthbMSxY8SxIMO8eWVsaWs8L3NwYW4+PC9kaXY+PC9kaXY+CiAgICAke2FjdGlvbkJ1dHRvbnN9CiAgICA8ZGl2IGNsYXNzPSJzZWN0aW9uLXRpdGxlIj7DnHllIExpc3Rlc2k8L2Rpdj4KICAgIDxkaXYgY2xhc3M9Im1lbWJlcnMtcGlsbHMiPiR7bWVtYmVycy5tYXAobj0+YDxzcGFuIGNsYXNzPSJtZW1iZXItcGlsbCI+JHtlc2NhcGVIdG1sKG4pfTwvc3Bhbj5gKS5qb2luKCcnKSB8fCAnPHNwYW4gY2xhc3M9Im11dGVkIj5IZW7DvHogw7x5ZSB5b2s8L3NwYW4+J308L2Rpdj4KICAgIDxkaXYgY2xhc3M9InNlY3Rpb24tdGl0bGUiPkt1bMO8cCBDaGF0IE9kYXPEsTwvZGl2PgogICAgPGRpdiBjbGFzcz0ibXV0ZWQiIHN0eWxlPSJmb250LXNpemU6MTJweDttYXJnaW4tYm90dG9tOjhweCI+QnUgdGVsZWZvbmRhIHlhemFuOiAke2VzY2FwZUh0bWwobWUucGFydG5lck5hbWUpfSDigKIgJHtlc2NhcGVIdG1sKG1lLmNvdXBsZU5hbWUpfTwvZGl2PgogICAgPGRpdiBpZD0iY2x1Yk1zZ3MiPjxkaXYgY2xhc3M9Im11dGVkIiBzdHlsZT0icGFkZGluZzoxMnB4IDJweCI+U29oYmV0IHnDvGtsZW5peW9yLi4uPC9kaXY+PC9kaXY+CiAgICA8ZGl2IGNsYXNzPSJjb21wb3NlciI+PGlucHV0IGlkPSJjbHViSW5wdXQiIHBsYWNlaG9sZGVyPSJLdWzDvHAgb2Rhc8SxbmEgbWVzYWogeWF6Li4uIj48YnV0dG9uIGNsYXNzPSJnb2xkIiBzdHlsZT0id2lkdGg6NjRweCIgb25jbGljaz0ic2VuZENsdWJNZXNzYWdlKCkiPuKMpjwvYnV0dG9uPjwvZGl2PmA7CiAgc3RhcnRSZWFsdGltZUNoYXQoJ2NsdWInLGN1cnJlbnRDbHViLCdjbHViTXNncycpOwp9CmZ1bmN0aW9uIGpvaW5DbHViKGtleSl7IHJldHVybiBzZXRTaGFyZWRDbHViTWVtYmVyc2hpcChrZXksIHRydWUpOyB9CmZ1bmN0aW9uIGxlYXZlQ2x1YihrZXkpeyByZXR1cm4gc2V0U2hhcmVkQ2x1Yk1lbWJlcnNoaXAoa2V5LCBmYWxzZSk7IH0KYXN5bmMgZnVuY3Rpb24gc2VuZENsdWJNZXNzYWdlKCl7CiAgaWYoIWlzQ3VycmVudENvdXBsZUluQ2x1YihjdXJyZW50Q2x1YikpewogICAgY29uc3Qgb2sgPSBhd2FpdCBzZXRTaGFyZWRDbHViTWVtYmVyc2hpcChjdXJyZW50Q2x1YiwgdHJ1ZSk7CiAgICBpZighb2spIHJldHVybjsKICB9CiAgcmV0dXJuIHNlbmRSZWFsdGltZVJvb21NZXNzYWdlKCdjbHViJyxjdXJyZW50Q2x1YiwnY2x1YklucHV0Jyk7Cn0=').decode('utf-8')
-          if old not in text:
-              raise SystemExit('Expected club block not found; refusing partial patch')
-          text = text.replace(old, new, 1)
+
+          old_meta = '<meta name="paira-build" content="v19.2-firestore-meta-fix">'
+          new_meta = '<meta name="paira-build" content="v19.3-club-membership-sync">'
+          if old_meta in text:
+              text = text.replace(old_meta, new_meta, 1)
+
+          start = text.find('function renderClubs(){')
+          end = text.find('renderEventsList();', start)
+          if start < 0 or end < 0:
+              raise SystemExit(f'Club anchors missing start={start} end={end}')
+
+          new_block = '''const clubMembershipUnsubs = new Map();
+
+          function clubMembershipEventId(key){
+            return `club_${String(key || '').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,70)}`;
+          }
+
+          function isCurrentCoupleInClub(key){
+            const me = currentChatIdentity();
+            const members = state.clubMembers[key] || [];
+            return members.includes(me.coupleName) || members.includes(currentUser);
+          }
+
+          function applyClubMembership(key, remote){
+            const me = currentChatIdentity();
+            state.clubMembers[key] = state.clubMembers[key] || [];
+            state.clubMembers[key] = state.clubMembers[key].filter(n => n !== currentUser && n !== me.coupleName);
+            if(remote && remote.joined === true) state.clubMembers[key].push(me.coupleName);
+            persist();
+            renderClubs();
+            if(currentClub === key){
+              const active = document.querySelector('.screen.active');
+              if(active && active.id === 'clubDetail') renderClubDetail();
+            }
+          }
+
+          async function ensureClubMembershipSync(key){
+            const accountId = sharedProfileAccountId();
+            if(!key || !accountId || clubMembershipUnsubs.has(key)) return;
+            try{
+              const api = await waitForPairaFirebaseApi();
+              const eventId = clubMembershipEventId(key);
+              const existing = await api.getEventAttendance(eventId, accountId);
+              applyClubMembership(key, existing);
+              const unsub = api.subscribeEventAttendance(eventId, accountId, row=>{
+                applyClubMembership(key, row);
+              }, err=>{
+                console.warn('PAIRA club membership sync', key, err);
+                clubMembershipUnsubs.delete(key);
+              });
+              clubMembershipUnsubs.set(key, unsub);
+            }catch(err){
+              console.warn('PAIRA club membership start', key, err);
+            }
+          }
+
+          function ensureAllClubMembershipSync(){
+            Object.keys(clubs || {}).forEach(key=>ensureClubMembershipSync(key));
+          }
+
+          async function setSharedClubMembership(key, joined){
+            const accountId = sharedProfileAccountId();
+            const me = currentChatIdentity();
+            const wasJoined = isCurrentCoupleInClub(key);
+
+            applyClubMembership(key, joined ? {joined:true} : {joined:false});
+
+            if(!accountId){
+              toast(joined ? 'Kulübe katıldın ✓' : 'Kulüpten ayrıldın');
+              return true;
+            }
+
+            try{
+              const api = await waitForPairaFirebaseApi();
+              await api.setEventAttendance(clubMembershipEventId(key), accountId, {
+                joined,
+                inviteCode:accountId,
+                coupleName:me.coupleName,
+                partnerName:me.partnerName,
+                deviceId:getDeviceId()
+              });
+              toast(joined ? 'Çift olarak kulübe katıldınız ✓' : 'Çift olarak kulüpten ayrıldınız');
+              return true;
+            }catch(err){
+              console.warn('PAIRA club membership save', err);
+              applyClubMembership(key, wasJoined ? {joined:true} : {joined:false});
+              toast('Kulüp üyeliği kaydedilemedi');
+              return false;
+            }
+          }
+
+          function renderClubs(){
+            document.getElementById('clubsList').innerHTML = Object.entries(clubs).map(([key,c])=>{
+              const count = (state.clubMembers[key] || []).length;
+              return `<button class="listbtn" onclick="openClub('${key}')"><div class="club-top"><div><b>${c.title}</b><div class="muted" style="margin-top:4px">${c.desc}</div></div><span class="club-badge">${count} üye</span></div></button>`;
+            }).join('');
+          }
+          function openClub(key){
+            currentClub = key;
+            renderClubDetail();
+            show('clubDetail');
+            ensureClubMembershipSync(key);
+          }
+          function renderClubDetail(){
+            const c = clubs[currentClub];
+            const me=currentChatIdentity();
+            const members = state.clubMembers[currentClub] || [];
+            const joined = isCurrentCoupleInClub(currentClub);
+            const actionButtons = joined
+              ? `<button class="gold" style="opacity:.75">Kulübe Katıldın ✓</button><button class="out" style="margin-top:10px;border-color:#b96060;color:#ffb2ac" onclick="leaveClub('${currentClub}')">Kulüpten Ayrıl</button>`
+              : `<button class="gold" onclick="joinClub('${currentClub}')">Kulübe Katıl</button>`;
+            document.getElementById('clubDetailWrap').innerHTML = `
+              <div class="card"><h2>${c.title}</h2><p class="muted">${c.desc}</p><div class="row" style="justify-content:space-between;flex-wrap:wrap"><span class="badge">${members.length} üye</span><span class="badge">Kalıcı üyelik</span></div></div>
+              ${actionButtons}
+              <div class="section-title">Üye Listesi</div>
+              <div class="members-pills">${members.map(n=>`<span class="member-pill">${escapeHtml(n)}</span>`).join('') || '<span class="muted">Henüz üye yok</span>'}</div>
+              <div class="section-title">Kulüp Chat Odası</div>
+              <div class="muted" style="font-size:12px;margin-bottom:8px">Bu telefonda yazan: ${escapeHtml(me.partnerName)} • ${escapeHtml(me.coupleName)}</div>
+              <div id="clubMsgs"><div class="muted" style="padding:12px 2px">Sohbet yükleniyor...</div></div>
+              <div class="composer"><input id="clubInput" placeholder="Kulüp odasına mesaj yaz..."><button class="gold" style="width:64px" onclick="sendClubMessage()">➤</button></div>`;
+            startRealtimeChat('club',currentClub,'clubMsgs');
+          }
+          function joinClub(key){ return setSharedClubMembership(key, true); }
+          function leaveClub(key){ return setSharedClubMembership(key, false); }
+          async function sendClubMessage(){
+            if(!isCurrentCoupleInClub(currentClub)){
+              const ok = await setSharedClubMembership(currentClub, true);
+              if(!ok) return;
+            }
+            return sendRealtimeRoomMessage('club',currentClub,'clubInput');
+          }
+          '''
+
+          # Remove Python indentation that exists only to keep the YAML readable.
+          new_block = '\n'.join(line[10:] if line.startswith('          ') else line for line in new_block.splitlines()) + '\n'
+          text = text[:start] + new_block + text[end:]
+
           startup_old = "renderAdminEvents();\nrenderClubs();\nrenderAdminInbox();"
           startup_new = "renderAdminEvents();\nrenderClubs();\nensureAllClubMembershipSync();\nrenderAdminInbox();"
           if startup_old not in text:
-              raise SystemExit('Startup anchor not found; refusing partial patch')
+              raise SystemExit('Startup anchor missing')
           text = text.replace(startup_old, startup_new, 1)
-          if text == original:
-              raise SystemExit('No changes made')
+
           path.write_text(text, encoding='utf-8')
           print('PAIRA v19.3 club membership sync applied.')
 
