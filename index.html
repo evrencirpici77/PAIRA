@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>PAIRA</title>
-<meta name="paira-build" content="v19.3-club-membership-sync">
+<meta name="paira-build" content="v19.4-chat-hub-fix">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
@@ -309,10 +309,24 @@ textarea.form-field{min-height:105px;resize:vertical}
   </div>
 </section>
 
-<section id="chats" class="screen page"><div class="head"><button class="back" onclick="show('home')">‹</button><div><div class="logo">PAIRA</div><div class="sub">CHAT</div></div><span></span></div>
-<div class="card"><b id="chatIdentityInfo">Partner kimliği aktif</b><div class="muted" style="font-size:12px;margin-top:4px">Aynı çift hesabındaki iki partner mesajlarda ayrı isimle görünür.</div></div><div class="card muted">Henüz bireysel üye sohbeti yok.</div>
-<button class="listbtn" onclick="openClub('gurme')"><b>Gurme Kulübü</b><br><span class="muted">Kulüp sohbeti</span></button>
-<button class="listbtn" onclick="openEventChat('bogaz')"><b>Boğaz’da Akşam Yemeği</b><br><span class="muted">Etkinlik sohbeti</span></button></section>
+<section id="chats" class="screen page">
+  <div class="head"><button class="back" onclick="show('home')">‹</button><div><div class="logo">PAIRA</div><div class="sub">CHAT</div></div><span></span></div>
+  <div class="card"><b id="chatIdentityInfo">Partner kimliği aktif</b><div class="muted" style="font-size:12px;margin-top:4px">Aynı çift hesabındaki iki partner mesajlarda ayrı isimle görünür.</div></div>
+  <button class="listbtn" onclick="openGeneralChat()"><b>PAIRA Genel Sohbet</b><br><span class="muted">Tüm PAIRA üyeleri</span></button>
+  <div class="section-title">Kulüp Sohbetleri</div>
+  <div id="chatClubRooms"></div>
+  <div class="section-title">Etkinlik Sohbetleri</div>
+  <div id="chatEventRooms"></div>
+  <div class="card muted">Bireysel çift sohbetleri henüz aktif değil.</div>
+</section>
+
+<section id="generalChat" class="screen page">
+  <div class="head"><button class="back" onclick="show('chats')">‹</button><div><div class="logo">PAIRA</div><div class="sub">GENEL SOHBET</div></div><span></span></div>
+  <div class="muted" id="generalChatIdentity" style="font-size:12px;margin-bottom:10px"></div>
+  <div id="generalChatMsgs"><div class="muted" style="padding:12px 2px">Sohbet yükleniyor...</div></div>
+  <div class="composer"><input id="generalChatInput" placeholder="Genel sohbete mesaj yaz..."><button class="gold" style="width:64px" onclick="sendGeneralChatMessage()">➤</button></div>
+</section>
+
 <section id="dm" class="screen page">
   <div class="head"><button class="back" onclick="show('chats')">‹</button><div><div class="logo">PAIRA</div><div class="sub">BİREYSEL SOHBET</div></div><span></span></div>
   <div class="card muted" style="text-align:center;padding:26px 18px">Henüz gerçek bir üye sohbeti seçilmedi.</div>
@@ -562,7 +576,7 @@ if(!Array.isArray(state.profile.interests)) state.profile.interests = [];
 if(!Array.isArray(state.profile.photos)) state.profile.photos = [];
 if(typeof state.profile.coverIndex !== 'number') state.profile.coverIndex = 0;
 
-let currentEvent = 'bogaz';
+let currentEvent = '';
 let currentSlide = 0;
 let eventReturnScreen = 'events';
 let currentClub = 'gurme';
@@ -584,13 +598,8 @@ function show(id){
   if(id==='notifications'){ ensureNotificationsSync(); renderNotifications(); }
   if(['home','events','agenda','dayAgenda','eventDetail','eventChat','adminEvents'].includes(id)){ ensureEventsSync(); }
   if(id==='adminEvents'){ ensureEventsSeededForAdmin(); }
-  if(id==='chats'){
-    const me=currentChatIdentity();
-    const z=document.getElementById('chatIdentityInfo');
-    if(z) z.textContent=`Bu telefonda yazan: ${me.partnerName} • ${me.coupleName}`;
-  }
-  if(id==='dm') startRealtimeChat('dm','ece_kaan','dmMsgs');
-  if(!['dm','eventChat','clubDetail'].includes(id) && realtimeChatUnsub) stopRealtimeChat();
+  if(id==='chats') renderChatsHub();
+  if(!['generalChat','eventChat','clubDetail'].includes(id) && realtimeChatUnsub) stopRealtimeChat();
   if(historyStack[historyStack.length-1] !== id) historyStack.push(id);
 }
 function goBack(){
@@ -1085,6 +1094,7 @@ function notificationTimeText(ts){
 function roomTitle(kind, roomId){
   if(kind === 'event') return (events[roomId] && events[roomId].title) || 'Etkinlik Sohbeti';
   if(kind === 'club') return (clubs[roomId] && clubs[roomId].title) || 'Kulüp Sohbeti';
+  if(kind === 'general') return 'PAIRA Genel Sohbet';
   return 'Sohbet';
 }
 
@@ -1195,7 +1205,7 @@ function stopNotificationChatSubscriptions(){
 
 async function startNotificationChatSubscriptions(api){
   stopNotificationChatSubscriptions();
-  const rooms = [];
+  const rooms = [['general','main']];
   Object.keys(events || {}).forEach(id=>rooms.push(['event',id]));
   Object.keys(clubs || {}).forEach(id=>rooms.push(['club',id]));
   rooms.forEach(([kind,roomId])=>{
@@ -1286,6 +1296,39 @@ async function sendRealtimeRoomMessage(kind, roomId, inputId){
     console.warn('PAIRA chat send',err);
     toast('Mesaj gönderilemedi');
   }
+}
+
+function renderChatsHub(){
+  const me=currentChatIdentity();
+  const z=document.getElementById('chatIdentityInfo');
+  if(z) z.textContent=`Bu telefonda yazan: ${me.partnerName} • ${me.coupleName}`;
+
+  const clubWrap=document.getElementById('chatClubRooms');
+  if(clubWrap){
+    clubWrap.innerHTML=Object.entries(clubs || {}).map(([key,c])=>
+      `<button class="listbtn" onclick="openClub('${key}')"><b>${escapeHtml(c.title)}</b><br><span class="muted">Kulüp sohbeti</span></button>`
+    ).join('') || '<div class="card muted">Henüz kulüp sohbeti yok.</div>';
+  }
+
+  const eventWrap=document.getElementById('chatEventRooms');
+  if(eventWrap){
+    const rows=Object.entries(events || {}).sort((a,b)=>String(a[1]?.dateISO || '').localeCompare(String(b[1]?.dateISO || '')));
+    eventWrap.innerHTML=rows.map(([id,e])=>
+      `<button class="listbtn" onclick="openEventChat('${id}')"><b>${escapeHtml(e.title || 'Etkinlik')}</b><br><span class="muted">Etkinlik sohbeti</span></button>`
+    ).join('') || '<div class="card muted">Henüz yayınlanmış etkinlik sohbeti yok.</div>';
+  }
+}
+
+function openGeneralChat(){
+  const me=currentChatIdentity();
+  show('generalChat');
+  const z=document.getElementById('generalChatIdentity');
+  if(z) z.textContent=`Bu telefonda yazan: ${me.partnerName} • ${me.coupleName}`;
+  startRealtimeChat('general','main','generalChatMsgs');
+}
+
+function sendGeneralChatMessage(){
+  return sendRealtimeRoomMessage('general','main','generalChatInput');
 }
 
 function sendMessage(boxId,inputId){
