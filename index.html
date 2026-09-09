@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>PAIRA</title>
-<meta name="paira-build" content="v20.1-partner-read-fix">
+<meta name="paira-build" content="v20.2-partner-save-verify">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
@@ -3075,10 +3075,45 @@ function openPartnerBusinessForm(id=''){
   modal(`<h2 style="color:#e7bd72;margin-top:0">${id?'Üye İşyerini Düzenle':'Yeni Üye İşyeri'}</h2><input type="hidden" id="pbId" value="${benefitEsc(id)}"><label class="form-label">İşyeri adı</label><input class="form-field" id="pbName" value="${benefitEsc(row.name||'')}" placeholder="Örn. Moda Bistro"><label class="form-label">Kategori</label><select class="form-field" id="pbCategory">${[['food','Cafe & Restoran'],['shop','Mağaza'],['care','Bakım'],['stay','Otel & Tatil'],['other','Diğer']].map(([v,l])=>`<option value="${v}" ${String(row.category||'food')===v?'selected':''}>${l}</option>`).join('')}</select><label class="form-label">PAIRA avantajı</label><input class="form-field" id="pbOffer" value="${benefitEsc(row.offer||'')}" placeholder="Örn. %20 indirim"><div class="form-grid"><div><label class="form-label">Semt</label><input class="form-field" id="pbDistrict" value="${benefitEsc(row.district||'')}" placeholder="Moda"></div><div><label class="form-label">Şehir</label><input class="form-field" id="pbCity" value="${benefitEsc(row.city||'İstanbul')}" placeholder="İstanbul"></div></div><label class="form-label">Kısa açıklama</label><textarea class="form-field" id="pbDescription" placeholder="İndirim hangi ürün veya hizmetlerde geçerli?">${benefitEsc(row.description||'')}</textarea><label class="form-label">Adres</label><textarea class="form-field" id="pbAddress" placeholder="Açık adres">${benefitEsc(row.address||'')}</textarea><label class="form-label">Telefon</label><input class="form-field" id="pbPhone" value="${benefitEsc(row.phone||'')}" placeholder="05…"><label class="form-label">Instagram / web</label><input class="form-field" id="pbSocial" value="${benefitEsc(row.social||'')}" placeholder="@mekan veya web adresi"><label class="form-label">Google Maps bağlantısı</label><input class="form-field" id="pbMapUrl" value="${benefitEsc(row.mapUrl||'')}" placeholder="İsteğe bağlı"><label class="form-label">Fotoğraf bağlantısı</label><input class="form-field" id="pbPhotoUrl" value="${benefitEsc(row.photoUrl||'')}" placeholder="İsteğe bağlı"><label style="display:flex;align-items:center;gap:10px;margin:14px 2px;color:#ecd3a3"><input type="checkbox" id="pbActive" ${row.active===false?'':'checked'}> Aktif olarak yayınla</label><button class="gold" onclick="savePartnerBusinessFromModal()">Kaydet ve Yayınla</button><button class="out" style="margin-top:8px" onclick="closeModal()">Vazgeç</button>`);
 }
 async function savePartnerBusinessFromModal(){
-  const name=(document.getElementById('pbName')?.value||'').trim(),offer=(document.getElementById('pbOffer')?.value||'').trim(); if(!name){toast('İşyeri adını yazın');return;} if(!offer){toast('PAIRA avantajını yazın');return;}
-  const existingId=document.getElementById('pbId')?.value||'',id=existingId||('partner_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7));
-  const row={id,name,category:document.getElementById('pbCategory')?.value||'other',offer,district:(document.getElementById('pbDistrict')?.value||'').trim(),city:(document.getElementById('pbCity')?.value||'').trim(),description:(document.getElementById('pbDescription')?.value||'').trim(),address:(document.getElementById('pbAddress')?.value||'').trim(),phone:(document.getElementById('pbPhone')?.value||'').trim(),social:(document.getElementById('pbSocial')?.value||'').trim(),mapUrl:(document.getElementById('pbMapUrl')?.value||'').trim(),photoUrl:(document.getElementById('pbPhotoUrl')?.value||'').trim(),active:!!document.getElementById('pbActive')?.checked,updatedAt:new Date().toISOString()};
-  try{if(!window.PAIRA_FIREBASE_API?.savePartnerBusiness)throw new Error('Firebase hazır değil');await window.PAIRA_FIREBASE_API.savePartnerBusiness(row);closeModal();toast(existingId?'İşyeri güncellendi ✓':'İşyeri yayınlandı ✓');}catch(err){console.warn('PAIRA partner save',err);toast('İşyeri kaydedilemedi');}
+  const name=(document.getElementById('pbName')?.value||'').trim(),
+        offer=(document.getElementById('pbOffer')?.value||'').trim();
+  if(!name){toast('İşyeri adını yazın');return;}
+  if(!offer){toast('PAIRA avantajını yazın');return;}
+  const existingId=document.getElementById('pbId')?.value||'',
+        id=existingId||('partner_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7));
+  const row={
+    id,
+    name,
+    category:document.getElementById('pbCategory')?.value||'other',
+    offer,
+    district:(document.getElementById('pbDistrict')?.value||'').trim(),
+    city:(document.getElementById('pbCity')?.value||'').trim(),
+    description:(document.getElementById('pbDescription')?.value||'').trim(),
+    address:(document.getElementById('pbAddress')?.value||'').trim(),
+    phone:(document.getElementById('pbPhone')?.value||'').trim(),
+    social:(document.getElementById('pbSocial')?.value||'').trim(),
+    mapUrl:(document.getElementById('pbMapUrl')?.value||'').trim(),
+    photoUrl:(document.getElementById('pbPhotoUrl')?.value||'').trim(),
+    active:!!document.getElementById('pbActive')?.checked,
+    updatedAt:new Date().toISOString()
+  };
+  try{
+    const api=window.PAIRA_FIREBASE_API || await waitForPairaFirebaseApi();
+    if(!api?.savePartnerBusiness) throw new Error('Firebase hazır değil');
+    const saved=await api.savePartnerBusiness(row);
+    const savedId=String(saved?.id||saved?._firebaseId||id);
+    const next=(partnerBusinessRows||[]).filter(x=>String(x?.id||x?._firebaseId||'')!==savedId);
+    next.unshift(saved);
+    partnerBusinessRows=next.sort((a,b)=>String(b.updatedAt||"").localeCompare(String(a.updatedAt||"")));
+    renderPartnerAdmin();
+    renderPartnerBusinesses();
+    closeModal();
+    toast(existingId?'İşyeri güncellendi ✓':'İşyeri yayınlandı ✓');
+    setTimeout(()=>startPartnerBusinessRealtime(),250);
+  }catch(err){
+    console.warn('PAIRA partner save',err);
+    toast('İşyeri kaydedilemedi');
+  }
 }
 async function togglePartnerBusiness(id){const row=(partnerBusinessRows||[]).find(x=>(x.id||x._firebaseId)===id);if(!row)return;try{await window.PAIRA_FIREBASE_API.savePartnerBusiness({...row,id,active:row.active===false,updatedAt:new Date().toISOString()});toast(row.active===false?'İşyeri aktifleştirildi':'İşyeri pasife alındı');}catch(err){toast('Güncelleme başarısız');}}
 async function removePartnerBusiness(id){const row=(partnerBusinessRows||[]).find(x=>(x.id||x._firebaseId)===id);if(!row)return;if(!confirm(`"${row.name}" işyerini silmek istiyor musunuz?`))return;try{await window.PAIRA_FIREBASE_API.deletePartnerBusiness(id);toast('İşyeri silindi');}catch(err){toast('Silme başarısız');}}
@@ -3094,6 +3129,12 @@ async function startPartnerBusinessRealtime(){
   if(adminBox)adminBox.innerHTML='<div class="partner-empty">İşyeri listesi yükleniyor…</div>';
   try{
     const api=window.PAIRA_FIREBASE_API || await waitForPairaFirebaseApi();
+
+    const initialRows=await api.listPartnerBusinesses();
+    partnerBusinessRows=Array.isArray(initialRows)?initialRows:[];
+    renderPartnerBusinesses();
+    renderPartnerAdmin();
+
     if(partnerBusinessUnsub)partnerBusinessUnsub();
     partnerBusinessUnsub=api.subscribePartnerBusinesses((rows,err)=>{
       if(err){
@@ -3106,8 +3147,8 @@ async function startPartnerBusinessRealtime(){
       renderPartnerAdmin();
     });
   }catch(err){
-    console.warn('PAIRA partner subscribe',err);
-    if(adminBox)adminBox.innerHTML='<div class="partner-empty">İşyeri listesi su anda alınamadı.<br><br><button class="out" onclick="startPartnerBusinessRealtime()">↻ Tekrar Dene</button></div>';
+    console.warn('PAIRA partner initial load',err);
+    if(adminBox)adminBox.innerHTML='<div class="partner-empty">İşyeri listesi şu anda alınamadı.<br><br><button class="out" onclick="startPartnerBusinessRealtime()">↻ Tekrar Dene</button></div>';
   }
 }
 window.openPartnerBusinessForm=openPartnerBusinessForm;window.savePartnerBusinessFromModal=savePartnerBusinessFromModal;window.togglePartnerBusiness=togglePartnerBusiness;window.removePartnerBusiness=removePartnerBusiness;window.renderPartnerAdmin=renderPartnerAdmin;window.openMemberBenefitQr=openMemberBenefitQr;window.openPartnerMap=openPartnerMap;window.startPartnerBusinessRealtime=startPartnerBusinessRealtime;
@@ -3583,12 +3624,18 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
   }
 
 
+  async function listPartnerBusinesses(){
+    const snap=await getDocs(collection(db,"partnerBusinesses"));
+    return snap.docs
+      .map(d=>({_firebaseId:d.id,...d.data()}))
+      .sort((a,b)=>String(b.updatedAt||"").localeCompare(String(a.updatedAt||"")));
+  }
   function subscribePartnerBusinesses(callback){
-    const ref = collection(db,"partnerBusinesses");
+    const ref=collection(db,"partnerBusinesses");
     return onSnapshot(
       ref,
       snap=>{
-        const rows = snap.docs
+        const rows=snap.docs
           .map(d=>({_firebaseId:d.id,...d.data()}))
           .sort((a,b)=>String(b.updatedAt||"").localeCompare(String(a.updatedAt||"")));
         callback(rows,null);
@@ -3601,9 +3648,15 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
   }
   async function savePartnerBusiness(row){
     if(!auth.currentUser) throw new Error("Yönetici girişi gerekli");
-    const id=String(row?.id||row?._firebaseId||"").trim(); if(!id)throw new Error("İşyeri kimliği eksik");
-    const clean={...row,id,updatedAt:new Date().toISOString()}; delete clean._firebaseId;
-    await setDoc(doc(db,"partnerBusinesses",id),clean,{merge:true}); return clean;
+    const id=String(row?.id||row?._firebaseId||"").trim();
+    if(!id) throw new Error("İşyeri kimliği eksik");
+    const clean={...row,id,updatedAt:new Date().toISOString()};
+    delete clean._firebaseId;
+    const ref=doc(db,"partnerBusinesses",id);
+    await setDoc(ref,clean,{merge:true});
+    const verify=await getDoc(ref);
+    if(!verify.exists()) throw new Error("İşyeri kayıt doğrulaması başarısız");
+    return {_firebaseId:verify.id,...verify.data()};
   }
   async function deletePartnerBusiness(id){
     if(!auth.currentUser) throw new Error("Yönetici girişi gerekli");
@@ -3615,6 +3668,7 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
     saveInvitation,
     approveInvitationPartner,
     removeInvitation,
+    listPartnerBusinesses,
     subscribePartnerBusinesses,
     savePartnerBusiness,
     deletePartnerBusiness,
