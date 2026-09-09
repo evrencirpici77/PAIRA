@@ -1,0 +1,49 @@
+name: ÂLÂ visual test only
+
+on:
+  push:
+    branches:
+      - ala-gorsel-deneme
+    paths:
+      - '.github/workflows/ala-visual-test-only.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ala-gorsel-deneme
+          fetch-depth: 0
+      - name: Inject test-only visual css
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          tag='<link rel="stylesheet" href="/ala-visual-test.css?v=2">'
+          if tag not in s:
+              anchor='</head>'
+              if anchor not in s:
+                  raise SystemExit('head closing tag not found')
+              s=s.replace(anchor, tag+'\n'+anchor, 1)
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Safety check
+        run: |
+          grep -q 'ala-visual-test.css?v=2' index.html
+          grep -q 'paira-build' index.html
+      - name: Commit test branch only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No change needed"
+          else
+            git commit -m "Apply ÂLÂ visual mask on test branch only"
+            git push origin ala-gorsel-deneme
+          fi
