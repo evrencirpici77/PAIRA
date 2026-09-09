@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>PAIRA</title>
-<meta name="paira-build" content="v19.1-event-save-fix">
+<meta name="paira-build" content="v19.2-firestore-meta-fix">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
@@ -3045,7 +3045,7 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
       const rows = [];
       snap.docs.forEach(d=>{
         const data = d.data() || {};
-        if(d.id === '__meta__' || data.kind === 'meta'){
+        if(d.id === '_meta' || data.kind === 'meta'){
           initialized = data.initialized === true || initialized;
           return;
         }
@@ -3061,7 +3061,7 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
   }
 
   async function seedEventsIfNeeded(rows){
-    const metaRef = doc(db, 'events', '__meta__');
+    const metaRef = doc(db, 'events', '_meta');
     const metaSnap = await getDoc(metaRef);
     if(metaSnap.exists() && metaSnap.data()?.initialized === true) return true;
     if(!verifiedAdmin || !auth.currentUser) throw new Error('EVENT_SEED_ADMIN_REQUIRED');
@@ -3069,7 +3069,7 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
     const source = Array.isArray(rows) ? rows.filter(Boolean) : [];
     for(const row of source){
       const id = safeEventId(row.id || row._firebaseId);
-      if(!id || id === '__meta__') continue;
+      if(!id || id === '_meta') continue;
       await setDoc(eventRef(id), cleanEventPayload(id,row), {merge:false});
     }
     await setDoc(metaRef,{kind:'meta',initialized:true,updatedAt:Date.now()},{merge:false});
@@ -3080,14 +3080,14 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
     if(!verifiedAdmin || !auth.currentUser) throw new Error('EVENT_SAVE_ADMIN_REQUIRED');
     const clean = cleanEventPayload(id,data);
     await setDoc(eventRef(clean.id), clean, {merge:false});
-    await setDoc(doc(db,'events','__meta__'),{kind:'meta',initialized:true,updatedAt:Date.now()},{merge:true});
+    await setDoc(doc(db,'events','_meta'),{kind:'meta',initialized:true,updatedAt:Date.now()},{merge:true});
     return clean;
   }
 
   async function deleteEvent(id){
     if(!verifiedAdmin || !auth.currentUser) throw new Error('EVENT_DELETE_ADMIN_REQUIRED');
     await deleteDoc(eventRef(id));
-    await setDoc(doc(db,'events','__meta__'),{kind:'meta',initialized:true,updatedAt:Date.now()},{merge:true});
+    await setDoc(doc(db,'events','_meta'),{kind:'meta',initialized:true,updatedAt:Date.now()},{merge:true});
   }
 
   async function uploadEventPhotos(id, photos){
