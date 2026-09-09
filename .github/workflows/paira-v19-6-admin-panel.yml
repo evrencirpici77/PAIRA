@@ -1,0 +1,102 @@
+name: PAIRA v19.6 admin panel
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/paira-v19-6-admin-panel.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore real admin login and dashboard
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          original = text
+
+          text = text.replace(
+              '<meta name="paira-build" content="v19.5-admin-entry-chat-hub">',
+              '<meta name="paira-build" content="v19.6-real-admin-panel">',
+              1,
+          )
+
+          old_menu = '<button class="citybtn" onclick="closeModal();pairaRequireAdmin(\'adminMembers\')">🔐 Yönetici Girişi / Paneli</button>'
+          new_menu = '<button class="citybtn" onclick="closeModal();pairaOpenAdminLogin()">🔐 Yönetici Girişi / Paneli</button>'
+          if old_menu not in text:
+              raise SystemExit('Admin menu button not found')
+          text = text.replace(old_menu, new_menu, 1)
+
+          admin_members_anchor = '<section id="adminMembers" class="screen page">'
+          if admin_members_anchor not in text:
+              raise SystemExit('adminMembers anchor not found')
+
+          admin_panel = '''<section id="adminPanel" class="screen page">
+  <div class="head">
+    <button class="back" onclick="show('home')">‹</button>
+    <div><div class="logo" style="font-size:34px">PAIRA</div><div class="sub">YÖNETİCİ PANELİ</div></div>
+    <button class="circle" onclick="pairaAdminLogout();show('home')">⏻</button>
+  </div>
+  <div class="card">
+    <h2 style="color:#efc97d;margin:0 0 6px">Yönetim Merkezi</h2>
+    <div class="muted">Üye, etkinlik, sohbet ve yönetici işlemleri.</div>
+  </div>
+  <button class="listbtn" onclick="pairaRequireAdmin('adminMembers')"><b>👥 Üye Yönetimi</b><br><span class="muted">Davet, onay, çıkarma ve üye kayıtları</span></button>
+  <button class="listbtn" onclick="pairaRequireAdmin('adminEvents')"><b>📅 Etkinlik Yönetimi</b><br><span class="muted">Etkinlik ekle, düzenle ve duyuru yayınla</span></button>
+  <button class="listbtn" onclick="show('chats')"><b>💬 Chat Odaları</b><br><span class="muted">Genel, kulüp ve etkinlik sohbetlerini aç</span></button>
+  <button class="listbtn" onclick="show('clubs')"><b>🛋 Etkinlik Kulüpleri</b><br><span class="muted">Kulüp odalarına ve kulüp sohbetlerine git</span></button>
+  <button class="listbtn" onclick="pairaRequireAdmin('adminInbox')"><b>📥 Yönetici Gelen Kutusu</b><br><span class="muted">Üyelerden gelen talep, öneri ve şikâyetler</span></button>
+  <button class="listbtn" onclick="pairaRequireAdmin('webPublish')"><b>🌐 Web’i Yayınla</b><br><span class="muted">Yayınlama araçları</span></button>
+  <button class="out" style="margin-top:14px" onclick="pairaAdminLogout();show('home')">Yönetici Oturumunu Kapat</button>
+</section>
+
+'''
+          text = text.replace(admin_members_anchor, admin_panel + admin_members_anchor, 1)
+
+          require_anchor = '''  window.pairaRequireAdmin = async function(targetScreen) {
+    if (verifiedAdmin && auth.currentUser) {
+      openAdminTarget(targetScreen);
+      return;
+    }
+'''
+          if require_anchor not in text:
+              raise SystemExit('pairaRequireAdmin anchor not found')
+
+          login_fn = '''  window.pairaOpenAdminLogin = async function() {
+    verifiedAdmin = false;
+    pairaRestIdToken = "";
+    try {
+      if (auth.currentUser) await signOut(auth);
+    } catch (_) {}
+    openAdminLogin('adminPanel');
+  };
+
+'''
+          text = text.replace(require_anchor, login_fn + require_anchor, 1)
+
+          if text == original:
+              raise SystemExit('No changes made')
+
+          path.write_text(text, encoding='utf-8')
+          print('PAIRA v19.6 real admin panel applied')
+          PY
+
+      - name: Commit admin panel
+        shell: bash
+        run: |
+          git config user.name "PAIRA Hotfix Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Restore password admin dashboard"
+          git push
