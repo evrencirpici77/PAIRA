@@ -1,0 +1,5 @@
+/* ÂLÂ visual trial STEP 1: entrance screen only. Locked. */
+#splash{background:#020202!important}
+#splash .mock{background:#020202!important;filter:saturate(1.22) contrast(1.08) brightness(1.05)}
+#splash .mock>img{filter:saturate(1.28) contrast(1.10) brightness(1.06)!important}
+#splash::after{content:'ÂLÂ';position:absolute;left:0;right:0;top:17%;text-align:center;font-family:Georgia,serif;font-size:76px;font-weight:700;letter-spacing:.13em;color:#f2c66f;text-shadow:0 0 10px rgba(242,198,111,.35),0 2px 2px #000;pointer-events:none;z-index:15}
