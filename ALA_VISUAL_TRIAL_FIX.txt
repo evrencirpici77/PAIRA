@@ -1,0 +1,1 @@
+ÂLÂ visual trial: restored the known working approved splash build after the missing image caused a black screen. Production main is untouched.
