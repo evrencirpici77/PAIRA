@@ -1,0 +1,33 @@
+name: Lock ÂLÂ visual step 1
+on:
+  push:
+    branches: [ala-final-gorsel-deneme]
+    paths: ['.github/workflows/ala-step1-lock.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ala-final-gorsel-deneme
+      - name: Inject locked step 1 visual loader
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          tag='<script src="/ala-step1-livegold.js?v=1"></script>'
+          if tag not in s:
+              s=s.replace('</body>',tag+'\n</body>')
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add index.html
+          git diff --cached --quiet || git commit -m "Activate locked ÂLÂ entrance visual step 1"
+          git push
