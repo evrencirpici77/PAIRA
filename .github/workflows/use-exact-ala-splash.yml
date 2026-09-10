@@ -1,0 +1,44 @@
+name: Use exact approved ÂLÂ splash
+
+on:
+  push:
+    branches: [ala-splash-deneme]
+    paths:
+      - '.github/workflows/use-exact-ala-splash.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ala-splash-deneme
+          fetch-depth: 0
+      - name: Replace only splash artwork source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          pat = re.compile(r'(<section id="splash"[^>]*>\s*<div class="mock">\s*<img src=")[^"]+("[^>]*>)', re.S)
+          new, count = pat.subn(r'\1/assets/ala-splash-reference.webp?v=1\2', s, count=1)
+          if count != 1:
+              raise SystemExit(f'splash image replacement failed: {count}')
+          if new == s:
+              raise SystemExit('splash image was not changed')
+          p.write_text(new, encoding='utf-8')
+          print('Only splash artwork source changed to approved ÂLÂ image')
+          PY
+      - name: Commit isolated splash change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Use approved ÂLÂ splash image only"
+          git push origin ala-splash-deneme
