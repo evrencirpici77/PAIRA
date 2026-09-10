@@ -11,12 +11,8 @@
       const parent = node.parentElement;
       if (!parent) continue;
       if (parent.closest('script, style, textarea, input, option')) continue;
-      if (node.nodeValue && node.nodeValue.includes('PAIRA')) {
-        node.nodeValue = node.nodeValue.replace(/PAIRA/g, BRAND);
-      }
-      if (node.nodeValue && node.nodeValue.includes('ALA')) {
-        node.nodeValue = node.nodeValue.replace(/\bALA\b/g, BRAND);
-      }
+      if (node.nodeValue && node.nodeValue.includes('PAIRA')) node.nodeValue = node.nodeValue.replace(/PAIRA/g, BRAND);
+      if (node.nodeValue && node.nodeValue.includes('ALA')) node.nodeValue = node.nodeValue.replace(/\bALA\b/g, BRAND);
     }
   };
 
@@ -27,11 +23,8 @@
     replaceBrandText(document.body || document.documentElement);
   };
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', apply, { once: true });
-  } else {
-    apply();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply, { once: true });
+  else apply();
 
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
@@ -57,4 +50,58 @@
   const startObserver = () => document.body && observer.observe(document.body, { childList: true, subtree: true, characterData: true });
   if (document.body) startObserver();
   else document.addEventListener('DOMContentLoaded', startObserver, { once: true });
+
+  // ÂLÂ member directory fix. Use coupleProfiles as the directory source.
+  // Explicitly removed invitations remain hidden; legacy profiles are no longer discarded solely because their old invitation key differs.
+  let alaDirectory = [];
+  let alaDirectoryStarted = false;
+
+  const installMemberFix = async () => {
+    if (alaDirectoryStarted) return true;
+    if (typeof window.waitForPairaFirebaseApi !== 'function' || typeof window.memberCardFromProfile !== 'function' || typeof window.currentCoupleMember !== 'function') return false;
+    alaDirectoryStarted = true;
+    const originalRealMembersData = window.realMembersData;
+
+    window.realMembersData = function() {
+      const self = window.currentCoupleMember();
+      const byId = new Map();
+      alaDirectory.forEach(m => { if (m && m.id) byId.set(String(m.id), m); });
+      byId.set(String(self.id), self);
+      return [...byId.values()].sort((a,b) => {
+        if (a.isSelf && !b.isSelf) return -1;
+        if (b.isSelf && !a.isSelf) return 1;
+        return String(a.name || '').localeCompare(String(b.name || ''), 'tr');
+      });
+    };
+
+    try {
+      const api = await window.waitForPairaFirebaseApi();
+      api.subscribeCoupleProfiles(async rows => {
+        const checked = await Promise.all((rows || []).map(async profile => {
+          const id = String(profile?._firebaseId || '').trim();
+          if (!id) return null;
+          try {
+            const inv = await api.getInvitation(id);
+            if (inv && inv.status === 'removed') return null;
+          } catch (_) {}
+          return window.memberCardFromProfile(profile);
+        }));
+        alaDirectory = checked.filter(Boolean);
+        if (typeof window.renderMembersView === 'function') window.renderMembersView();
+        const active = document.querySelector('.screen.active');
+        if (active && active.id === 'member' && typeof window.renderSelectedMemberView === 'function') window.renderSelectedMemberView();
+      }, err => console.warn('ALA member directory sync', err));
+    } catch (err) {
+      alaDirectoryStarted = false;
+      window.realMembersData = originalRealMembersData;
+      console.warn('ALA member directory start', err);
+    }
+    return true;
+  };
+
+  let tries = 0;
+  const timer = setInterval(async () => {
+    tries += 1;
+    if (await installMemberFix() || tries > 40) clearInterval(timer);
+  }, 250);
 })();
