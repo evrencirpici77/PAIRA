@@ -6,11 +6,9 @@
     const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
-
     for (const node of nodes) {
       const parent = node.parentElement;
-      if (!parent) continue;
-      if (parent.closest('script, style, textarea, input, option')) continue;
+      if (!parent || parent.closest('script, style, textarea, input, option')) continue;
       if (node.nodeValue && node.nodeValue.includes('PAIRA')) node.nodeValue = node.nodeValue.replace(/PAIRA/g, BRAND);
       if (node.nodeValue && node.nodeValue.includes('ALA')) node.nodeValue = node.nodeValue.replace(/\bALA\b/g, BRAND);
     }
@@ -22,7 +20,6 @@
     if (appleTitle) appleTitle.setAttribute('content', BRAND);
     replaceBrandText(document.body || document.documentElement);
   };
-
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply, { once: true });
   else apply();
 
@@ -46,45 +43,61 @@
       }
     }
   });
-
   const startObserver = () => document.body && observer.observe(document.body, { childList: true, subtree: true, characterData: true });
   if (document.body) startObserver();
   else document.addEventListener('DOMContentLoaded', startObserver, { once: true });
 
-  // Member directory fix: coupleProfiles is the directory source. Do not discard
-  // an existing profile merely because a legacy invitation document cannot be read.
-  const installMemberDirectoryFix = () => {
-    if (typeof window.memberCardFromProfile !== 'function') return false;
-    window.applyMembersDirectorySnapshot = async function(rows, seq) {
-      try {
-        const api = await window.waitForPairaFirebaseApi();
+  // ÂLÂ member directory: coupleProfiles is the live directory source.
+  // Explicitly removed invitations stay hidden; a missing/legacy invitation no longer hides a valid profile.
+  let alaDirectory = [];
+  let alaDirectoryStarted = false;
+
+  const installMemberFix = async () => {
+    if (alaDirectoryStarted) return true;
+    if (typeof window.waitForPairaFirebaseApi !== 'function' || typeof window.memberCardFromProfile !== 'function' || typeof window.currentCoupleMember !== 'function') return false;
+    alaDirectoryStarted = true;
+
+    const originalRealMembersData = window.realMembersData;
+    window.realMembersData = function() {
+      const self = window.currentCoupleMember();
+      const byId = new Map();
+      alaDirectory.forEach(m => { if (m && m.id) byId.set(String(m.id), m); });
+      byId.set(String(self.id), self);
+      return [...byId.values()].sort((a,b) => {
+        if (a.isSelf && !b.isSelf) return -1;
+        if (b.isSelf && !a.isSelf) return 1;
+        return String(a.name || '').localeCompare(String(b.name || ''), 'tr');
+      });
+    };
+
+    try {
+      const api = await window.waitForPairaFirebaseApi();
+      api.subscribeCoupleProfiles(async rows => {
         const checked = await Promise.all((rows || []).map(async profile => {
           const id = String(profile?._firebaseId || '').trim();
           if (!id) return null;
           try {
             const inv = await api.getInvitation(id);
             if (inv && inv.status === 'removed') return null;
-          } catch (_) {
-            // Profile remains visible when the optional legacy invitation lookup fails.
-          }
+          } catch (_) {}
           return window.memberCardFromProfile(profile);
         }));
-        if (seq !== window.membersDirectorySeq) return;
-        window.directoryMembers = checked.filter(Boolean);
-        window.membersDirectoryReady = true;
+        alaDirectory = checked.filter(Boolean);
+        if (typeof window.renderMembersView === 'function') window.renderMembersView();
         const active = document.querySelector('.screen.active');
-        if (active && active.id === 'members') window.renderMembersView();
-        if (active && active.id === 'member') window.renderSelectedMemberView();
-      } catch (err) {
-        console.warn('ALA member directory filter', err);
-      }
-    };
+        if (active && active.id === 'member' && typeof window.renderSelectedMemberView === 'function') window.renderSelectedMemberView();
+      }, err => console.warn('ALA member directory sync', err));
+    } catch (err) {
+      alaDirectoryStarted = false;
+      window.realMembersData = originalRealMembersData;
+      console.warn('ALA member directory start', err);
+    }
     return true;
   };
 
   let tries = 0;
-  const timer = setInterval(() => {
+  const timer = setInterval(async () => {
     tries += 1;
-    if (installMemberDirectoryFix() || tries > 40) clearInterval(timer);
+    if (await installMemberFix() || tries > 40) clearInterval(timer);
   }, 250);
 })();
