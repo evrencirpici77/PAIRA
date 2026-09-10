@@ -1,0 +1,1 @@
+(()=>{const apply=()=>{if(!document.querySelector('link[data-ala-step1]')){const l=document.createElement('link');l.rel='stylesheet';l.href='/ala-step1-livegold.css?v=1';l.dataset.alaStep1='1';document.head.appendChild(l)}};document.readyState==='loading'?document.addEventListener('DOMContentLoaded',apply):apply();})();
