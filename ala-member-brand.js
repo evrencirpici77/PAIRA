@@ -51,57 +51,28 @@
   if (document.body) startObserver();
   else document.addEventListener('DOMContentLoaded', startObserver, { once: true });
 
-  // ÂLÂ member directory fix. Use coupleProfiles as the directory source.
-  // Explicitly removed invitations remain hidden; legacy profiles are no longer discarded solely because their old invitation key differs.
-  let alaDirectory = [];
-  let alaDirectoryStarted = false;
-
-  const installMemberFix = async () => {
-    if (alaDirectoryStarted) return true;
-    if (typeof window.waitForPairaFirebaseApi !== 'function' || typeof window.memberCardFromProfile !== 'function' || typeof window.currentCoupleMember !== 'function') return false;
-    alaDirectoryStarted = true;
-    const originalRealMembersData = window.realMembersData;
-
-    window.realMembersData = function() {
-      const self = window.currentCoupleMember();
-      const byId = new Map();
-      alaDirectory.forEach(m => { if (m && m.id) byId.set(String(m.id), m); });
-      byId.set(String(self.id), self);
-      return [...byId.values()].sort((a,b) => {
-        if (a.isSelf && !b.isSelf) return -1;
-        if (b.isSelf && !a.isSelf) return 1;
-        return String(a.name || '').localeCompare(String(b.name || ''), 'tr');
-      });
-    };
-
+  // Keep the approved ÂLÂ visuals untouched and use the same live member-directory
+  // implementation as the working production app. The production directory reads
+  // coupleProfiles in real time and validates each profile against its invitation.
+  let installed = false;
+  const installLiveMemberDirectory = () => {
+    if (installed) return true;
+    if (typeof window.ensureMembersDirectorySync !== 'function' || typeof window.renderMembersView !== 'function') return false;
+    installed = true;
     try {
-      const api = await window.waitForPairaFirebaseApi();
-      api.subscribeCoupleProfiles(async rows => {
-        const checked = await Promise.all((rows || []).map(async profile => {
-          const id = String(profile?._firebaseId || '').trim();
-          if (!id) return null;
-          try {
-            const inv = await api.getInvitation(id);
-            if (inv && inv.status === 'removed') return null;
-          } catch (_) {}
-          return window.memberCardFromProfile(profile);
-        }));
-        alaDirectory = checked.filter(Boolean);
-        if (typeof window.renderMembersView === 'function') window.renderMembersView();
-        const active = document.querySelector('.screen.active');
-        if (active && active.id === 'member' && typeof window.renderSelectedMemberView === 'function') window.renderSelectedMemberView();
-      }, err => console.warn('ALA member directory sync', err));
+      window.ensureMembersDirectorySync();
+      const active = document.querySelector('.screen.active');
+      if (active && active.id === 'members') window.renderMembersView();
     } catch (err) {
-      alaDirectoryStarted = false;
-      window.realMembersData = originalRealMembersData;
-      console.warn('ALA member directory start', err);
+      installed = false;
+      console.warn('ALA live member directory start', err);
     }
-    return true;
+    return installed;
   };
 
   let tries = 0;
-  const timer = setInterval(async () => {
+  const timer = setInterval(() => {
     tries += 1;
-    if (await installMemberFix() || tries > 40) clearInterval(timer);
+    if (installLiveMemberDirectory() || tries > 40) clearInterval(timer);
   }, 250);
 })();
