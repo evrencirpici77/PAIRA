@@ -1,0 +1,3 @@
+0 splash rebuilt 300x648
+2 home clean ÂLÂ logo, no blurred patch 300x533
+all_embedded_visuals_graded=19
