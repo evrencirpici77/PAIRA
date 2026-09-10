@@ -1,0 +1,191 @@
+name: Final ÂLÂ visual test
+
+on:
+  push:
+    branches: [ala-final-gorsel-deneme]
+    paths:
+      - '.github/workflows/ala-final-visuals.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ala-final-gorsel-deneme
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install image tools
+        run: pip install pillow opencv-python-headless numpy
+      - name: Rebuild actual screen artwork only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re,base64,io,math
+          import numpy as np
+          import cv2
+          from PIL import Image,ImageEnhance,ImageFilter,ImageDraw,ImageFont
+
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          pat=re.compile(r'data:image/(webp|png|jpeg);base64,([A-Za-z0-9+/=]+)')
+          ms=list(pat.finditer(s))
+          if len(ms)<4: raise SystemExit('embedded screen artwork not found')
+
+          def font(size,serif=False,bold=False):
+              c=[]
+              if serif:
+                  c += ['/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf','/usr/share/fonts/truetype/liberation2/LiberationSerif-Regular.ttf']
+              elif bold:
+                  c += ['/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf','/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf']
+              else:
+                  c += ['/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf','/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf']
+              for f in c:
+                  if Path(f).exists(): return ImageFont.truetype(f,size)
+              return ImageFont.load_default()
+
+          def grade(im,strong=1.0):
+              im=im.convert('RGB')
+              im=ImageEnhance.Color(im).enhance(1.18+0.12*strong)
+              im=ImageEnhance.Contrast(im).enhance(1.10+0.08*strong)
+              im=ImageEnhance.Brightness(im).enhance(1.02+0.035*strong)
+              im=ImageEnhance.Sharpness(im).enhance(1.18+0.22*strong)
+              a=np.array(im).astype(np.float32)
+              a[:,:,0]=np.clip(a[:,:,0]*1.055+3,0,255)
+              a[:,:,1]=np.clip(a[:,:,1]*1.018+1,0,255)
+              a[:,:,2]=np.clip(a[:,:,2]*0.92,0,255)
+              return Image.fromarray(a.astype(np.uint8))
+
+          def satin(w,h):
+              arr=np.zeros((h,w,3),dtype=np.float32)
+              arr[:]=[3,3,3]
+              yy,xx=np.mgrid[0:h,0:w]
+              curves=[
+                (0.15*w,0.00*h,0.18*w,0.40*h,34),
+                (0.93*w,0.00*h,0.62*w,0.35*h,30),
+                (1.03*w,0.42*h,0.70*w,0.82*h,34),
+                (-0.05*w,0.68*h,0.30*w,1.02*h,30),
+              ]
+              gold=np.array([213,137,42],dtype=np.float32)
+              for x0,y0,dx,dy,sig in curves:
+                  t=((yy-y0)*dy+(xx-x0)*dx)/(dx*dx+dy*dy+1e-6)
+                  cx=x0+t*dx; cy=y0+t*dy
+                  d=np.sqrt((xx-cx)**2+(yy-cy)**2)
+                  g=np.exp(-(d**2)/(2*sig**2))[:,:,None]
+                  arr += g*gold*0.42
+              arr=np.clip(arr,0,255).astype(np.uint8)
+              im=Image.fromarray(arr).filter(ImageFilter.GaussianBlur(6))
+              draw=ImageDraw.Draw(im)
+              # premium glow accents
+              for y in [int(h*.18),int(h*.62)]:
+                  draw.ellipse((int(w*.34),y-4,int(w*.66),y+4),fill=(168,100,30))
+              return im.filter(ImageFilter.GaussianBlur(4))
+
+          def draw_center(draw,text,y,f,fill,spacing=0):
+              if spacing<=0:
+                  b=draw.textbbox((0,0),text,font=f); x=(W-(b[2]-b[0]))//2
+                  draw.text((x,y),text,font=f,fill=fill)
+                  return
+              widths=[draw.textlength(ch,font=f) for ch in text]
+              total=sum(widths)+spacing*(len(text)-1)
+              x=(W-total)/2
+              for ch,ww in zip(text,widths):
+                  draw.text((x,y),ch,font=f,fill=fill); x+=ww+spacing
+
+          def build_splash(w,h):
+              global W
+              W=w
+              im=satin(w,h)
+              d=ImageDraw.Draw(im)
+              gold=(238,190,105); pale=(245,224,188)
+              f1=font(max(28,int(w*.16)),serif=True)
+              f2=font(max(8,int(w*.039)))
+              f3=font(max(6,int(w*.023)))
+              # ÂLÂ
+              draw_center(d,'ÂLÂ',int(h*.275),f1,gold)
+              # social club + side lines
+              draw_center(d,'SOCIAL CLUB',int(h*.39),f2,pale,2)
+              d.line((int(w*.10),int(h*.405),int(w*.25),int(h*.405)),fill=gold,width=1)
+              d.line((int(w*.75),int(h*.405),int(w*.90),int(h*.405)),fill=gold,width=1)
+              draw_center(d,'BEYOND ORDINARY CONNECTIONS',int(h*.49),f3,gold,1)
+              # button at same clickable zone as app hotspot
+              x0,x1=int(w*.16),int(w*.84); y0,y1=int(h*.80),int(h*.89)
+              d.rounded_rectangle((x0,y0,x1,y1),radius=max(8,int(w*.035)),outline=gold,width=1,fill=(5,4,3))
+              d.rectangle((int(w*.23),int(h*.825),int(w*.29),int(h*.858)),outline=gold,width=1)
+              d.text((int(w*.245),int(h*.825)), '★', font=font(max(7,int(w*.025))), fill=gold)
+              d.line((int(w*.34),int(h*.82),int(w*.34),int(h*.87)),fill=gold,width=1)
+              d.text((int(w*.39),int(h*.825)),'INVITATION CODE',font=font(max(9,int(w*.035)),bold=True),fill=gold)
+              d.text((int(w*.76),int(h*.82)),'›',font=font(max(20,int(w*.08))),fill=gold)
+              return grade(im,1.0)
+
+          def inpaint_brand(im):
+              a=np.array(im.convert('RGB'))
+              h,w=a.shape[:2]
+              mask=np.zeros((h,w),dtype=np.uint8)
+              # exact old brand strip only, leave people/menu/bell untouched
+              x0,x1=int(w*.22),int(w*.78); y0,y1=int(h*.025),int(h*.145)
+              cv2.rectangle(mask,(x0,y0),(x1,y1),255,-1)
+              bgr=cv2.cvtColor(a,cv2.COLOR_RGB2BGR)
+              out=cv2.inpaint(bgr,mask,5,cv2.INPAINT_TELEA)
+              im=Image.fromarray(cv2.cvtColor(out,cv2.COLOR_BGR2RGB))
+              d=ImageDraw.Draw(im)
+              f=font(max(27,int(w*.125)),serif=True)
+              sf=font(max(7,int(w*.032)))
+              brand='ÂLÂ'
+              bb=d.textbbox((0,0),brand,font=f); tw=bb[2]-bb[0]
+              x=(w-tw)//2; y=int(h*.045)-bb[1]
+              d.text((x+1,y+1),brand,font=f,fill=(70,39,11))
+              d.text((x,y),brand,font=f,fill=(239,195,111))
+              sub='SOCIAL CLUB'; sw=d.textlength(sub,font=sf); sx=(w-sw)//2
+              d.text((sx,int(h*.113)),sub,font=sf,fill=(244,221,179))
+              return im
+
+          rebuilt=[]; pos=0
+          preview=Path('_ala_final_preview'); preview.mkdir(exist_ok=True)
+          report=[]
+          for i,m in enumerate(ms):
+              rebuilt.append(s[pos:m.start()])
+              fmt=m.group(1); raw=base64.b64decode(m.group(2))
+              im=Image.open(io.BytesIO(raw)).convert('RGB'); w,h=im.size
+
+              if i==0:
+                  im=build_splash(w,h)
+                  report.append(f'0 splash rebuilt {w}x{h}')
+              else:
+                  # all embedded visual pages get same warm vivid grade
+                  im=grade(im,1.0 if i<10 else .7)
+                  if i==2:
+                      im=inpaint_brand(im)
+                      report.append(f'2 home clean ÂLÂ logo, no blurred patch {w}x{h}')
+
+              out=io.BytesIO(); savefmt={'webp':'WEBP','png':'PNG','jpeg':'JPEG'}[fmt]
+              kwargs={'quality':96,'method':6} if savefmt=='WEBP' else ({'quality':96} if savefmt=='JPEG' else {})
+              im.save(out,format=savefmt,**kwargs)
+              rebuilt.append(f'data:image/{fmt};base64,'+base64.b64encode(out.getvalue()).decode())
+              pos=m.end()
+              if i<10: im.save(preview/f'screen_{i}.jpg',quality=95)
+
+          rebuilt.append(s[pos:])
+          new=''.join(rebuilt)
+          new=new.replace('<link rel="stylesheet" href="/ala-visual-test.css?v=2">\n','')
+          p.write_text(new,encoding='utf-8')
+          (preview/'REPORT.txt').write_text('\n'.join(report)+f'\nall_embedded_visuals_graded={len(ms)}\n',encoding='utf-8')
+          print((preview/'REPORT.txt').read_text())
+          PY
+      - name: Commit visual-only test build
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html _ala_final_preview
+          if git diff --cached --quiet; then
+            echo "No change needed"
+          else
+            git commit -m "Create vivid clean ÂLÂ visual test without logic changes"
+            git push origin ala-final-gorsel-deneme
+          fi
