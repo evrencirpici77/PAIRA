@@ -10,18 +10,19 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ÂLÂ">
-<meta name="paira-build" content="v20.6-event-attendance-shared-account-2026-09-12">
+<meta name="paira-build" content="v20.7-ios-fast-tap-2026-09-12">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
 button,input,textarea,select{font:inherit}
+button,.hot,.listbtn,.gold,.out,.circle,.back{touch-action:manipulation;-webkit-user-select:none;user-select:none;cursor:pointer}
 body{overflow-x:hidden}
 #app{width:min(100%,480px);min-height:100dvh;margin:auto;background:#050403;position:relative;overflow:hidden}
 .screen{display:none;min-height:100dvh;background:#050403}
 .screen.active{display:block}
 .mock{position:relative;width:100%;line-height:0}
-.mock>img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
-.hot{position:absolute;z-index:20;border:0;background:transparent;color:transparent;padding:0}
+.mock>img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none;pointer-events:none}
+.hot{position:absolute;z-index:30;border:0;background:transparent;color:transparent;padding:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .hot:active{background:rgba(231,187,103,.12);outline:1px solid rgba(231,187,103,.25);border-radius:12px}
 .page{padding:16px 15px 94px;min-height:100dvh;background:
 linear-gradient(rgba(5,4,3,.90),rgba(5,4,3,.98)),
