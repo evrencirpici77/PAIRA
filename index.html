@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ÂLÂ">
-<meta name="paira-build" content="v20.3-local-chat-bridge-2026-09-11">
+<meta name="paira-build" content="v20.4-event-attendance-live-2026-09-12">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
@@ -2748,6 +2748,9 @@ function closeEvent(){
 
 let eventAttendanceUnsub = null;
 let eventAttendanceKey = '';
+let eventParticipantsUnsub = null;
+let eventParticipantsKey = '';
+const eventParticipants = {};
 
 function stopEventAttendanceSync(){
   if(typeof eventAttendanceUnsub === 'function'){
@@ -2755,6 +2758,38 @@ function stopEventAttendanceSync(){
   }
   eventAttendanceUnsub = null;
   eventAttendanceKey = '';
+  if(typeof eventParticipantsUnsub === 'function'){
+    try{ eventParticipantsUnsub(); }catch(_){ }
+  }
+  eventParticipantsUnsub = null;
+  eventParticipantsKey = '';
+}
+
+function applyEventParticipants(eventId, rows){
+  eventParticipants[eventId] = (rows || [])
+    .filter(r=>r && r.joined === true)
+    .sort((a,b)=>String(a.coupleName||'').localeCompare(String(b.coupleName||''),'tr'));
+  if(currentEvent === eventId){
+    const active = document.querySelector('.screen.active');
+    if(active && active.id === 'eventDetail') renderEventDetail();
+  }
+  const active = document.querySelector('.screen.active');
+  if(active && active.id === 'events') renderEventsList();
+  if(active && active.id === 'adminEvents') renderAdminEvents();
+}
+
+function parseCapacityNumber(value){
+  const m = String(value || '').match(/\d+/);
+  return m ? Math.max(0, parseInt(m[0],10) || 0) : null;
+}
+
+function eventAttendanceStats(eventId){
+  const rows = eventParticipants[eventId] || [];
+  const couples = rows.length;
+  const people = couples * 2;
+  const cap = parseCapacityNumber(events[eventId]?.capacity);
+  const remaining = cap === null ? null : Math.max(0, cap - people);
+  return {rows,couples,people,cap,remaining};
 }
 
 function applyEventAttendance(eventId, remote){
@@ -2785,6 +2820,12 @@ async function ensureEventAttendanceSync(eventId){
       applyEventAttendance(eventId, row);
     }, (err)=>{
       console.warn('PAIRA event attendance sync', err);
+    });
+    eventParticipantsKey = eventId;
+    eventParticipantsUnsub = api.subscribeEventParticipants(eventId, (rows)=>{
+      applyEventParticipants(eventId, rows);
+    }, (err)=>{
+      console.warn('PAIRA event participant list sync', err);
     });
   }catch(err){
     console.warn('PAIRA event attendance start', err);
@@ -2819,6 +2860,12 @@ function renderEventDetail(){
   const imgs = Array.isArray(e.images) ? e.images : [];
   if(currentSlide >= imgs.length) currentSlide = 0;
   const joined = !!state.joinedEvents[currentEvent];
+  const attendance = eventAttendanceStats(currentEvent);
+  const participantNames = attendance.rows.map(r=>escapeHtml(r.coupleName || 'Çift')).filter(Boolean);
+  const attendanceSummary = attendance.cap === null
+    ? `<div class="card" style="margin-top:10px"><b>👥 Katılan: ${attendance.couples} çift • ${attendance.people} kişi</b></div>`
+    : `<div class="card" style="margin-top:10px"><b>👥 Katılan: ${attendance.couples} çift • ${attendance.people} kişi</b><div class="muted" style="margin-top:6px">Kalan kontenjan: ${attendance.remaining} kişi / ${attendance.cap}</div></div>`;
+  const participantList = `<div class="card"><b>Etkinliğe Katılanlar</b><div class="members-pills" style="margin-top:10px">${participantNames.length ? participantNames.map(n=>`<span class="member-pill">${n}</span>`).join('') : '<span class="muted">Henüz katılım yok</span>'}</div></div>`;
   const buttons = joined
     ? `<button class="gold" style="opacity:.75">Katılıyorum ✓</button><button class="out" style="margin-top:10px;border-color:#b96060;color:#ffb2ac" onclick="leaveEvent('${currentEvent}')">Etkinlikten Ayrıl</button>`
     : `<button class="gold" onclick="joinEvent('${currentEvent}')">Etkinliğe Katıl</button>`;
@@ -2830,7 +2877,8 @@ function renderEventDetail(){
   document.getElementById('eventDetailWrap').innerHTML = `
     ${media}
     <div class="card"><h2>${e.title}</h2><div class="row" style="justify-content:space-between;flex-wrap:wrap"><span class="badge">🗓 ${e.date}</span><span class="badge">⏰ ${e.time}</span></div>
-      <p style="margin-top:12px">📍 ${e.location}</p><p class="muted">${e.desc}</p><p>👥 ${e.capacity}</p><p class="muted">Bu etkinlik ilanına en fazla 3 görsel eklenebilir. Görseller kaydırılarak gezilir.</p></div>
+      <p style="margin-top:12px">📍 ${e.location}</p><p class="muted">${e.desc}</p><p>👥 ${e.capacity}</p></div>
+    ${attendanceSummary}${participantList}
     ${buttons}<button class="out" style="margin-top:10px" onclick="shareEventWhatsApp('${currentEvent}')">🟢 WhatsApp'ta Paylaş</button><button class="out" style="margin-top:10px" onclick="openEventChat('${currentEvent}')">💬 Etkinlik Chat Odası</button>`;
 }
 function slideEvent(dir){
@@ -3718,6 +3766,19 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
     });
   }
 
+  function subscribeEventParticipants(eventId, onRows, onError){
+    const ref = collection(db, 'eventAttendance', safeEventAttendanceId(eventId,80), 'couples');
+    return onSnapshot(ref,(snap)=>{
+      const rows = snap.docs
+        .map(d=>({...d.data(), _firebaseId:d.id}))
+        .filter(r=>r.joined === true)
+        .sort((a,b)=>String(a.coupleName || '').localeCompare(String(b.coupleName || ''),'tr'));
+      onRows(rows);
+    },(err)=>{
+      if(onError) onError(err);
+    });
+  }
+
   async function setEventAttendance(eventId, accountId, payload){
     const clean = {
       eventId:String(eventId || '').slice(0,80),
@@ -3804,7 +3865,8 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
     subscribeCoupleProfiles,
     getEventAttendance,
     setEventAttendance,
-    subscribeEventAttendance
+    subscribeEventAttendance,
+    subscribeEventParticipants
   };
 
   window.pairaLoadInvitations = async function(){
