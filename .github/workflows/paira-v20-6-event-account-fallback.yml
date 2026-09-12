@@ -35,9 +35,6 @@ jobs:
             const p = getDevicePartnerIdentity();
             const direct = String((p && (p.inviteCode || p.memberId)) || '').trim().toUpperCase();
             if(direct) return direct;
-
-            // Eski kurulmuş telefonlarda partner kimliği anahtarı bulunmayabiliyor.
-            // Bu durumda iki telefonda da aynı olan çift adından deterministik ortak anahtar üret.
             const coupleName = String((state.profile && state.profile.name) || currentChatIdentity().coupleName || '').trim();
             if(!coupleName) return '';
             const folded = coupleName
@@ -52,41 +49,32 @@ jobs:
             raise SystemExit('sharedProfileAccountId block not found')
           s = s.replace(old_id, new_id, 1)
 
-          old_sync = '''              if(accountId){
-                const existing = await api.getEventAttendance(eventId, accountId);
-                applyEventAttendance(eventId, existing);
-                eventAttendanceUnsub = api.subscribeEventAttendance(eventId, accountId, (row)=>{
-                  applyEventAttendance(eventId, row);
-                }, (err)=>{
-                  console.warn('PAIRA event attendance sync', err);
-                });
-              }'''
-          new_sync = '''              if(accountId){
-                let existing = await api.getEventAttendance(eventId, accountId);
-
-                // Önceki sürümde yalnız bu telefonda duran “katıldım” bilgisini ortak kayda taşı.
-                if((!existing || existing.joined !== true) && state.joinedEvents && state.joinedEvents[eventId]){
-                  const me = currentChatIdentity();
-                  await api.setEventAttendance(eventId, accountId, {
-                    joined:true,
-                    inviteCode:accountId,
-                    coupleName:me.coupleName,
-                    partnerName:me.partnerName,
-                    deviceId:getDeviceId()
-                  });
-                  existing = await api.getEventAttendance(eventId, accountId);
-                }
-
-                applyEventAttendance(eventId, existing);
-                eventAttendanceUnsub = api.subscribeEventAttendance(eventId, accountId, (row)=>{
-                  applyEventAttendance(eventId, row);
-                }, (err)=>{
-                  console.warn('PAIRA event attendance sync', err);
-                });
-              }'''
-          if old_sync not in s:
+          pat = re.compile(r'''(?P<indent>[ \t]*)if\(accountId\)\{\s*const existing = await api\.getEventAttendance\(eventId, accountId\);\s*applyEventAttendance\(eventId, existing\);\s*eventAttendanceUnsub = api\.subscribeEventAttendance\(eventId, accountId, \(row\)=>\{\s*applyEventAttendance\(eventId, row\);\s*\}, \(err\)=>\{\s*console\.warn\('PAIRA event attendance sync', err\);\s*\}\);\s*\}''')
+          m = pat.search(s)
+          if not m:
             raise SystemExit('attendance sync block not found')
-          s = s.replace(old_sync, new_sync, 1)
+          i = m.group('indent')
+          repl = f'''{i}if(accountId){{
+{i}  let existing = await api.getEventAttendance(eventId, accountId);
+{i}  if((!existing || existing.joined !== true) && state.joinedEvents && state.joinedEvents[eventId]){{
+{i}    const me = currentChatIdentity();
+{i}    await api.setEventAttendance(eventId, accountId, {{
+{i}      joined:true,
+{i}      inviteCode:accountId,
+{i}      coupleName:me.coupleName,
+{i}      partnerName:me.partnerName,
+{i}      deviceId:getDeviceId()
+{i}    }});
+{i}    existing = await api.getEventAttendance(eventId, accountId);
+{i}  }}
+{i}  applyEventAttendance(eventId, existing);
+{i}  eventAttendanceUnsub = api.subscribeEventAttendance(eventId, accountId, (row)=>{{
+{i}    applyEventAttendance(eventId, row);
+{i}  }}, (err)=>{{
+{i}    console.warn('PAIRA event attendance sync', err);
+{i}  }});
+{i}}}'''
+          s = s[:m.start()] + repl + s[m.end():]
 
           p.write_text(s, encoding='utf-8')
           print('Patched to v20.6 shared event account fallback')
