@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ÂLÂ">
-<meta name="paira-build" content="v20.5-event-attendance-all-devices-2026-09-12">
+<meta name="paira-build" content="v20.6-event-attendance-shared-account-2026-09-12">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
@@ -1653,9 +1653,17 @@ let sharedProfileKey = '';
 
 function sharedProfileAccountId(){
   const p = getDevicePartnerIdentity();
-  // Ortak profil için iki telefonda da kesin aynı olan anahtar davet kodudur.
-  // Eski sürümlerde memberId öne alındığı için aynı çift iki farklı profile düşebiliyordu.
-  return String((p && (p.inviteCode || p.memberId)) || '').trim().toUpperCase();
+  const direct = String((p && (p.inviteCode || p.memberId)) || '').trim().toUpperCase();
+  if(direct) return direct;
+  const coupleName = String((state.profile && state.profile.name) || currentChatIdentity().coupleName || '').trim();
+  if(!coupleName) return '';
+  const folded = coupleName
+    .toLocaleUpperCase('tr-TR')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^A-Z0-9]+/g,'_')
+    .replace(/^_+|_+$/g,'')
+    .slice(0,90);
+  return folded ? `COUPLE_${folded}` : '';
 }
 
 function sharedProfilePayload(){
@@ -2828,7 +2836,18 @@ async function ensureEventAttendanceSync(eventId){
 
     // Kişinin kendi “katıldım” durumu yalnızca ortak çift hesabı bulunuyorsa okunur.
     if(accountId){
-      const existing = await api.getEventAttendance(eventId, accountId);
+      let existing = await api.getEventAttendance(eventId, accountId);
+      if((!existing || existing.joined !== true) && state.joinedEvents && state.joinedEvents[eventId]){
+        const me = currentChatIdentity();
+        await api.setEventAttendance(eventId, accountId, {
+          joined:true,
+          inviteCode:accountId,
+          coupleName:me.coupleName,
+          partnerName:me.partnerName,
+          deviceId:getDeviceId()
+        });
+        existing = await api.getEventAttendance(eventId, accountId);
+      }
       applyEventAttendance(eventId, existing);
       eventAttendanceUnsub = api.subscribeEventAttendance(eventId, accountId, (row)=>{
         applyEventAttendance(eventId, row);
