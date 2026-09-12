@@ -1,0 +1,24 @@
+name: PAIRA v20.8 global event participants
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/paira-v20-8-global-event-participants.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch global participant sync
+        run: python tools/event_patch_v20_8_global_participants.py
+      - name: Commit patched app
+        run: |
+          if git diff --quiet -- index.html; then echo "No changes"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Fix event participants across devices v20.8"
+          git push
