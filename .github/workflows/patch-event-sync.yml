@@ -1,0 +1,97 @@
+name: Patch event attendance sync
+
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-event-sync.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch index
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('v20.4-event-attendance-live-2026-09-12', 'v20.5-event-attendance-all-devices-2026-09-12')
+          old = '''async function ensureEventAttendanceSync(eventId){
+            const accountId = sharedProfileAccountId();
+            if(!eventId || !accountId) return;
+            const key = `${eventId}__${accountId}`;
+            if(eventAttendanceKey === key && eventAttendanceUnsub) return;
+
+            stopEventAttendanceSync();
+            eventAttendanceKey = key;
+
+            try{
+              const api = await waitForPairaFirebaseApi();
+              const existing = await api.getEventAttendance(eventId, accountId);
+              applyEventAttendance(eventId, existing);
+              eventAttendanceUnsub = api.subscribeEventAttendance(eventId, accountId, (row)=>{
+                applyEventAttendance(eventId, row);
+              }, (err)=>{
+                console.warn('PAIRA event attendance sync', err);
+              });
+              eventParticipantsKey = eventId;
+              eventParticipantsUnsub = api.subscribeEventParticipants(eventId, (rows)=>{
+                applyEventParticipants(eventId, rows);
+              }, (err)=>{
+                console.warn('PAIRA event participant list sync', err);
+              });
+            }catch(err){
+              console.warn('PAIRA event attendance start', err);
+            }
+          }'''
+          new = '''async function ensureEventAttendanceSync(eventId){
+            if(!eventId) return;
+            const accountId = sharedProfileAccountId();
+            const key = `${eventId}__${accountId || 'guest'}`;
+
+            // Aynı etkinlik zaten dinleniyorsa gereksiz yere abonelikleri yeniden kurma.
+            if(eventAttendanceKey === key && eventParticipantsKey === eventId && eventParticipantsUnsub) return;
+
+            stopEventAttendanceSync();
+            eventAttendanceKey = key;
+            eventParticipantsKey = eventId;
+
+            try{
+              const api = await waitForPairaFirebaseApi();
+
+              // Katılımcı listesi ortak veridir. Telefonun partner kimliği eksik/eski olsa bile
+              // herkes aynı çift sayısını, kişi sayısını ve isim listesini görmelidir.
+              eventParticipantsUnsub = api.subscribeEventParticipants(eventId, (rows)=>{
+                applyEventParticipants(eventId, rows);
+              }, (err)=>{
+                console.warn('PAIRA event participant list sync', err);
+              });
+
+              // Kişinin kendi “katıldım” durumu yalnızca ortak çift hesabı bulunuyorsa okunur.
+              if(accountId){
+                const existing = await api.getEventAttendance(eventId, accountId);
+                applyEventAttendance(eventId, existing);
+                eventAttendanceUnsub = api.subscribeEventAttendance(eventId, accountId, (row)=>{
+                  applyEventAttendance(eventId, row);
+                }, (err)=>{
+                  console.warn('PAIRA event attendance sync', err);
+                });
+              }
+            }catch(err){
+              console.warn('PAIRA event attendance start', err);
+            }
+          }'''
+          if old not in s:
+            raise SystemExit('Expected attendance block not found; refusing to modify index.html')
+          p.write_text(s.replace(old, new), encoding='utf-8')
+      - name: Commit patched index
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Apply event attendance sync fix"
+          git push
