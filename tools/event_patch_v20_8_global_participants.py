@@ -8,9 +8,6 @@ if marker in s:
     print('Already patched')
     raise SystemExit(0)
 
-# The previous implementation subscribed to a nested collection path that can differ
-# between legacy event ids. Use a collectionGroup listener and filter by eventId,
-# while writes also persist canonical eventId/accountId fields.
 old="""function subscribeEventParticipants(eventId, onRows, onError){
     const ref = collection(db, 'eventAttendance', safeEventAttendanceId(eventId,80), 'couples');
     return onSnapshot(ref,(snap)=>{
@@ -40,17 +37,19 @@ if old not in s:
     raise SystemExit('participant subscription block not found')
 s=s.replace(old,new,1)
 
-# Ensure Firestore modular import includes collectionGroup.
-s=s.replace('collection, doc, setDoc, getDoc, onSnapshot', 'collection, collectionGroup, doc, setDoc, getDoc, onSnapshot')
+# Add collectionGroup to the existing Firebase Firestore import, regardless of import ordering.
+imp=re.search(r'import\s*\{([^}]*\bonSnapshot\b[^}]*)\}\s*from\s*[\"\'][^\"\']*firebase-firestore[^\"\']*[\"\']',s)
+if not imp:
+    raise SystemExit('Firestore import not found')
+inside=imp.group(1)
+if 'collectionGroup' not in inside:
+    new_inside=inside.rstrip()+', collectionGroup '
+    s=s[:imp.start(1)]+new_inside+s[imp.end(1):]
 
-# Enrich every attendance write with canonical ids, so all devices can discover it.
-needle="""await setDoc(ref, { ...payload, updatedAt: serverTimestamp() }, {merge:true});"""
-repl="""await setDoc(ref, { ...payload, eventId:safeEventAttendanceId(eventId,80), accountId:safeEventAttendanceId(accountId,120), updatedAt: serverTimestamp() }, {merge:true});"""
-if needle not in s:
-    raise SystemExit('setEventAttendance write not found')
-s=s.replace(needle,repl,1)
+# The nested document path itself already identifies event and account. v20.8 only
+# needs the global reader to see both old and new records, so do not require a
+# particular setDoc formatting here.
 
-# Stamp build marker without relying on exact previous version.
 m=re.search(r'<meta name="paira-build" content="([^"]+)">',s)
 if m:
     s=s[:m.start()]+f'<meta name="paira-build" content="{marker}">'+s[m.end():]
