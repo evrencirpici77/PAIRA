@@ -313,6 +313,19 @@ textarea.form-field{min-height:105px;resize:vertical}
 .verify-icon{font-size:48px;margin-bottom:8px}
 .partner-empty{border:1px dashed #71532f;border-radius:16px;padding:20px;text-align:center;color:#b9aa95}
 
+
+/* v20.7 iOS/PWA fast touch */
+button,.hot,[role="button"]{
+  touch-action:manipulation;
+  -webkit-user-select:none;
+  user-select:none;
+}
+.mock>img{pointer-events:none!important;}
+.hot{pointer-events:auto!important;z-index:60;}
+@supports (-webkit-touch-callout:none){
+  button,.hot,[role="button"]{-webkit-touch-callout:none;}
+}
+
 </style>
 </head>
 <body>
@@ -4123,5 +4136,23 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
   window.PAIRA_FIREBASE = { app, auth, db, storage, config: firebaseConfig };
   window.dispatchEvent(new CustomEvent("paira-firebase-ready"));
 </script>
+
+<script>
+// v20.7: iPhone/Safari/PWA'da ilk dokunusun gecikmesini azaltir.
+(function(){
+  function primeTap(el){
+    if(!el || el.dataset.fastTapBound==='1') return;
+    el.dataset.fastTapBound='1';
+    el.addEventListener('touchstart', function(){}, {passive:true});
+  }
+  function bind(){
+    document.querySelectorAll('button,.hot,[role="button"]').forEach(primeTap);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind, {once:true});
+  else bind();
+  new MutationObserver(bind).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
 </body>
 </html>
