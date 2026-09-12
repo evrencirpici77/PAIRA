@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/paira-v20-8-global-event-participants.yml'
+      - 'tools/event_patch_v20_8_global_participants.py'
   workflow_dispatch:
 permissions:
   contents: write
