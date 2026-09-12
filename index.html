@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ÂLÂ">
-<meta name="paira-build" content="v20.7-ios-fast-tap-2026-09-12">
+<meta name="paira-build" content="v20.8-global-event-participants-2026-09-12">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
@@ -3393,8 +3393,7 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
     query,
     orderBy,
     onSnapshot,
-    limit
-  } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+    limit, collectionGroup } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyB3gFiLfA3naEP4Lx5fNt7o5oUwXQSUM1c",
@@ -3809,16 +3808,17 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
   }
 
   function subscribeEventParticipants(eventId, onRows, onError){
-    const ref = collection(db, 'eventAttendance', safeEventAttendanceId(eventId,80), 'couples');
+    const canonicalEventId = safeEventAttendanceId(eventId,80);
+    const ref = collectionGroup(db, 'couples');
     return onSnapshot(ref,(snap)=>{
       const rows = snap.docs
-        .map(d=>({...d.data(), _firebaseId:d.id}))
-        .filter(r=>r.joined === true)
+        .map(d=>({...d.data(), _firebaseId:d.id, _parentEventId:(d.ref.parent.parent && d.ref.parent.parent.id)||''}))
+        .filter(r=>r.joined === true && (safeEventAttendanceId(r.eventId||'',80) === canonicalEventId || r._parentEventId === canonicalEventId))
         .sort((a,b)=>String(a.coupleName || '').localeCompare(String(b.coupleName || ''),'tr'));
-      onRows(rows);
-    },(err)=>{
-      if(onError) onError(err);
-    });
+      const unique=[]; const seen=new Set();
+      rows.forEach(r=>{ const k=String(r.accountId||r.inviteCode||r._firebaseId||'').toUpperCase(); if(!seen.has(k)){seen.add(k);unique.push(r);} });
+      onRows(unique);
+    },(err)=>{ if(onError) onError(err); });
   }
 
   async function setEventAttendance(eventId, accountId, payload){
