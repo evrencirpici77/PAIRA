@@ -46,9 +46,8 @@ if 'collectionGroup' not in inside:
     new_inside=inside.rstrip()+', collectionGroup '
     s=s[:imp.start(1)]+new_inside+s[imp.end(1):]
 
-# The nested document path itself already identifies event and account. v20.8 only
-# needs the global reader to see both old and new records, so do not require a
-# particular setDoc formatting here.
+# The nested document path itself identifies event and account. Global reader sees legacy/current rows.
+# trigger: 2026-09-12-final
 
 m=re.search(r'<meta name="paira-build" content="([^"]+)">',s)
 if m:
