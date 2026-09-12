@@ -1,0 +1,40 @@
+name: ALA v20.7 iPhone fast tap
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/paira-v20-7-ios-fast-tap.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch iPhone tap behavior
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('v20.6-event-attendance-shared-account-2026-09-12', 'v20.7-ios-fast-tap-2026-09-12')
+          s = s.replace("button,input,textarea,select{font:inherit}", "button,input,textarea,select{font:inherit}\nbutton,.hot,.listbtn,.gold,.out,.circle,.back{touch-action:manipulation;-webkit-user-select:none;user-select:none;cursor:pointer}")
+          s = s.replace(".mock>img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}", ".mock>img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none;pointer-events:none}")
+          s = s.replace(".hot{position:absolute;z-index:20;border:0;background:transparent;color:transparent;padding:0}", ".hot{position:absolute;z-index:30;border:0;background:transparent;color:transparent;padding:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent}")
+          p.write_text(s, encoding='utf-8')
+          print('Patched iPhone fast tap')
+      - name: Commit patched app
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Improve iPhone invitation button tap response"
+          git push
