@@ -1,0 +1,56 @@
+name: PAIRA v20.4 event attendance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/paira-v20-4-event-attendance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch index.html
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          if 'v20.4-event-attendance-live-2026-09-12' in s:
+              print('Already patched')
+              raise SystemExit(0)
+
+          replacements = [
+          ('<meta name="paira-build" content="v20.3-local-chat-bridge-2026-09-11">', '<meta name="paira-build" content="v20.4-event-attendance-live-2026-09-12">'),
+          ("let eventAttendanceUnsub = null;\nlet eventAttendanceKey = '';", "let eventAttendanceUnsub = null;\nlet eventAttendanceKey = '';\nlet eventParticipantsUnsub = null;\nlet eventParticipantsKey = '';\nconst eventParticipants = {};"),
+          ("  eventAttendanceUnsub = null;\n  eventAttendanceKey = '';\n}", "  eventAttendanceUnsub = null;\n  eventAttendanceKey = '';\n  if(typeof eventParticipantsUnsub === 'function'){\n    try{ eventParticipantsUnsub(); }catch(_){ }\n  }\n  eventParticipantsUnsub = null;\n  eventParticipantsKey = '';\n}\n\nfunction applyEventParticipants(eventId, rows){\n  eventParticipants[eventId] = (rows || [])\n    .filter(r=>r && r.joined === true)\n    .sort((a,b)=>String(a.coupleName||'').localeCompare(String(b.coupleName||''),'tr'));\n  if(currentEvent === eventId){\n    const active = document.querySelector('.screen.active');\n    if(active && active.id === 'eventDetail') renderEventDetail();\n  }\n  const active = document.querySelector('.screen.active');\n  if(active && active.id === 'events') renderEventsList();\n  if(active && active.id === 'adminEvents') renderAdminEvents();\n}\n\nfunction parseCapacityNumber(value){\n  const m = String(value || '').match(/\\d+/);\n  return m ? Math.max(0, parseInt(m[0],10) || 0) : null;\n}\n\nfunction eventAttendanceStats(eventId){\n  const rows = eventParticipants[eventId] || [];\n  const couples = rows.length;\n  const people = couples * 2;\n  const cap = parseCapacityNumber(events[eventId]?.capacity);\n  const remaining = cap === null ? null : Math.max(0, cap - people);\n  return {rows,couples,people,cap,remaining};\n}"),
+          ("    }, (err)=>{\n      console.warn('PAIRA event attendance sync', err);\n    });\n  }catch(err){", "    }, (err)=>{\n      console.warn('PAIRA event attendance sync', err);\n    });\n    eventParticipantsKey = eventId;\n    eventParticipantsUnsub = api.subscribeEventParticipants(eventId, (rows)=>{\n      applyEventParticipants(eventId, rows);\n    }, (err)=>{\n      console.warn('PAIRA event participant list sync', err);\n    });\n  }catch(err){"),
+          ("  if(currentSlide >= imgs.length) currentSlide = 0;\n  const joined = !!state.joinedEvents[currentEvent];", "  if(currentSlide >= imgs.length) currentSlide = 0;\n  const joined = !!state.joinedEvents[currentEvent];\n  const attendance = eventAttendanceStats(currentEvent);\n  const participantNames = attendance.rows.map(r=>escapeHtml(r.coupleName || 'Çift')).filter(Boolean);\n  const attendanceSummary = attendance.cap === null\n    ? `<div class=\"card\" style=\"margin-top:10px\"><b>👥 Katılan: ${attendance.couples} çift • ${attendance.people} kişi</b></div>`\n    : `<div class=\"card\" style=\"margin-top:10px\"><b>👥 Katılan: ${attendance.couples} çift • ${attendance.people} kişi</b><div class=\"muted\" style=\"margin-top:6px\">Kalan kontenjan: ${attendance.remaining} kişi / ${attendance.cap}</div></div>`;\n  const participantList = `<div class=\"card\"><b>Etkinliğe Katılanlar</b><div class=\"members-pills\" style=\"margin-top:10px\">${participantNames.length ? participantNames.map(n=>`<span class=\"member-pill\">${n}</span>`).join('') : '<span class=\"muted\">Henüz katılım yok</span>'}</div></div>`;"),
+          ("      <p style=\"margin-top:12px\">📍 ${e.location}</p><p class=\"muted\">${e.desc}</p><p>👥 ${e.capacity}</p><p class=\"muted\">Bu etkinlik ilanına en fazla 3 görsel eklenebilir. Görseller kaydırılarak gezilir.</p></div>\n    ${buttons}", "      <p style=\"margin-top:12px\">📍 ${e.location}</p><p class=\"muted\">${e.desc}</p><p>👥 ${e.capacity}</p></div>\n    ${attendanceSummary}${participantList}\n    ${buttons}"),
+          ("  async function setEventAttendance(eventId, accountId, payload){", "  function subscribeEventParticipants(eventId, onRows, onError){\n    const ref = collection(db, 'eventAttendance', safeEventAttendanceId(eventId,80), 'couples');\n    return onSnapshot(ref,(snap)=>{\n      const rows = snap.docs\n        .map(d=>({...d.data(), _firebaseId:d.id}))\n        .filter(r=>r.joined === true)\n        .sort((a,b)=>String(a.coupleName || '').localeCompare(String(b.coupleName || ''),'tr'));\n      onRows(rows);\n    },(err)=>{\n      if(onError) onError(err);\n    });\n  }\n\n  async function setEventAttendance(eventId, accountId, payload){"),
+          ("    setEventAttendance,\n    subscribeEventAttendance\n  };", "    setEventAttendance,\n    subscribeEventAttendance,\n    subscribeEventParticipants\n  };")
+          ]
+
+          for old, new in replacements:
+              if old not in s:
+                  raise SystemExit('Expected block not found; aborting safely')
+              s = s.replace(old, new, 1)
+
+          p.write_text(s, encoding='utf-8')
+          print('Patched to v20.4')
+      - name: Commit patched app
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "PAIRA v20.4 event attendance live"
+          git push
