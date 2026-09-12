@@ -1,0 +1,47 @@
+name: ALA v20.7 iOS touch fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ala-v20-7-ios-touch-fix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch iOS touch response
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          s = s.replace('v20.6-event-attendance-shared-account-2026-09-12','v20.7-ios-fast-touch-2026-09-12')
+
+          css = '''\n/* v20.7 iOS/PWA fast touch */\nbutton,.hot,[role="button"]{\n  touch-action:manipulation;\n  -webkit-user-select:none;\n  user-select:none;\n}\n.mock>img{pointer-events:none!important;}\n.hot{pointer-events:auto!important;z-index:60;}\n@supports (-webkit-touch-callout:none){\n  button,.hot,[role="button"]{-webkit-touch-callout:none;}\n}\n'''
+          if 'v20.7 iOS/PWA fast touch' not in s:
+              s = s.replace('</style>', css + '\n</style>', 1)
+
+          js = '''\n<script>\n// v20.7: iPhone/Safari/PWA'da ilk dokunusun gecikmesini azaltir.\n(function(){\n  function primeTap(el){\n    if(!el || el.dataset.fastTapBound==='1') return;\n    el.dataset.fastTapBound='1';\n    el.addEventListener('touchstart', function(){}, {passive:true});\n  }\n  function bind(){\n    document.querySelectorAll('button,.hot,[role="button"]').forEach(primeTap);\n  }\n  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind, {once:true});\n  else bind();\n  new MutationObserver(bind).observe(document.documentElement,{childList:true,subtree:true});\n})();\n</script>\n'''
+          if 'v20.7: iPhone/Safari/PWA' not in s:
+              s = s.replace('</body>', js + '\n</body>', 1)
+
+          p.write_text(s, encoding='utf-8')
+
+      - name: Commit patched app
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Improve iPhone touch response on entry button"
+          git push
