@@ -1,0 +1,49 @@
+name: Remove broken install helper rendering
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ala-remove-broken-install-helper.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Remove broken helper block and visible leaked CSS
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          # Remove the complete custom install helper. It is currently leaking CSS as page text on iOS.
+          s=re.sub(r'\s*<!-- ALA INSTALL HELPER START -->.*?<!-- ALA INSTALL HELPER END -->\s*', '\n', s, flags=re.S)
+          # Remove later iOS positioning patches if present.
+          s=re.sub(r'\s*<!-- ALA IOS INSTALL POSITION FIX -->\s*<style>.*?</style>\s*', '\n', s, flags=re.S)
+          s=re.sub(r'\s*<!-- ALA IOS INSTALL CENTER FIX -->\s*<style>.*?</style>\s*', '\n', s, flags=re.S)
+          # Safety cleanup: remove orphaned helper style/script fragments that reference only alaInstall elements.
+          s=re.sub(r'<style[^>]*>\s*#alaInstallFab\{.*?</style>', '', s, flags=re.S)
+          p.write_text(s, encoding='utf-8')
+          print('Broken install helper removed cleanly')
+          PY
+      - name: Commit repair
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Remove broken install helper rendering"
+          git push origin HEAD:main
