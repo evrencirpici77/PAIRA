@@ -1,0 +1,69 @@
+name: Device specific install button label
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ala-device-install-label.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Add device specific install label
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='<!-- ALA DEVICE INSTALL LABEL START -->'
+          if marker in s:
+              print('Device label helper already present')
+              raise SystemExit(0)
+          inject=r'''
+          <!-- ALA DEVICE INSTALL LABEL START -->
+          <script>
+          (function(){
+            function isStandalone(){return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;}
+            function setInstallLabel(){
+              var b=document.getElementById('alaInstallFab');
+              if(!b) return;
+              if(isStandalone()){ b.style.display='none'; return; }
+              var ua=navigator.userAgent||'';
+              if(/iPhone|iPad|iPod/i.test(ua)) b.textContent='🍎 iPhone’a Kur';
+              else if(/Android/i.test(ua)) b.textContent='🤖 Android’e Kur';
+              else b.textContent='📲 Telefonuna Kur';
+            }
+            if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',setInstallLabel);
+            else setInstallLabel();
+            window.addEventListener('pageshow',setInstallLabel);
+            window.addEventListener('appinstalled',setInstallLabel);
+          })();
+          </script>
+          <!-- ALA DEVICE INSTALL LABEL END -->
+          '''
+          pos=s.lower().rfind('</body>')
+          if pos<0: raise SystemExit('No </body> found')
+          s=s[:pos]+inject+'\n'+s[pos:]
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Show iPhone or Android install label"
+          git push origin HEAD:main
