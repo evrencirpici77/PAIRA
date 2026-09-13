@@ -1,0 +1,54 @@
+name: Repair iPhone install screen cleanly
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ala-ios-install-clean-repair.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore clean page and safely center iPhone install button
+        shell: bash
+        run: |
+          git show c7c12250834b6569294afd2c1a5fb70a42338bd4:index.html > index.html
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old="if(/iPhone|iPad|iPod/i.test(ua)) b.textContent='🍎 iPhone’a Kur';"
+          new="""if(/iPhone|iPad|iPod/i.test(ua)){
+                b.textContent='🍎 iPhone’a Kur';
+                b.style.left='50%';
+                b.style.right='auto';
+                b.style.transform='translateX(-50%)';
+                b.style.maxWidth='calc(100vw - 28px)';
+                b.style.boxSizing='border-box';
+              }"""
+          if old not in s:
+              raise SystemExit('iPhone label code not found')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          print('Clean page restored; iPhone button centered with JS only')
+          PY
+      - name: Commit repair
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Repair iPhone install screen and center button"
+          git push origin HEAD:main
