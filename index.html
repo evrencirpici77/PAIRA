@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<!-- EVRENIN ALASI GERCEK SON SURUM -->
 <title>ÂLÂ</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" href="/icon-192.png">
@@ -2664,7 +2665,25 @@ async function recoverChatIdentityFromMembership(){
         rec=(rows||[]).find(r=>Array.isArray(r?.partnerDevices) && r.partnerDevices.includes(deviceId)) || null;
       }catch(_){ }
     }
-    if(!rec) return false;
+    if(!rec){
+      // Üye işyerleri tarafında çalışan üyelik kurtarma yöntemini Chat için de kullan.
+      // Bu, özellikle iPhone ana ekran kurulumunda eski generik kimlik kalmışsa işe yarar.
+      try{
+        if(typeof resolveActiveMemberIdentityForBenefit==='function'){
+          const ident=await resolveActiveMemberIdentityForBenefit();
+          if(ident?.partnerName && ident?.coupleName && ident.partnerName!=='Partner' && ident.coupleName!=='Çift'){
+            localStorage.setItem('paira_partner_identity_v14',JSON.stringify(ident));
+            setChatPartnerChoice(ident.partnerName,ident.coupleName);
+            state.profile=state.profile||{};
+            state.profile.name=ident.coupleName;
+            if(ident.city) state.profile.city=ident.city;
+            try{persist();}catch(_){ }
+            return true;
+          }
+        }
+      }catch(_){ }
+      return false;
+    }
 
     const devices=Array.isArray(rec.partnerDevices)?rec.partnerDevices:[];
     let idx=devices.indexOf(deviceId);
@@ -2700,22 +2719,38 @@ async function recoverChatIdentityFromMembership(){
 
 function currentChatIdentity(){
   const p=getDevicePartnerIdentity();
-  if(p && p.partnerName){
-    let partnerName=String(p.partnerName||'').trim();
-    const coupleName=String(p.coupleName||'Çift').trim();
-    const names=splitCoupleNamesForChat(coupleName);
+  const profileCoupleName=String((state.profile&&state.profile.name)||'').trim();
 
-    // Eski kayıtlarda partner adı yanlışlıkla çift adı olarak tutulmuşsa düzelt.
-    if(partnerName===coupleName && names.length){
-      const idx=Number.isInteger(Number(p.partnerIndex)) ? Number(p.partnerIndex) : 0;
+  if(p){
+    let partnerName=String(p.partnerName||'').trim();
+    let coupleName=String(p.coupleName||'').trim();
+
+    // Eski kurulumlarda kimlik 'Partner • Çift' olarak takılı kalabiliyor.
+    // Profilde gerçek çift adı varsa onu kullan ve partnerIndex ile doğru kişiyi seç.
+    const genericPartner=!partnerName || partnerName==='Partner' || /^\d+\. Partner$/i.test(partnerName);
+    const genericCouple=!coupleName || coupleName==='Çift';
+    if(genericCouple && profileCoupleName && profileCoupleName!=='Çift') coupleName=profileCoupleName;
+
+    const names=splitCoupleNamesForChat(coupleName);
+    const idx=Number.isInteger(Number(p.partnerIndex)) ? Number(p.partnerIndex) : 0;
+    if((genericPartner || partnerName===coupleName) && names.length){
       partnerName=names[Math.max(0,Math.min(idx,names.length-1))] || names[0];
     }
-    return {partnerName:partnerName||'Partner',coupleName};
+
+    if(partnerName && partnerName!=='Partner' && coupleName && coupleName!=='Çift'){
+      // Çalışan kimliği aynı anda kalıcılaştır; sonraki açılışta tekrar generik değere düşmesin.
+      try{
+        const fixed={...p,partnerName,coupleName};
+        localStorage.setItem('paira_partner_identity_v14',JSON.stringify(fixed));
+        setChatPartnerChoice(partnerName,coupleName);
+      }catch(_){ }
+      return {partnerName,coupleName};
+    }
   }
 
-  const coupleName=String((state.profile&&state.profile.name)||'Çift').trim();
+  const coupleName=profileCoupleName || 'Çift';
   const savedChoice=getChatPartnerChoice();
-  if(savedChoice?.partnerName && (!savedChoice.coupleName || savedChoice.coupleName===coupleName)){
+  if(savedChoice?.partnerName && savedChoice.partnerName!=='Partner' && (!savedChoice.coupleName || savedChoice.coupleName===coupleName)){
     return {partnerName:savedChoice.partnerName,coupleName};
   }
 
