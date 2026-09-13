@@ -5342,6 +5342,28 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
 <!-- ALA INSTALL HELPER START -->
 <style id="ala-install-style">
 #alaInstallFab{position
+<!-- ALA IOS CENTER V2 START -->
+<style>
+@supports (-webkit-touch-callout: none){
+  #alaInstallFab{
+    left:0 !important;
+    right:0 !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+    transform:none !important;
+    width:max-content !important;
+    max-width:calc(100vw - 32px) !important;
+    min-width:190px !important;
+    box-sizing:border-box !important;
+    text-align:center !important;
+    justify-content:center !important;
+    bottom:calc(92px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+</style>
+<!-- ALA IOS CENTER V2 END -->
+
+
 <!-- ALA DEVICE INSTALL LABEL START -->
 <script>
 (function(){
