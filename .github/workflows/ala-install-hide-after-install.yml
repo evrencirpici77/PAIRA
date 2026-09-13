@@ -1,0 +1,66 @@
+name: Hide install button after install
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ala-install-hide-after-install.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Hide install button in standalone mode
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          if 'id="alaInstallFab"' not in s:
+              raise SystemExit('Install button not found')
+
+          # Hidden by default. Browser mode enables it with the existing .show rule.
+          s, n = re.subn(
+              r'(#alaInstallFab\{[^}]*?)display:flex;',
+              r'\1display:none;',
+              s,
+              count=1
+          )
+          if n != 1:
+              raise SystemExit('Install button display style not found')
+
+          # Restore standalone detection that was removed by the previous visibility patch.
+          forced = "function render(){fab.classList.add('show');"
+          correct = "function render(){if(standalone()){fab.classList.remove('show');return}fab.classList.add('show');"
+          if forced in s:
+              s = s.replace(forced, correct, 1)
+          elif correct not in s:
+              raise SystemExit('Install render function pattern not found')
+
+          p.write_text(s, encoding='utf-8')
+          print('Install button now appears in browser and hides in installed app')
+          PY
+
+      - name: Commit fix
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Hide phone install button in standalone app"
+          git push origin HEAD:main
