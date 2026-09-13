@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-title" content="ÂLÂ">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="format-detection" content="telephone=no">
-<meta name="paira-build" content="ala-business-events-realtime-sync-2026-09-13">
+<meta name="paira-build" content="ala-sync-fix-chat-business-suggestions-2026-09-13b">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
@@ -1840,7 +1840,7 @@ function getField(id){
   return el ? String(el.value || '').trim() : '';
 }
 
-function submitSuggestionForm(type){
+async function submitSuggestionForm(type){
   const labels = {event:'Etkinlik Önerisi', friend:'Arkadaş Önerisi', rating:'Değerlendirme', complaint:'Şikâyet'};
   let data = {};
   if(type === 'event'){
@@ -1857,15 +1857,35 @@ function submitSuggestionForm(type){
     if(!data.subject || !data.note) return toast('Konu ve açıklama gerekli');
   }
 
-  state.adminInbox = state.adminInbox || [];
-  state.adminInbox.unshift({
+  const me=currentChatIdentity();
+  const submission={
     id: Date.now(),
     type: type,
     label: labels[type],
-    sender: currentUser,
+    sender: `${me.partnerName} • ${me.coupleName}`,
     createdAt: new Date().toLocaleString('tr-TR'),
+    clientAt: Date.now(),
     data: data
-  });
+  };
+
+  // Önce merkezi Firebase chat odasına yaz. Böylece öneri başka telefondaki
+  // yönetici gelen kutusuna da ulaşır. Yerel kayıt yalnız yedektir.
+  try{
+    const api=await getPairaChatApi();
+    await api.sendChatMessage('system','admin_inbox',{
+      partnerName:me.partnerName,
+      coupleName:me.coupleName,
+      text:'__ALA_SUBMISSION__'+JSON.stringify(submission),
+      deviceId:getDeviceId()
+    });
+  }catch(err){
+    console.warn('ALA submission sync',err);
+    toast('Öneri gönderilemedi, bağlantıyı kontrol et');
+    return;
+  }
+
+  state.adminInbox = state.adminInbox || [];
+  state.adminInbox.unshift(submission);
   persist();
   closeModal();
   updateAdminCounters();
@@ -1895,7 +1915,37 @@ function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
 
-function renderAdminInbox(){
+let adminInboxRealtimeUnsub=null;
+let adminInboxRealtimeStarted=false;
+async function startAdminInboxRealtime(){
+  if(adminInboxRealtimeStarted) return;
+  adminInboxRealtimeStarted=true;
+  try{
+    const api=await getPairaChatApi();
+    adminInboxRealtimeUnsub=api.subscribeChatMessages('system','admin_inbox',(rows)=>{
+      const remote=(rows||[]).map(m=>{
+        const t=String(m?.text||'');
+        if(!t.startsWith('__ALA_SUBMISSION__')) return null;
+        try{
+          const item=JSON.parse(t.slice('__ALA_SUBMISSION__'.length));
+          item._remoteId=m.id;
+          item.clientAt=Number(item.clientAt||m.clientAt||0);
+          if(!item.sender) item.sender=messageSenderLabel(m);
+          return item;
+        }catch(_){return null;}
+      }).filter(Boolean).sort((a,b)=>Number(b.clientAt||0)-Number(a.clientAt||0));
+      state.adminInbox=remote;
+      try{persist();}catch(_){ }
+      renderAdminInbox(false);
+    },err=>{console.warn('ALA admin inbox realtime',err);adminInboxRealtimeStarted=false;});
+  }catch(err){
+    console.warn('ALA admin inbox start',err);
+    adminInboxRealtimeStarted=false;
+  }
+}
+
+function renderAdminInbox(startRealtime=true){
+  if(startRealtime) startAdminInboxRealtime();
   const list = state.adminInbox || [];
   const count = document.getElementById('adminInboxCount');
   if(count) count.textContent = list.length;
@@ -2591,20 +2641,45 @@ async function recoverChatIdentityFromMembership(){
   chatIdentityRecoveryInFlight=true;
   try{
     const api=await waitForPairaFirebaseApi();
-    if(!api || typeof api.listInvitations!=='function') return false;
     const deviceId=getDeviceId();
-    const rows=await api.listInvitations();
-    const rec=(rows||[]).find(r=>Array.isArray(r?.partnerDevices) && r.partnerDevices.includes(deviceId));
+    let rec=null;
+
+    // Önce bu telefonda daha önce kaydedilmiş davet/üyelik bilgisini kullan.
+    // Böylece üye telefonunun bütün davet listesini okumasına gerek kalmaz.
+    const localRows=Array.isArray(state.adminMembers)?state.adminMembers:[];
+    rec=localRows.find(r=>Array.isArray(r?.partnerDevices) && r.partnerDevices.includes(deviceId)) || null;
+    if(!rec && existing?.inviteCode){
+      rec=localRows.find(r=>String(r?.inviteCode||r?._firebaseId||'').toUpperCase()===String(existing.inviteCode).toUpperCase()) || null;
+    }
+
+    // Yerelde bulunamazsa yalnız kendi davet belgesini getir.
+    if(!rec && existing?.inviteCode && api?.getInvitation){
+      try{ rec=await api.getInvitation(existing.inviteCode); }catch(_){ }
+    }
+
+    // Son çare: yetki varsa merkezi listedeki cihaz eşleşmesini ara.
+    if(!rec && api?.listInvitations){
+      try{
+        const rows=await api.listInvitations();
+        rec=(rows||[]).find(r=>Array.isArray(r?.partnerDevices) && r.partnerDevices.includes(deviceId)) || null;
+      }catch(_){ }
+    }
     if(!rec) return false;
-    const idx=(rec.partnerDevices||[]).indexOf(deviceId);
-    const partnerName=String((rec.partnerNames||[])[idx] || '').trim();
-    const coupleName=String(rec.name||'').trim();
-    if(!partnerName || !coupleName) return false;
+
+    const devices=Array.isArray(rec.partnerDevices)?rec.partnerDevices:[];
+    let idx=devices.indexOf(deviceId);
+    if(idx<0 && Number.isInteger(Number(existing?.partnerIndex))) idx=Number(existing.partnerIndex);
+    if(idx<0) idx=0;
+    const partnerNames=Array.isArray(rec.partnerNames)?rec.partnerNames:[];
+    const partnerName=String(partnerNames[idx] || existing?.partnerName || '').trim();
+    const coupleName=String(rec.name || existing?.coupleName || state.profile?.name || '').trim();
+    if(!partnerName || !coupleName || partnerName==='Partner' || coupleName==='Çift') return false;
+
     const identity={
       memberId:rec.id||rec.inviteCode||rec._firebaseId||'',
-      inviteCode:rec.inviteCode||rec._firebaseId||rec.id||'',
+      inviteCode:rec.inviteCode||rec._firebaseId||rec.id||existing?.inviteCode||'',
       coupleName,
-      city:rec.city||'',
+      city:rec.city||existing?.city||'',
       partnerIndex:idx,
       partnerName
     };
@@ -2612,7 +2687,7 @@ async function recoverChatIdentityFromMembership(){
     setChatPartnerChoice(partnerName,coupleName);
     state.profile=state.profile||{};
     state.profile.name=coupleName;
-    if(rec.city) state.profile.city=rec.city;
+    if(identity.city) state.profile.city=identity.city;
     try{persist();}catch(_){ }
     return true;
   }catch(err){
@@ -3883,6 +3958,19 @@ let partnerBusinessRows = [];
 let partnerBusinessUnsub = null;
 let benefitSeedHtml = '';
 const PARTNER_BUSINESS_CACHE_KEY='ala_partner_business_cache_v1';
+let partnerBusinessRegistrySeen=false;
+window.addEventListener('ala-partner-business-registry',(ev)=>{
+  const rows=Array.isArray(ev?.detail)?ev.detail:[];
+  partnerBusinessRegistrySeen=true;
+  if(rows.length || !(partnerBusinessRows||[]).length) setPartnerBusinessRows(rows);
+});
+async function mirrorPartnerBusinessRegistry(){
+  try{
+    const api=await waitForPairaFirebaseApi();
+    if(api?.savePartnerBusinessRegistry) await api.savePartnerBusinessRegistry(partnerBusinessRows||[]);
+  }catch(err){console.warn('ALA business registry mirror',err);}
+}
+window.mirrorPartnerBusinessRegistry=mirrorPartnerBusinessRegistry;
 function readPartnerBusinessCache(){
   try{const v=JSON.parse(localStorage.getItem(PARTNER_BUSINESS_CACHE_KEY)||'[]');return Array.isArray(v)?v:[];}catch(_){return [];}
 }
@@ -3950,6 +4038,7 @@ async function savePartnerBusinessFromModal(){
     const next=(partnerBusinessRows||[]).filter(x=>String(x?.id||x?._firebaseId||'')!==savedId);
     next.unshift(saved);
     setPartnerBusinessRows(next);
+    await mirrorPartnerBusinessRegistry();
     closeModal();
     toast(existingId?'İşyeri güncellendi ✓':'İşyeri yayınlandı ✓');
     setTimeout(()=>startPartnerBusinessRealtime(),250);
@@ -4572,6 +4661,10 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
             const id=decodeURIComponent(String(docRow.name||'').split('/').pop()||'');
             const row=fsDecodeFields(docRow.fields||{});
             if(id==='_meta'||row.kind==='meta'){initialized=row.initialized===true||initialized;return;}
+            if(id==='_partner_business_registry'||row.kind==='partner_business_registry'){
+              try{window.dispatchEvent(new CustomEvent('ala-partner-business-registry',{detail:Array.isArray(row.businesses)?row.businesses:[]}));}catch(_){ }
+              return;
+            }
             rows.push({...row,_firebaseId:id});
           });
           rows.sort((a,b)=>{const da=String(a.dateISO||''),dbb=String(b.dateISO||'');if(da!==dbb)return da.localeCompare(dbb);return String(a.startTime||'').localeCompare(String(b.startTime||''));});
@@ -4584,7 +4677,7 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
     }
     return onSnapshot(collection(db,'events'),(snap)=>{
       let initialized=false; const rows=[];
-      snap.docs.forEach(d=>{const data=d.data()||{};if(d.id==='_meta'||data.kind==='meta'){initialized=data.initialized===true||initialized;return;}rows.push({...data,_firebaseId:d.id});});
+      snap.docs.forEach(d=>{const data=d.data()||{};if(d.id==='_meta'||data.kind==='meta'){initialized=data.initialized===true||initialized;return;}if(d.id==='_partner_business_registry'||data.kind==='partner_business_registry'){try{window.dispatchEvent(new CustomEvent('ala-partner-business-registry',{detail:Array.isArray(data.businesses)?data.businesses:[]}));}catch(_){ }return;}rows.push({...data,_firebaseId:d.id});});
       rows.sort((a,b)=>{const da=String(a.dateISO||''),dbb=String(b.dateISO||'');if(da!==dbb)return da.localeCompare(dbb);return String(a.startTime||'').localeCompare(String(b.startTime||''));});
       onRows(rows,initialized);
     },err=>{if(onError)onError(err);});
@@ -4784,6 +4877,22 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
   }
 
 
+  async function savePartnerBusinessRegistry(rows){
+    const cleanRows=(Array.isArray(rows)?rows:[]).map(r=>{
+      const x={...r,id:String(r?.id||r?._firebaseId||'')};
+      delete x._firebaseId;
+      return x;
+    }).filter(r=>r.id).slice(0,200);
+    const payload={kind:'partner_business_registry',businesses:cleanRows,updatedAt:Date.now()};
+    if(isLocalContent()){
+      if(!pairaRestIdToken) throw new Error('Yönetici oturumu bulunamadı.');
+      await restFirestore('events/_partner_business_registry',{method:'PATCH',body:JSON.stringify({fields:fsEncodeFields(payload)})});
+      return;
+    }
+    if(!verifiedAdmin || !auth.currentUser) throw new Error('Yönetici girişi gerekli');
+    await setDoc(doc(db,'events','_partner_business_registry'),payload,{merge:false});
+  }
+
   async function listPartnerBusinesses(){
     if(isLocalContent()){
       const data = pairaRestIdToken
@@ -4912,6 +5021,7 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
     removeInvitation,
     listPartnerBusinesses,
     subscribePartnerBusinesses,
+    savePartnerBusinessRegistry,
     savePartnerBusiness,
     deletePartnerBusiness,
     subscribeChatMessages,
@@ -5014,6 +5124,7 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
             }
             pairaRestIdToken = data.idToken || "";
             verifiedAdmin = true;
+            try{ const rows=await listPartnerBusinesses(); await savePartnerBusinessRegistry(rows); }catch(_){ }
             window.closeModal();
             openAdminTarget(targetScreen);
             if (window.toast) window.toast("Yönetici girişi başarılı");
@@ -5037,6 +5148,7 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
             throw new Error("Bu hesap yönetici olarak yetkilendirilmemiş.");
           }
 
+          try{ const rows=await listPartnerBusinesses(); await savePartnerBusinessRegistry(rows); }catch(_){ }
           window.closeModal();
           openAdminTarget(targetScreen);
           if (window.toast) window.toast("Yönetici girişi başarılı");
@@ -5165,6 +5277,9 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
 
   onAuthStateChanged(auth, async (user) => {
     verifiedAdmin = user ? await isCurrentUserAdmin() : false;
+    if(verifiedAdmin){
+      try{ const rows=await listPartnerBusinesses(); await savePartnerBusinessRegistry(rows); }catch(err){console.warn('ALA business registry auto sync',err);}
+    }
   });
 
   window.PAIRA_FIREBASE = { app, auth, db, storage, config: firebaseConfig };
