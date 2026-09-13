@@ -1,0 +1,71 @@
+name: Fix iPhone install button position
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ala-ios-install-position-fix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Center install button safely on iPhone
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='<!-- ALA IOS INSTALL POSITION FIX -->'
+          if marker in s:
+              print('iPhone position fix already present')
+              raise SystemExit(0)
+          inject=r'''
+          <!-- ALA IOS INSTALL POSITION FIX -->
+          <style>
+          #alaInstallFab{
+            left:50vw !important;
+            right:auto !important;
+            transform:translateX(-50%) !important;
+            max-width:calc(100vw - 32px) !important;
+            box-sizing:border-box !important;
+          }
+          @supports (-webkit-touch-callout: none){
+            #alaInstallFab{
+              left:50vw !important;
+              right:auto !important;
+              transform:translateX(-50%) !important;
+              bottom:calc(92px + env(safe-area-inset-bottom, 0px)) !important;
+              max-width:calc(100vw - 28px) !important;
+              min-width:190px !important;
+              width:auto !important;
+            }
+          }
+          </style>
+          '''
+          pos=s.lower().rfind('</body>')
+          if pos<0: raise SystemExit('No </body> found')
+          s=s[:pos]+inject+'\n'+s[pos:]
+          p.write_text(s,encoding='utf-8')
+          print('Install button centered safely for iPhone')
+          PY
+      - name: Commit fix
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Fix iPhone install button position"
+          git push origin HEAD:main
