@@ -9,7 +9,7 @@
   "theme_color": "#050403",
   "icons": [
     {
-      "src": "/paira-app-icon.svg",
+      "src": "/ala-app-icon.svg?v=2",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
