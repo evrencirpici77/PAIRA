@@ -1,0 +1,69 @@
+name: Center iPhone install button robustly
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ala-ios-center-install-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply robust iPhone centering
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='<!-- ALA IOS CENTER V2 START -->'
+          if marker in s:
+              print('Already applied')
+              raise SystemExit(0)
+          inject=r'''
+          <!-- ALA IOS CENTER V2 START -->
+          <style>
+          @supports (-webkit-touch-callout: none){
+            #alaInstallFab{
+              left:0 !important;
+              right:0 !important;
+              margin-left:auto !important;
+              margin-right:auto !important;
+              transform:none !important;
+              width:max-content !important;
+              max-width:calc(100vw - 32px) !important;
+              min-width:190px !important;
+              box-sizing:border-box !important;
+              text-align:center !important;
+              justify-content:center !important;
+              bottom:calc(92px + env(safe-area-inset-bottom, 0px)) !important;
+            }
+          }
+          </style>
+          <!-- ALA IOS CENTER V2 END -->
+          '''
+          pos=s.lower().rfind('</body>')
+          if pos<0: raise SystemExit('No </body> found')
+          s=s[:pos]+inject+'\n'+s[pos:]
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Center iPhone install button robustly"
+          git push origin HEAD:main
