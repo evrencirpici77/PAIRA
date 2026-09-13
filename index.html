@@ -5,14 +5,20 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>ÂLÂ</title>
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" type="image/svg+xml" href="/paira-app-icon.svg">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <meta name="theme-color" content="#050403">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ÂLÂ">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
 <meta name="paira-build" content="ala-business-events-realtime-sync-2026-09-13">
 <style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 html,body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
 button,input,textarea,select{font:inherit}
 body{overflow-x:hidden}
@@ -1717,6 +1723,9 @@ function renderChatsHub(){
   const me=currentChatIdentity();
   const z=document.getElementById('chatIdentityInfo');
   if(z) z.innerHTML=`Bu telefonda yazan: <b>${escapeHtml(me.partnerName)}</b> • ${escapeHtml(me.coupleName)} <button class="smallbtn" style="margin-left:7px" onclick="chooseChatPartner()">Değiştir</button>`;
+  if((me.partnerName==='Partner' || me.coupleName==='Çift') && !chatIdentityRecoveryInFlight){
+    recoverChatIdentityFromMembership().then(changed=>{ if(changed) renderChatsHub(); });
+  }
 
   const clubWrap=document.getElementById('chatClubRooms');
   if(clubWrap){
@@ -2574,6 +2583,46 @@ function setChatPartnerChoice(name,coupleName){
   return row;
 }
 
+let chatIdentityRecoveryInFlight=false;
+async function recoverChatIdentityFromMembership(){
+  if(chatIdentityRecoveryInFlight) return false;
+  const existing=getDevicePartnerIdentity();
+  if(existing && existing.partnerName && existing.coupleName && existing.partnerName!=='Partner' && existing.coupleName!=='Çift') return false;
+  chatIdentityRecoveryInFlight=true;
+  try{
+    const api=await waitForPairaFirebaseApi();
+    if(!api || typeof api.listInvitations!=='function') return false;
+    const deviceId=getDeviceId();
+    const rows=await api.listInvitations();
+    const rec=(rows||[]).find(r=>Array.isArray(r?.partnerDevices) && r.partnerDevices.includes(deviceId));
+    if(!rec) return false;
+    const idx=(rec.partnerDevices||[]).indexOf(deviceId);
+    const partnerName=String((rec.partnerNames||[])[idx] || '').trim();
+    const coupleName=String(rec.name||'').trim();
+    if(!partnerName || !coupleName) return false;
+    const identity={
+      memberId:rec.id||rec.inviteCode||rec._firebaseId||'',
+      inviteCode:rec.inviteCode||rec._firebaseId||rec.id||'',
+      coupleName,
+      city:rec.city||'',
+      partnerIndex:idx,
+      partnerName
+    };
+    localStorage.setItem('paira_partner_identity_v14',JSON.stringify(identity));
+    setChatPartnerChoice(partnerName,coupleName);
+    state.profile=state.profile||{};
+    state.profile.name=coupleName;
+    if(rec.city) state.profile.city=rec.city;
+    try{persist();}catch(_){ }
+    return true;
+  }catch(err){
+    console.warn('ALA chat identity recovery',err);
+    return false;
+  }finally{
+    chatIdentityRecoveryInFlight=false;
+  }
+}
+
 function currentChatIdentity(){
   const p=getDevicePartnerIdentity();
   if(p && p.partnerName){
@@ -2599,11 +2648,21 @@ function currentChatIdentity(){
   return {partnerName:names[0]||'Partner',coupleName};
 }
 
-function chooseChatPartner(){
-  const coupleName=String((getDevicePartnerIdentity()?.coupleName)||(state.profile&&state.profile.name)||'Çift').trim();
-  const names=splitCoupleNamesForChat(coupleName);
+async function chooseChatPartner(){
+  let coupleName=String((getDevicePartnerIdentity()?.coupleName)||(state.profile&&state.profile.name)||'Çift').trim();
+  let names=splitCoupleNamesForChat(coupleName);
   if(names.length<2){
-    return toast('Partner isimleri üyelik kaydında ayrı görünmüyor');
+    await recoverChatIdentityFromMembership();
+    coupleName=String((getDevicePartnerIdentity()?.coupleName)||(state.profile&&state.profile.name)||'Çift').trim();
+    const recIdentity=getDevicePartnerIdentity();
+    names=splitCoupleNamesForChat(coupleName);
+    if(names.length<2 && recIdentity?.partnerName){
+      // Kayıtta çift adı ayrıştırılamasa bile bu cihazın gerçek partner adını koru.
+      names=[String(recIdentity.partnerName).trim()].filter(Boolean);
+    }
+    if(names.length<2){
+      return toast('Partner isimleri üyelik kaydından yüklenemedi');
+    }
   }
   modal(`<h2 style="color:#e7bd72;margin-top:0">Bu telefondan kim yazıyor?</h2>
     <p class="muted">Bu seçim yalnız bu telefona kaydedilir. Mesajlarda çift adı değil, yazan kişinin adı görünür.</p>
@@ -3228,17 +3287,30 @@ function openAgendaDay(y,m,d){
   ids.forEach(id=>ensureEventListAttendance(id));
   show('dayAgenda');
 }
+function resolveLiveEventId(id){
+  const raw=String(id||'').trim();
+  if(raw && events && events[raw]) return raw;
+  let decoded=raw;
+  try{ decoded=decodeURIComponent(raw); }catch(_){ }
+  if(decoded && events && events[decoded]) return decoded;
+  const entries=Object.entries(events||{}).filter(([k,e])=>k&&e&&k!=='_meta');
+  const byInner=entries.find(([k,e])=>String(e.id||e._firebaseId||'').trim()===raw || String(e.id||e._firebaseId||'').trim()===decoded);
+  if(byInner) return byInner[0];
+  // Eski ekran/önbellek tek kalan canlı etkinliğin eski kimliğini taşıyorsa kullanıcıyı boş ekrana düşürme.
+  if(entries.length===1) return entries[0][0];
+  return raw;
+}
 function openEvent(id){
   const active = document.querySelector('.screen.active');
   if(active && active.id !== 'eventDetail' && active.id !== 'eventChat'){
     eventReturnScreen = active.id;
   }
-  currentEvent = id;
+  currentEvent = resolveLiveEventId(id);
   currentSlide = 0;
   renderEventDetail();
   show('eventDetail');
-  ensureEventAttendanceSync(id);
-  ensureEventAttendeesSync(id);
+  ensureEventAttendanceSync(currentEvent);
+  ensureEventAttendeesSync(currentEvent);
 }
 function closeEvent(){
   show(eventReturnScreen || 'events');
@@ -5097,6 +5169,23 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
 
   window.PAIRA_FIREBASE = { app, auth, db, storage, config: firebaseConfig };
   window.dispatchEvent(new CustomEvent("paira-firebase-ready"));
+</script>
+
+<script>
+(function(){
+  // iPhone/iPad ana ekran ikonundan açılışı daha kararlı hale getirir.
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('/service-worker.js', {scope:'/'}).catch(function(){});
+    }, {once:true});
+  }
+  // iOS geri-dönüşlerinde donmuş sayfa görüntüsü kalırsa görünümü tazele.
+  window.addEventListener('pageshow', function(e){
+    if (e.persisted) {
+      try { window.dispatchEvent(new Event('resize')); } catch(_) {}
+    }
+  });
+})();
 </script>
 </body>
 </html>
