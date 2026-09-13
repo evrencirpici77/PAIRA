@@ -1,0 +1,93 @@
+name: Add safe iPhone install button
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ala-ios-simple-install-button.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Add simple iPhone-only install helper
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='<!-- ALA IOS SIMPLE INSTALL START -->'
+          if marker in s:
+              print('Simple iPhone install helper already present')
+              raise SystemExit(0)
+          inject=r'''
+          <!-- ALA IOS SIMPLE INSTALL START -->
+          <script>
+          (function(){
+            function standalone(){
+              return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
+            }
+            function isiOS(){
+              return /iPhone|iPad|iPod/i.test(navigator.userAgent||'');
+            }
+            function addButton(){
+              if(!isiOS() || standalone() || document.getElementById('alaIosInstallBtn')) return;
+              var b=document.createElement('button');
+              b.id='alaIosInstallBtn';
+              b.type='button';
+              b.textContent='🍎 iPhone’a Kur';
+              Object.assign(b.style,{
+                position:'fixed',
+                left:'50%',
+                transform:'translateX(-50%)',
+                bottom:'96px',
+                zIndex:'2147483000',
+                border:'1px solid rgba(231,189,114,.58)',
+                background:'linear-gradient(135deg,#f1d790,#c89a45)',
+                color:'#17120a',
+                borderRadius:'999px',
+                padding:'13px 20px',
+                font:'800 16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
+                boxShadow:'0 10px 30px rgba(0,0,0,.45)',
+                whiteSpace:'nowrap',
+                maxWidth:'calc(100vw - 32px)',
+                boxSizing:'border-box'
+              });
+              b.addEventListener('click',function(){
+                alert('iPhone’a kurmak için:\n\n1. Safari’nin altındaki Paylaş simgesine dokun.\n2. “Ana Ekrana Ekle”yi seç.\n3. Sağ üstten “Ekle”ye dokun.');
+              });
+              document.body.appendChild(b);
+            }
+            if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',addButton);
+            else addButton();
+            window.addEventListener('pageshow',addButton);
+          })();
+          </script>
+          <!-- ALA IOS SIMPLE INSTALL END -->
+          '''
+          pos=s.lower().rfind('</body>')
+          if pos<0: raise SystemExit('No </body> found')
+          s=s[:pos]+inject+'\n'+s[pos:]
+          p.write_text(s,encoding='utf-8')
+          print('Safe iPhone install button added')
+          PY
+      - name: Commit
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Add safe iPhone install button"
+          git push origin HEAD:main
