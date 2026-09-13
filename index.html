@@ -5342,29 +5342,6 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
 <!-- ALA INSTALL HELPER START -->
 <style id="ala-install-style">
 #alaInstallFab{position
-<!-- ALA IOS INSTALL POSITION FIX -->
-<style>
-#alaInstallFab{
-  left:50vw !important;
-  right:auto !important;
-  transform:translateX(-50%) !important;
-  max-width:calc(100vw - 32px) !important;
-  box-sizing:border-box !important;
-}
-@supports (-webkit-touch-callout: none){
-  #alaInstallFab{
-    left:50vw !important;
-    right:auto !important;
-    transform:translateX(-50%) !important;
-    bottom:calc(92px + env(safe-area-inset-bottom, 0px)) !important;
-    max-width:calc(100vw - 28px) !important;
-    min-width:190px !important;
-    width:auto !important;
-  }
-}
-</style>
-
-
 <!-- ALA DEVICE INSTALL LABEL START -->
 <script>
 (function(){
@@ -5374,7 +5351,14 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
     if(!b) return;
     if(isStandalone()){ b.style.display='none'; return; }
     var ua=navigator.userAgent||'';
-    if(/iPhone|iPad|iPod/i.test(ua)) b.textContent='🍎 iPhone’a Kur';
+    if(/iPhone|iPad|iPod/i.test(ua)){
+      b.textContent='🍎 iPhone’a Kur';
+      b.style.left='50%';
+      b.style.right='auto';
+      b.style.transform='translateX(-50%)';
+      b.style.maxWidth='calc(100vw - 28px)';
+      b.style.boxSizing='border-box';
+    }
     else if(/Android/i.test(ua)) b.textContent='🤖 Android’e Kur';
     else b.textContent='📲 Telefonuna Kur';
   }
