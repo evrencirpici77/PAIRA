@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="ÂLÂ">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="32%" r="78%">
+      <stop offset="0" stop-color="#24170d"/>
+      <stop offset="0.48" stop-color="#0d0906"/>
+      <stop offset="1" stop-color="#030201"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8e3a8"/>
+      <stop offset="0.38" stop-color="#d7a34b"/>
+      <stop offset="0.72" stop-color="#f0c66d"/>
+      <stop offset="1" stop-color="#9a6225"/>
+    </linearGradient>
+    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="2.8" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect x="18" y="18" width="476" height="476" rx="112" fill="url(#bg)" stroke="url(#gold)" stroke-width="5"/>
+  <text x="256" y="242" text-anchor="middle" fill="url(#gold)" filter="url(#glow)" font-family="Georgia, 'Times New Roman', serif" font-size="138" font-weight="600" letter-spacing="8">ÂLÂ</text>
+  <line x1="145" y1="286" x2="367" y2="286" stroke="url(#gold)" stroke-width="3" opacity=".9"/>
+  <text x="256" y="340" text-anchor="middle" fill="#d9b46f" font-family="Arial, Helvetica, sans-serif" font-size="31" letter-spacing="11">SOCIAL CLUB</text>
+</svg>
