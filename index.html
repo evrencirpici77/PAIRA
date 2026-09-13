@@ -5341,7 +5341,29 @@ window.ensureEventsSeededForAdmin = ensureEventsSeededForAdmin;
 </html>
 <!-- ALA INSTALL HELPER START -->
 <style id="ala-install-style">
-#alaInstallFab{position:fixed;left:50%;right:auto;bottom:92px;transform:translateX(-50%);z-index:2147483000;border:1px solid rgba(231,189,114,.58);background:linear-gradient(135deg,#f1d790,#c89a45);color:#17120a;border-radius:999px;padding:13px 19px;font:800 14px/1.1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.48);display:none;align-items:center;justify-content:center;gap:8px;white-space:nowrap;min-width:176px}#alaInstallFab.show{display:flex}#alaInstallOverlay{position:fixed;inset:0;z-index:2147483001;background:rgba(0,0,0,.78);display:none;align-items:flex-end;justify-content:center;padding:16px}#alaInstallOverlay.show{display:flex}#alaInstallCard{width:min(460px,100%);background:#111;border:1px solid rgba(231,189,114,.34);border-radius:24px;padding:20px;color:#fff;box-shadow:0 20px 70px rgba(0,0,0,.65);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}#alaInstallCard h3{margin:0 0 7px;color:#e7bd72;font-size:22px}#alaInstallCard p{margin:0 0 14px;color:#cfcfcf;line-height:1.45;font-size:14px}.alaInstallBtn{width:100%;border:0;border-radius:15px;padding:14px 16px;margin-top:10px;font-weight:800;font-size:16px}.alaInstallPrimary{background:linear-gradient(135deg,#f1d790,#c89a45);color:#17120a}.alaInstallSecondary{background:#242424;color:#fff;border:1px solid rgba(255,255,255,.12)}.alaInstallSteps{background:#191919;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:13px 15px;margin-top:12px;color:#e8e8e8;line-height:1.55;font-size:14px}
+#alaInstallFab{position
+<!-- ALA DEVICE INSTALL LABEL START -->
+<script>
+(function(){
+  function isStandalone(){return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;}
+  function setInstallLabel(){
+    var b=document.getElementById('alaInstallFab');
+    if(!b) return;
+    if(isStandalone()){ b.style.display='none'; return; }
+    var ua=navigator.userAgent||'';
+    if(/iPhone|iPad|iPod/i.test(ua)) b.textContent='🍎 iPhone’a Kur';
+    else if(/Android/i.test(ua)) b.textContent='🤖 Android’e Kur';
+    else b.textContent='📲 Telefonuna Kur';
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',setInstallLabel);
+  else setInstallLabel();
+  window.addEventListener('pageshow',setInstallLabel);
+  window.addEventListener('appinstalled',setInstallLabel);
+})();
+</script>
+<!-- ALA DEVICE INSTALL LABEL END -->
+
+:fixed;left:50%;right:auto;bottom:92px;transform:translateX(-50%);z-index:2147483000;border:1px solid rgba(231,189,114,.58);background:linear-gradient(135deg,#f1d790,#c89a45);color:#17120a;border-radius:999px;padding:13px 19px;font:800 14px/1.1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.48);display:none;align-items:center;justify-content:center;gap:8px;white-space:nowrap;min-width:176px}#alaInstallFab.show{display:flex}#alaInstallOverlay{position:fixed;inset:0;z-index:2147483001;background:rgba(0,0,0,.78);display:none;align-items:flex-end;justify-content:center;padding:16px}#alaInstallOverlay.show{display:flex}#alaInstallCard{width:min(460px,100%);background:#111;border:1px solid rgba(231,189,114,.34);border-radius:24px;padding:20px;color:#fff;box-shadow:0 20px 70px rgba(0,0,0,.65);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}#alaInstallCard h3{margin:0 0 7px;color:#e7bd72;font-size:22px}#alaInstallCard p{margin:0 0 14px;color:#cfcfcf;line-height:1.45;font-size:14px}.alaInstallBtn{width:100%;border:0;border-radius:15px;padding:14px 16px;margin-top:10px;font-weight:800;font-size:16px}.alaInstallPrimary{background:linear-gradient(135deg,#f1d790,#c89a45);color:#17120a}.alaInstallSecondary{background:#242424;color:#fff;border:1px solid rgba(255,255,255,.12)}.alaInstallSteps{background:#191919;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:13px 15px;margin-top:12px;color:#e8e8e8;line-height:1.55;font-size:14px}
 </style>
 <button id="alaInstallFab" type="button" aria-label="Telefonuna kur" onclick="var x=document.getElementById('alaInstallOverlay');if(x)x.classList.add('show')">📲 Telefonuna Kur</button>
 <div id="alaInstallOverlay" aria-hidden="true"><div id="alaInstallCard" role="dialog" aria-modal="true"><h3>Telefonuna Kur</h3><p>ÂLÂ'yı ana ekranına ekle. Sonraki girişlerde WhatsApp davet linkini aramana gerek kalmaz.</p><div id="alaInstallDynamic"></div><button class="alaInstallBtn alaInstallSecondary" id="alaInstallClose" type="button">Şimdilik Kapat</button></div></div>
